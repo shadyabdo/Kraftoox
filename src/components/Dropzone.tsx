@@ -1,0 +1,132 @@
+import { useRef, useState, type CSSProperties, type DragEvent } from "react";
+import { cx, showToast } from "../lib/utils";
+import { Icon } from "./Icons";
+
+interface DropzoneProps {
+  accept: string;
+  multiple?: boolean;
+  onFiles: (files: File[]) => void;
+  title?: string;
+  subtitle?: string;
+  color?: string;
+  compact?: boolean;
+}
+
+/* منطقة إفلات الملفات — سحب/إفلات، نقر، ولصق من الحافظة */
+export function Dropzone({
+  accept,
+  multiple = false,
+  onFiles,
+  title = "اسحب ملفاتك هنا",
+  subtitle = "أو انقر للاختيار من جهازك — يمكنك أيضاً اللصق بـ Ctrl+V",
+  color = "var(--teal)",
+  compact = false,
+}: DropzoneProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [live, setLive] = useState(false);
+  const acceptList = accept.split(",").map((s) => s.trim().toLowerCase());
+
+  const validate = (files: File[]): File[] => {
+    const ok = files.filter((f) => {
+      const type = f.type.toLowerCase();
+      const ext = `.${f.name.split(".").pop()?.toLowerCase()}`;
+      return acceptList.some(
+        (a) =>
+          (a.startsWith(".") && a === ext) ||
+          (a.endsWith("/*") && type.startsWith(a.slice(0, -1))) ||
+          a === type
+      );
+    });
+    if (ok.length !== files.length) {
+      showToast("بعض الملفات بصيغة غير مدعومة في هذه الأداة وتم تجاهلها", "err");
+    }
+    return ok;
+  };
+
+  const handle = (list: FileList | null) => {
+    if (!list || list.length === 0) return;
+    const files = validate(Array.from(list));
+    if (files.length) onFiles(multiple ? files : files.slice(0, 1));
+  };
+
+  const onDrop = (e: DragEvent) => {
+    e.preventDefault();
+    setLive(false);
+    handle(e.dataTransfer.files);
+  };
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={title}
+      onClick={() => inputRef.current?.click()}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          inputRef.current?.click();
+        }
+      }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setLive(true);
+      }}
+      onDragLeave={() => setLive(false)}
+      onDrop={onDrop}
+      className={cx(
+        "group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl text-center outline-none transition-all duration-300",
+        compact ? "gap-2.5 px-4 py-8" : "gap-3 px-6 py-12 sm:py-16",
+        "bg-surface focus-visible:ring-2 focus-visible:ring-[var(--teal)]",
+        live && "dropzone-live"
+      )}
+      style={
+        {
+          "--tc-active": color,
+          border: "1px solid var(--line)",
+          boxShadow: live
+            ? `0 0 0 3px color-mix(in srgb, ${color} 30%, transparent), var(--card-shadow)`
+            : "var(--card-shadow)",
+        } as CSSProperties
+      }
+    >
+      <span className="ants absolute inset-[7px] rounded-xl" aria-hidden="true" />
+
+      <span
+        className={cx(
+          "grid place-items-center rounded-2xl transition-transform duration-300 group-hover:scale-110",
+          compact ? "h-12 w-12" : "h-16 w-16"
+        )}
+        style={{ background: `color-mix(in srgb, ${color} 13%, transparent)`, color }}
+      >
+        <Icon name="upload" size={compact ? 22 : 30} />
+      </span>
+
+      <div>
+        <p className={cx("font-display font-bold", compact ? "text-base" : "text-lg sm:text-xl")}>
+          {title}
+        </p>
+        <p className="c-muted mt-1 text-xs sm:text-sm">{subtitle}</p>
+      </div>
+
+      <span
+        className="font-display mt-1 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition-transform duration-200 group-hover:-translate-y-0.5"
+        style={{ background: color, color: color.includes("amber") ? "#2b1c02" : undefined }}
+      >
+        <Icon name="file" size={16} />
+        اختر {multiple ? "الملفات" : "ملفاً"}
+      </span>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        multiple={multiple}
+        className="hidden"
+        onChange={(e) => {
+          handle(e.target.files);
+          e.target.value = "";
+        }}
+      />
+    </div>
+  );
+}

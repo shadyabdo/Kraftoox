@@ -1,0 +1,7 @@
+# FileTools — robots.txt
+User-agent: *
+Allow: /
+Disallow: /server/
+
+# Sitemap
+Sitemap: https://filetools.app/sitemap.xml
