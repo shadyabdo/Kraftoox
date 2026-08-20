@@ -100,7 +100,7 @@ export default function ResizeImage() {
     doneItems.forEach((it, i) => {
       zip.file(`${it.file.name.replace(/\.[^.]+$/, "")}-resized-${i + 1}.${it.file.name.split(".").pop()}`, it.out!);
     });
-    downloadBlob(await zip.generateAsync({ type: "blob" }), "filetools-resized-images.zip");
+    downloadBlob(await zip.generateAsync({ type: "blob" }), "kraftoox-resized-images.zip");
   };
 
   return (

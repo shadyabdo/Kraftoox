@@ -151,7 +151,7 @@ export default function MergePdf() {
                   type="button"
                   className="btn btn-teal"
                   onClick={() =>
-                    downloadBlob(bytesToBlob(result.bytes, "application/pdf"), "filetools-merged.pdf")
+                    downloadBlob(bytesToBlob(result.bytes, "application/pdf"), "kraftoox-merged.pdf")
                   }
                 >
                   <Icon name="download" size={17} />

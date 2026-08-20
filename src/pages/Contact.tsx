@@ -6,7 +6,7 @@ import { Icon } from "../components/Icons";
 import { Reveal } from "../components/Reveal";
 import { CopyBtn } from "../components/bits";
 
-const EMAIL = "support@filetools.app";
+const EMAIL = "support@kraftoox.app";
 
 export default function Contact() {
   usePageMeta("/contact");
@@ -38,7 +38,7 @@ export default function Contact() {
   };
 
   const mailtoHref = `mailto:${EMAIL}?subject=${encodeURIComponent(
-    `[FileTools] ${subject} — ${name}`
+    `[Kraftoox] ${subject} — ${name}`
   )}&body=${encodeURIComponent(`الاسم: ${name}\nالبريد: ${email}\n\n${message}`)}`;
 
   return (
@@ -224,7 +224,7 @@ export default function Contact() {
                   type="button"
                   className="btn btn-ghost !px-3 !py-2 !text-xs"
                   onClick={async () => {
-                    const ok = await copyText("https://filetools.app/");
+                    const ok = await copyText("https://kraftoox.app/");
                     if (ok) showToast("تم نسخ رابط الموقع");
                   }}
                 >
@@ -232,7 +232,7 @@ export default function Contact() {
                   نسخ الرابط
                 </button>
                 <a
-                  href={`https://wa.me/?text=${encodeURIComponent("FileTools — أدوات مجانية لمعالجة الصور وPDF داخل المتصفح: https://filetools.app/")}`}
+                  href={`https://wa.me/?text=${encodeURIComponent("Kraftoox — ورشة مجانية للصور والفيديو وPDF والذكاء الاصطناعي داخل المتصفح: https://kraftoox.app/")}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-ghost !px-3 !py-2 !text-xs"

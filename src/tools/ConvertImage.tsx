@@ -65,7 +65,7 @@ export default function ConvertImage() {
     doneItems.forEach((it, i) =>
       zip.file(`${baseName(it.file.name)}-${i + 1}.${extForFormat(format)}`, it.out!)
     );
-    downloadBlob(await zip.generateAsync({ type: "blob" }), "filetools-converted-images.zip");
+    downloadBlob(await zip.generateAsync({ type: "blob" }), "kraftoox-converted-images.zip");
   };
 
   return (

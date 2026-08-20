@@ -217,8 +217,8 @@ export async function compressPdf(file: File, quality: number, maxDim = 1800): P
   pdf.setAuthor("");
   pdf.setSubject("");
   pdf.setKeywords([]);
-  pdf.setProducer("FileTools");
-  pdf.setCreator("FileTools");
+  pdf.setProducer("Kraftoox");
+  pdf.setCreator("Kraftoox");
 
   const bytes = await pdf.save({ useObjectStreams: true });
   return { bytes, replacedImages, skippedImages };
@@ -297,7 +297,7 @@ export async function imagesToPdf(files: File[], opts: ImagesToPdfOptions): Prom
     const dh = ih * scale;
     page.drawImage(img, { x: (pw - dw) / 2, y: (ph - dh) / 2, width: dw, height: dh });
   }
-  pdf.setProducer("FileTools");
-  pdf.setCreator("FileTools");
+  pdf.setProducer("Kraftoox");
+  pdf.setCreator("Kraftoox");
   return pdf.save({ useObjectStreams: true });
 }

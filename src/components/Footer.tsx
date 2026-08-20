@@ -4,7 +4,7 @@ import { Link } from "../lib/router";
 import { copyText, showToast } from "../lib/utils";
 import { Icon, LogoMark } from "./Icons";
 
-const SITE_URL = "https://filetools.app/";
+const SITE_URL = "https://kraftoox.app/";
 
 export function Footer() {
   const [copied, setCopied] = useState(false);
@@ -13,13 +13,13 @@ export function Footer() {
     {
       label: "مشاركة على X",
       href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-        "FileTools — أدوات مجانية لضغط الصور وتحويلها ومعالجة ملفات PDF داخل المتصفح"
+        "Kraftoox — ورشة مجانية: صور، فيديو، PDF، تسجيل شاشة وذكاء اصطناعي داخل المتصفح"
       )}&url=${encodeURIComponent(SITE_URL)}`,
     },
     {
       label: "مشاركة على واتساب",
       href: `https://wa.me/?text=${encodeURIComponent(
-        "FileTools — أدوات مجانية لضغط الصور ومعالجة ملفات PDF داخل المتصفح: " + SITE_URL
+        "Kraftoox — ورشة مجانية للصور والفيديو وPDF والذكاء الاصطناعي داخل المتصفح: " + SITE_URL
       )}`,
     },
     {
@@ -36,7 +36,7 @@ export function Footer() {
             <Link to="/" className="flex items-center gap-2.5">
               <LogoMark size={38} />
               <span className="font-display text-xl font-bold" dir="ltr">
-                File<span className="c-teal">Tools</span>
+                Kraft<span className="c-teal">oox</span>
               </span>
             </Link>
             <p className="c-muted mt-3 max-w-xs text-sm leading-relaxed">
@@ -166,7 +166,7 @@ export function Footer() {
         </div>
 
         <div className="c-muted mt-10 flex flex-col items-center justify-between gap-3 border-t bd-line pt-6 text-xs sm:flex-row">
-          <p>© 2026 FileTools — جميع الحقوق محفوظة. صُنع بعناية للمستخدم العربي.</p>
+          <p>© 2026 Kraftoox — جميع الحقوق محفوظة. صُنع بعناية للمستخدم العربي.</p>
           <p className="flex items-center gap-1.5">
             يعمل بأدوات مفتوحة المصدر:
             <span className="font-mono" dir="ltr">pdf-lib · pako · Canvas API</span>

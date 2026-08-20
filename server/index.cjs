@@ -1,5 +1,5 @@
 /**
- * FileTools — Backend اختياري (Node.js + Express + Supabase)
+ * Kraftoox — Backend اختياري (Node.js + Express + Supabase)
  * ============================================================
  * الغرض: توفير روابط «دائمة» للصور بميزانية صفرية.
  * الواجهة الأمامية تعمل بالكامل بدون هذا الخادم — هذا مجرد إضافة اختيارية
@@ -78,4 +78,4 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`FileTools API listening on :${PORT}`));
+app.listen(PORT, () => console.log(`Kraftoox API listening on :${PORT}`));

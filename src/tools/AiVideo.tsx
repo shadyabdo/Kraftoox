@@ -366,7 +366,7 @@ export default function AiVideo() {
                   <span dir="ltr" className="font-mono">{(resultSize / 1048576).toFixed(1)} MB</span> · بدون علامة مائية
                 </p>
                 <div className="flex gap-2">
-                  <a href={resultUrl} download={`filetools-${topic.slice(0, 24) || "video"}.webm`} className="btn btn-teal">
+                  <a href={resultUrl} download={`kraftoox-${topic.slice(0, 24) || "video"}.webm`} className="btn btn-teal">
                     <Icon name="download" size={17} />
                     تحميل الفيديو
                   </a>

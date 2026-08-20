@@ -63,7 +63,7 @@ export default function ExtractPdfImages() {
     images.forEach((img, i) => {
       zip.file(`extracted-${String(i + 1).padStart(2, "0")}.${img.ext}`, img.blob);
     });
-    downloadBlob(await zip.generateAsync({ type: "blob" }), "filetools-extracted-images.zip");
+    downloadBlob(await zip.generateAsync({ type: "blob" }), "kraftoox-extracted-images.zip");
   };
 
   return (

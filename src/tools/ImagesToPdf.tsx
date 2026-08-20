@@ -157,7 +157,7 @@ export default function ImagesToPdf() {
                 <button
                   type="button"
                   className="btn btn-teal"
-                  onClick={() => downloadBlob(bytesToBlob(result.bytes, "application/pdf"), "filetools-images.pdf")}
+                  onClick={() => downloadBlob(bytesToBlob(result.bytes, "application/pdf"), "kraftoox-images.pdf")}
                 >
                   <Icon name="download" size={17} />
                   تحميل الملف

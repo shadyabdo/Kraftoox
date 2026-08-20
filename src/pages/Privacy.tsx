@@ -46,7 +46,7 @@ export default function Privacy() {
           </h1>
           <p className="c-muted mt-3 text-sm">
             آخر تحديث: <b>15 يناير 2026</b> — تنطبق هذه السياسة على موقع
-            <span className="font-mono" dir="ltr"> filetools.app </span> وجميع أدواته.
+            <span className="font-mono" dir="ltr"> kraftoox.app </span> وجميع أدواته.
           </p>
         </header>
       </Reveal>

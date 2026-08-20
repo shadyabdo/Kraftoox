@@ -401,7 +401,7 @@ export default function VideoEditor() {
                     <video src={result.url} controls className="mx-auto max-h-72 rounded-lg" style={{ maxWidth: "100%" }} />
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                       <span className="text-xs c-muted" dir="ltr">WebM · {formatBytes(result.size)} · {formatSeconds(total)}</span>
-                      <a href={result.url} download="filetools-edit.webm" className="btn btn-teal !py-2 !text-sm">
+                      <a href={result.url} download="kraftoox-edit.webm" className="btn btn-teal !py-2 !text-sm">
                         <Icon name="download" size={15} />
                         تنزيل الفيديو
                       </a>

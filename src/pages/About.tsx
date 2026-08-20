@@ -67,7 +67,7 @@ export default function About() {
       <Reveal delay={120}>
         <div className="mt-8 max-w-3xl space-y-4 text-[15px] leading-loose">
           <p>
-            بدأ FileTools من إحباط شخصي: كل مرة احتجنا فيها لضغط صورة أو دمج ملف PDF، كانت
+            بدأ Kraftoox من إحباط شخصي: كل مرة احتجنا فيها لضغط صورة أو دمج ملف PDF، كانت
             المواقع المتاحة تطلب منا <b>رفع ملفاتنا إلى خوادمها</b> — عقود عمل، صور عائلية،
             مستندات حساسة — ثم تعدنا بحذفها «قريباً». لم يعجبنا هذا العقد أبداً.
           </p>
@@ -107,7 +107,7 @@ export default function About() {
       <section className="mt-16">
         <SectionHead
           kicker="تحت الغطاء"
-          title="ماذا يشغّل FileTools تقنياً؟"
+          title="ماذا يشغّل Kraftoox تقنياً؟"
           desc="موقع ثابت بالكامل — لا خوادم تطبيقية ولا قواعد بيانات ملفات. هذا كل ما في الأمر:"
           icon="code"
           color="var(--amber)"

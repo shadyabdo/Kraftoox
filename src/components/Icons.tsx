@@ -361,23 +361,22 @@ export function Icon({ name, size = 20, ...rest }: IconProps) {
   );
 }
 
-/* شعار FileTools */
+/* شعار Kraftoox — حرف K مرسوم بخطوط سميكة مع شرارتين */
 export function LogoMark({ size = 34 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
-      <rect x="4" y="4" width="56" height="56" rx="14" fill="var(--teal)" />
+      <rect x="4" y="4" width="56" height="56" rx="15" fill="var(--teal)" />
+      <path d="M24 16v32" stroke="var(--bg)" strokeWidth="7.5" strokeLinecap="round" />
       <path
-        d="M20 14h16l10 10v26a4 4 0 0 1-4 4H20a4 4 0 0 1-4-4V18a4 4 0 0 1 4-4z"
-        fill="var(--surface)"
-        stroke="var(--line)"
-        strokeWidth="1"
+        d="M42 16 26.5 32 42 48"
+        stroke="var(--bg)"
+        strokeWidth="7.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
       />
-      <path d="M36 14l10 10H38a2 2 0 0 1-2-2z" fill="var(--teal-soft)" />
-      <path
-        d="M16 40l8-9 6 6 6-8 12 13v6a4 4 0 0 1-4 4H20a4 4 0 0 1-4-4z"
-        fill="var(--teal)"
-      />
-      <circle cx="44" cy="45" r="4.5" fill="var(--amber)" />
+      <circle cx="47" cy="13" r="3.6" fill="var(--amber)" />
+      <circle cx="47" cy="51" r="2.6" fill="#e8757b" />
     </svg>
   );
 }

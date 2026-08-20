@@ -429,7 +429,7 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
             <Reveal>
               <p className="font-display flex items-center gap-2 text-sm font-semibold c-amber">
                 <Icon name="bolt" size={16} />
-                كيف يعمل FileTools؟
+                كيف يعمل Kraftoox؟
               </p>
               <h2 className="font-display mt-2 text-3xl font-bold leading-snug sm:text-4xl">
                 ثلاث خطوات.
@@ -490,7 +490,7 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
         </div>
       </section>
 
-      {/* ===== لماذا FileTools — شبكة غير متماثلة ===== */}
+      {/* ===== لماذا Kraftoox — شبكة غير متماثلة ===== */}
       <section className="mx-auto mt-24 max-w-6xl px-4">
         <SectionHead
           kicker="لماذا نحن؟"
@@ -655,7 +655,7 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
               <button
                 type="button"
                 onClick={async () => {
-                  const ok = await copyText("https://filetools.app/");
+                  const ok = await copyText("https://kraftoox.app/");
                   if (ok) showToast("تم نسخ الرابط — شاركه مع من تحب");
                 }}
                 className="btn btn-ghost !px-6 !py-3 !text-base"

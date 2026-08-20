@@ -1,7 +1,7 @@
-# FileTools — robots.txt
+# Kraftoox — robots.txt
 User-agent: *
 Allow: /
 Disallow: /server/
 
 # Sitemap
-Sitemap: https://filetools.app/sitemap.xml
+Sitemap: https://kraftoox.app/sitemap.xml

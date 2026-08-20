@@ -186,7 +186,7 @@ export default function AiImage() {
                     type="button"
                     className="btn btn-teal !py-2 !text-sm"
                     onClick={() => {
-                      downloadBlob(current.blob, `filetools-ai-${current.id}.png`);
+                      downloadBlob(current.blob, `kraftoox-ai-${current.id}.png`);
                       showToast("تم تنزيل الصورة");
                     }}
                   >

@@ -73,7 +73,7 @@ export default function CompressImage() {
       zip.file(`${it.file.name.replace(/\.[^.]+$/, "")}-compressed-${i + 1}.${ext}`, it.out!);
     });
     const blob = await zip.generateAsync({ type: "blob" });
-    downloadBlob(blob, "filetools-compressed-images.zip");
+    downloadBlob(blob, "kraftoox-compressed-images.zip");
   };
 
   return (
