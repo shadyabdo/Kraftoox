@@ -17,6 +17,15 @@ export function formatBytes(bytes: number): string {
   return `${v >= 100 ? Math.round(v) : v.toFixed(1)} ${units[i]}`;
 }
 
+export function formatSeconds(total: number): string {
+  const s = Math.round(total);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  return `${m}:${String(sec).padStart(2, "0")}`;
+}
+
 export function percentSavings(before: number, after: number): string {
   if (before <= 0) return "0%";
   const p = ((before - after) / before) * 100;

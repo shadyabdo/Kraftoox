@@ -1,11 +1,13 @@
 import type { IconName } from "../components/Icons";
 
+export type ToolCategory = "image" | "pdf" | "video" | "ai";
+
 export interface ToolDef {
   slug: string;
   name: string;
   short: string;
   long: string;
-  category: "image" | "pdf";
+  category: ToolCategory;
   icon: IconName;
   color: string;
   accept: string;
@@ -13,7 +15,15 @@ export interface ToolDef {
   badge: string;
   keywords: string;
   features: string[];
+  isNew?: boolean;
 }
+
+export const CATEGORY_META: Record<ToolCategory, { label: string; color: string }> = {
+  image: { label: "الصور", color: "var(--teal)" },
+  pdf: { label: "PDF", color: "var(--red)" },
+  video: { label: "الفيديو", color: "var(--blue)" },
+  ai: { label: "ذكاء اصطناعي", color: "var(--amber)" },
+};
 
 export const TOOLS: ToolDef[] = [
   {
@@ -93,6 +103,66 @@ export const TOOLS: ToolDef[] = [
     ],
   },
   {
+    slug: "upscale-image",
+    name: "تكبير الصور وتحسينها",
+    short: "كبّر صورك حتى 4 أضعاف بدقة تصل إلى 7680 بكسل مع تعزيز الحواف والتفاصيل.",
+    long: "محرك تكبير متدرج متعدد المراحل يعيد بناء الصورة بمضاعفات صغيرة متتالية للحصول على تفاصيل أفضل من التكبير المباشر، مع خيار تعزيز الحواف ومقارنة فورية قبل/بعد.",
+    category: "image",
+    icon: "expand",
+    color: "#0f6e6e",
+    accept: "image/jpeg,image/png,image/webp",
+    multiple: false,
+    badge: "×2 · ×3 · ×4 حتى 7680px",
+    keywords: "تكبير الصور تحسين جودة الصورة upscale image enhance photo تكبير الصورة بدون فقدان الجودة زيادة دقة الصورة",
+    features: [
+      "معاملات تكبير ×2 و×3 و×4",
+      "تكبير متدرج متعدد المراحل للحفاظ على الحواف",
+      "تعزيز اختياري للحواف والتفاصيل",
+      "منزلق مقارنة فوري قبل/بعد",
+    ],
+    isNew: true,
+  },
+  {
+    slug: "remove-watermark",
+    name: "إزالة العلامة المائية من الصور",
+    short: "لوّن فوق العلامة المائية ودع خوارزمية الترميم تعيد بناء المنطقة من محيطها.",
+    long: "حدّد العلامة المائية بفرشاة دقيقة، ثم تعيد خوارزمية الترميم الانتشاري (Diffusion Inpainting) بناء البكسلات من محيط المنطقة — النتيجة صورة نظيفة تقارنها بالأصل بمنزلق واحد.",
+    category: "image",
+    icon: "eraser",
+    color: "#2f7d5c",
+    accept: "image/jpeg,image/png,image/webp",
+    multiple: false,
+    badge: "Inpainting محلي",
+    keywords: "ازالة العلامة المائية حذف الشعار من الصورة remove watermark ازالة حقوق الصورة مسح اللوجو من الصورة",
+    features: [
+      "فرشاة تحديد دقيقة بحجم قابل للضبط",
+      "خوارزمية ترميم انتشاري تعمل محلياً",
+      "منزلق مقارنة قبل/بعد",
+      "تصدير PNG بدقة كاملة",
+    ],
+    isNew: true,
+  },
+  {
+    slug: "photo-editor",
+    name: "محرر الصور أونلاين (فوتوشوب)",
+    short: "محرر متكامل: فرشاة، نصوص عربية، قص، تدوير، فلاتر وتعديلات لونية وتصدير بكل الصيغ.",
+    long: "استوديو تحرير كامل داخل متصفحك: ارسم وامحُ وأضف نصوصاً عربية وقُصّ ودوّر واقلب، مع 7 فلاتر جاهزة و7 تعديلات لونية غير مدمّرة وتراجع/إعادة حتى 25 خطوة وتصدير PNG أو JPG أو WebP.",
+    category: "image",
+    icon: "brush",
+    color: "#0c7a63",
+    accept: "image/jpeg,image/png,image/webp",
+    multiple: false,
+    badge: "Brush · Text · Crop · Filters",
+    keywords: "فوتوشوب اونلاين محرر صور تعديل الصور photoshop online photo editor اضافة نص على صورة قص صورة فلاتر صور",
+    features: [
+      "فرشاة وممحاة بألوان وأحجام حرة",
+      "نصوص عربية بأي حجم ولون ومكان",
+      "قص وتدوير وقلب أفقي/رأسي",
+      "فلاتر جاهزة + تعديلات لونية غير مدمّرة + تراجع/إعادة",
+    ],
+    isNew: true,
+  },
+  {
     slug: "compress-pdf",
     name: "ضغط ملفات PDF",
     short: "قلّل حجم ملفات PDF الكبيرة بإعادة ضغط الصور المضمنة وتحسين بنية الملف.",
@@ -168,10 +238,92 @@ export const TOOLS: ToolDef[] = [
       "تحميل فردي لأي صورة",
     ],
   },
+  {
+    slug: "upscale-video",
+    name: "تكبير دقة الفيديو",
+    short: "ارفع دقة فيديوهاتك حتى ×3 بإعادة ترميز إطاري يحافظ على الصوت الأصلي.",
+    long: "يعيد المحرك ترميز الفيديو إطاراً بإطار داخل متصفحك عبر Canvas وMediaRecorder مع الحفاظ على المسار الصوتي — كبّر مقاطعك من 480p إلى HD أو من HD إلى 4K.",
+    category: "video",
+    icon: "video",
+    color: "#1e7ec2",
+    accept: "video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov",
+    multiple: false,
+    badge: "MP4 · WEBM · MOV",
+    keywords: "تكبير الفيديو تحسين جودة الفيديو upscale video زيادة دقة الفيديو video enhancer تكبير مقطع",
+    features: [
+      "معاملات تكبير ×1.5 و×2 و×3",
+      "الحفاظ على الصوت الأصلي",
+      "شريط تقدم حي مع إمكانية الإلغاء",
+      "معالجة محلية بالكامل — الفيديو لا يُرفع",
+    ],
+    isNew: true,
+  },
+  {
+    slug: "remove-watermark-video",
+    name: "إزالة العلامة المائية من الفيديو",
+    short: "حدّد مكان العلامة المائية بمستطيل قابل للسحب وصدّر فيديو نظيفاً بصوت أصلي.",
+    long: "ضع مستطيل التحديد فوق العلامة المائية (قوالب جاهزة للزوايا الأربع والمنتصف)، ويستبدل المحرك المنطقة بتمويه منطقي يمتزج مع كل إطار — ثم يصدّر الفيديو كاملاً مع صوته الأصلي.",
+    category: "video",
+    icon: "film",
+    color: "#2b6cb0",
+    accept: "video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov",
+    multiple: false,
+    badge: "إزالة شعارات · زوايا · وسط",
+    keywords: "ازالة العلامة المائية من الفيديو حذف الشعار من الفيديو remove watermark from video ازالة حقوق الفيديو تنظيف الفيديو",
+    features: [
+      "مستطيل تحديد بالسحب والتحجيم",
+      "قوالب جاهزة لمواضع العلامات الشائعة",
+      "تمويه منطقي يمتزج مع حركة الفيديو",
+      "الحفاظ على الصوت الأصلي في الناتج",
+    ],
+    isNew: true,
+  },
+  {
+    slug: "ai-image",
+    name: "توليد الصور بالذكاء الاصطناعي",
+    short: "حوّل أوصافك العربية إلى صور احترافية بنماذج FLUX وTurbo — بلا حدود وبلا علامة مائية.",
+    long: "اكتب وصفك بالعربية أو الإنجليزية، اختر النمط الفني (سينمائي، واقعي، أنمي، ثلاثي الأبعاد…) والأبعاد، وولّد صوراً احترافية عبر نماذج مفتوحة المصدر مجانية — مع سجل جلسة وتنزيل فوري.",
+    category: "ai",
+    icon: "ai",
+    color: "#e8930c",
+    accept: "",
+    multiple: false,
+    badge: "FLUX · TURBO · بلا حدود",
+    keywords: "توليد الصور بالذكاء الاصطناعي ai image generator صنع صور بالذكاء الاصطناعي توليد صور عربية text to image",
+    features: [
+      "يفهم الأوصاف العربية بالكامل",
+      "6 أنماط فنية وأبعاد شورتز ويوتيوب ومربع",
+      "نموذجا FLUX وTurbo بدون مفاتيح API",
+      "سجل جلسة مع تنزيل ونسخ رابط لكل صورة",
+    ],
+    isNew: true,
+  },
+  {
+    slug: "ai-video",
+    name: "توليد الفيديو بالذكاء الاصطناعي",
+    short: "من فكرة واحدة إلى فيديو يوتيوب جاهز: سيناريو عربي، مشاهد AI، وتعليقات — حتى ساعة كاملة.",
+    long: "يكتب الذكاء الاصطناعي سيناريو عربياً قابلًا للتعديل، يولّد مشهداً مصوراً لكل جملة، ثم يركّب فيديوك بحركة سينمائية وتعليقات عربية — شورتز 9:16 أو 16:9، من 15 ثانية حتى ساعة، بلا حدود وبلا علامة مائية.",
+    category: "ai",
+    icon: "film",
+    color: "#c77a06",
+    accept: "",
+    multiple: false,
+    badge: "شورتز · طويل · عربي",
+    keywords: "توليد فيديو بالذكاء الاصطناعي ai video generator صناعة فيديو يوتيوب عمل شورتز فيديو عربي مولد فيديو",
+    features: [
+      "سيناريو عربي يولّده الذكاء الاصطناعي ويمكنك تعديله",
+      "صيغتا يوتيوب شورتز 9:16 والفيديو العادي 16:9",
+      "مدد من 15 ثانية حتى ساعة كاملة",
+      "تعليقات عربية وحركة سينمائية بلا علامة مائية",
+    ],
+    isNew: true,
+  },
 ];
 
 export const IMAGE_TOOLS = TOOLS.filter((t) => t.category === "image");
 export const PDF_TOOLS = TOOLS.filter((t) => t.category === "pdf");
+export const VIDEO_TOOLS = TOOLS.filter((t) => t.category === "video");
+export const AI_TOOLS = TOOLS.filter((t) => t.category === "ai");
 
 export function getTool(slug: string): ToolDef | undefined {
   return TOOLS.find((t) => t.slug === slug);

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { IMAGE_TOOLS, PDF_TOOLS } from "../data/tools";
+import { IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS, AI_TOOLS } from "../data/tools";
 import { Link } from "../lib/router";
 import { copyText, showToast } from "../lib/utils";
 import { Icon, LogoMark } from "./Icons";
@@ -31,7 +31,7 @@ export function Footer() {
   return (
     <footer className="mt-20 border-t bd-line" style={{ background: "var(--surface)" }}>
       <div className="mx-auto max-w-6xl px-4 py-12">
-        <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+        <div className="grid gap-10 md:grid-cols-3 xl:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr]">
           <div>
             <Link to="/" className="flex items-center gap-2.5">
               <LogoMark size={38} />
@@ -40,8 +40,8 @@ export function Footer() {
               </span>
             </Link>
             <p className="c-muted mt-3 max-w-xs text-sm leading-relaxed">
-              ثماني أدوات مجانية لمعالجة الصور وملفات PDF — تعمل بالكامل داخل متصفحك، بدون تسجيل،
-              وبدون أن تغادر ملفاتك جهازك أبداً.
+              خمس عشرة أداة مجانية لمعالجة الصور وملفات PDF والفيديو وتوليد المحتوى بالذكاء
+              الاصطناعي — تعمل داخل متصفحك، بدون تسجيل، وبدون أن تغادر ملفاتك جهازك أبداً.
             </p>
             <div className="mt-4 flex items-center gap-2 rounded-xl border bd-line bg-surface2 px-3 py-2 text-xs font-medium">
               <span className="c-teal">
@@ -107,6 +107,38 @@ export function Footer() {
               {PDF_TOOLS.map((t) => (
                 <li key={t.slug}>
                   <Link to={`/tool/${t.slug}`} className="c-muted text-sm transition-colors hover:text-[var(--red)]">
+                    {t.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-display mb-3 flex items-center gap-1.5 text-sm font-bold">
+              <span style={{ color: "var(--blue)" }}><Icon name="video" size={15} /></span>
+              أدوات الفيديو
+            </h4>
+            <ul className="space-y-2">
+              {VIDEO_TOOLS.map((t) => (
+                <li key={t.slug}>
+                  <Link to={`/tool/${t.slug}`} className="c-muted text-sm transition-colors hover:text-[var(--blue)]">
+                    {t.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-display mb-3 flex items-center gap-1.5 text-sm font-bold">
+              <span className="c-amber"><Icon name="ai" size={15} /></span>
+              الذكاء الاصطناعي
+            </h4>
+            <ul className="space-y-2">
+              {AI_TOOLS.map((t) => (
+                <li key={t.slug}>
+                  <Link to={`/tool/${t.slug}`} className="c-muted text-sm transition-colors hover:text-[var(--amber)]">
                     {t.name}
                   </Link>
                 </li>

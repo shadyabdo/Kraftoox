@@ -22,14 +22,21 @@ export function ToolCard({ tool, delay = 0 }: { tool: ToolDef; delay?: number })
           >
             <Icon name={tool.icon} size={24} />
           </span>
-          <span
-            className="font-display text-[11px] font-semibold tracking-wide px-2 py-1 rounded-md"
-            style={{
-              color: tool.color,
-              background: `color-mix(in srgb, ${tool.color} 9%, transparent)`,
-            }}
-          >
-            {tool.category === "image" ? "صور" : "PDF"}
+          <span className="flex items-center gap-1.5">
+            {tool.isNew && (
+              <span className="font-display anim-pulse-soft rounded-md bg-[var(--red)] px-2 py-1 text-[10px] font-bold text-white">
+                جديد
+              </span>
+            )}
+            <span
+              className="font-display rounded-md px-2 py-1 text-[11px] font-semibold tracking-wide"
+              style={{
+                color: tool.color,
+                background: `color-mix(in srgb, ${tool.color} 9%, transparent)`,
+              }}
+            >
+              {tool.category === "image" ? "صور" : tool.category === "pdf" ? "PDF" : tool.category === "video" ? "فيديو" : "AI"}
+            </span>
           </span>
         </div>
 

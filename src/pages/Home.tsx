@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { TOOLS, IMAGE_TOOLS, PDF_TOOLS, type ToolDef } from "../data/tools";
+import { TOOLS, IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS, AI_TOOLS, getTool, type ToolDef } from "../data/tools";
 import { Link } from "../lib/router";
 import { getProcessedCount, matchesQuery, copyText, showToast } from "../lib/utils";
 import { Icon, type IconName } from "../components/Icons";
@@ -52,9 +52,11 @@ function Counter({ to, suffix = "", label }: { to: number; suffix?: string; labe
 /* ===== المشهد الحي: بطاقات ملفات تُعالج ===== */
 const LIVE_JOBS = [
   { file: "photo.jpg", task: "ضغط الصور", color: "#0c7a63", icon: "image" as IconName },
+  { file: "clip.mp4", task: "تكبير إلى 4K", color: "#1e7ec2", icon: "video" as IconName },
   { file: "report.pdf", task: "دمج ملفات PDF", color: "#e0762e", icon: "merge" as IconName },
-  { file: "logo.png", task: "تحويل إلى WebP", color: "#35845c", icon: "convert" as IconName },
+  { file: "idea.txt", task: "توليد فيديو AI", color: "#c77a06", icon: "film" as IconName },
   { file: "scan.pdf", task: "استخراج الصور", color: "#9c4040", icon: "extract" as IconName },
+  { file: "shot.png", task: "إزالة العلامة المائية", color: "#2f7d5c", icon: "eraser" as IconName },
 ];
 
 function LiveStack() {
@@ -205,7 +207,9 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
 
   const searching = q.trim().length > 0;
 
-  const QUICK: ToolDef[] = [TOOLS[0], TOOLS[5], TOOLS[6], TOOLS[3]];
+  const QUICK = ["compress-image", "ai-video", "photo-editor", "upscale-video"]
+    .map((s) => getTool(s))
+    .filter((t): t is ToolDef => !!t);
 
   return (
     <main>
@@ -215,7 +219,7 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
           <Reveal>
             <p className="inline-flex items-center gap-2 rounded-full border bd-line bg-surface px-3.5 py-1.5 text-xs font-semibold">
               <span className="anim-pulse-soft inline-block h-2 w-2 rounded-full" style={{ background: "var(--teal)" }} />
-              ٨ أدوات مجانية · بدون تسجيل · ملفاتك لا تغادر جهازك
+              ١٥ أداة مجانية · ذكاء اصطناعي · بدون تسجيل · ملفاتك لا تغادر جهازك
             </p>
           </Reveal>
 
@@ -244,9 +248,9 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
 
           <Reveal delay={180}>
             <p className="c-muted mt-6 max-w-xl text-base leading-relaxed sm:text-lg">
-              اضغط صورك، حوّل صيغها، ادمج ملفات PDF أو استخرج صورها — بسرعة المواقع الكبرى
-              وخصوصية لا تضاهى: <b className="text-[var(--ink)]">المعالجة كلها تحدث على جهازك</b>،
-              ولا يُرفع أي ملف إلى أي خادم.
+              اضغط صورك وكبّرها، أزل العلامات المائية، حرّر صورك كمحترف، ادمج ملفات PDF — بل
+              و<b className="text-[var(--ink)]">ولّد صوراً وفيديوهات بالذكاء الاصطناعي بالعربية</b>.
+              بسرعة المواقع الكبرى وخصوصية لا تضاهى: المعالجة كلها على جهازك، ولا يُرفع أي ملف.
             </p>
           </Reveal>
 
@@ -295,7 +299,7 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
           <Reveal delay={400}>
             <div className="mt-9 grid max-w-xl grid-cols-3 gap-4 border-t bd-line pt-6">
               <Counter to={Math.max(processed, 0)} label={`ملفاً عولج على هذا الجهاز${processed === 0 ? " (ابدأ الآن!)" : ""}`} />
-              <Counter to={8} label="أدوات متخصصة" />
+              <Counter to={TOOLS.length} label="أداة متخصصة" />
               <Counter to={0} label="ملفات رُفعت لخوادم" />
             </div>
           </Reveal>
@@ -311,7 +315,7 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
         <div className="marquee-track items-center gap-8">
           {[0, 1].map((dup) => (
             <div key={dup} className="flex shrink-0 items-center gap-8">
-              {["JPG", "PNG", "WEBP", "PDF", "GIF", "SVG", "A4", "ZIP", "BBCode", "Markdown", "HTML"].map((f) => (
+              {["JPG", "PNG", "WEBP", "PDF", "MP4", "WEBM", "4K", "AI", "FLUX", "GIF", "SVG", "A4", "ZIP", "BBCode", "Markdown", "HTML"].map((f) => (
                 <span key={`${dup}-${f}`} className="flex items-center gap-8">
                   <span className="font-mono text-sm font-semibold tracking-widest c-muted">{f}</span>
                   <span className="c-amber"><Icon name="sparkle" size={13} /></span>
@@ -380,6 +384,36 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
               />
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {PDF_TOOLS.map((t, i) => (
+                  <ToolCard key={t.slug} tool={t} delay={i * 70} />
+                ))}
+              </div>
+            </div>
+
+            <div id="video-tools" className="mt-14">
+              <SectionHead
+                kicker="قسم الفيديو — جديد"
+                title="أدوات الفيديو"
+                desc="تكبير الدقة وإزالة العلامات المائية — إعادة ترميز إطارية كاملة داخل متصفحك مع الحفاظ على الصوت."
+                icon="video"
+                color="var(--blue)"
+              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                {VIDEO_TOOLS.map((t, i) => (
+                  <ToolCard key={t.slug} tool={t} delay={i * 70} />
+                ))}
+              </div>
+            </div>
+
+            <div id="ai-tools" className="mt-14">
+              <SectionHead
+                kicker="قسم الذكاء الاصطناعي — جديد"
+                title="التوليد بالذكاء الاصطناعي"
+                desc="صور احترافية وفيديوهات يوتيوب كاملة بالسيناريو العربي — بلا حدود، بلا علامات مائية، ومجاني للأبد."
+                icon="ai"
+                color="var(--amber)"
+              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                {AI_TOOLS.map((t, i) => (
                   <ToolCard key={t.slug} tool={t} delay={i * 70} />
                 ))}
               </div>

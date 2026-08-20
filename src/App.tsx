@@ -19,6 +19,13 @@ const CompressPdf = lazy(() => import("./tools/CompressPdf"));
 const MergePdf = lazy(() => import("./tools/MergePdf"));
 const ImagesToPdf = lazy(() => import("./tools/ImagesToPdf"));
 const ExtractPdfImages = lazy(() => import("./tools/ExtractPdfImages"));
+const UpscaleImage = lazy(() => import("./tools/UpscaleImage"));
+const UpscaleVideo = lazy(() => import("./tools/UpscaleVideo"));
+const RemoveWatermark = lazy(() => import("./tools/RemoveWatermark"));
+const RemoveWatermarkVideo = lazy(() => import("./tools/RemoveWatermarkVideo"));
+const PhotoEditor = lazy(() => import("./tools/PhotoEditor"));
+const AiImage = lazy(() => import("./tools/AiImage"));
+const AiVideo = lazy(() => import("./tools/AiVideo"));
 
 const TOOL_PAGES: Record<string, ComponentType> = {
   "compress-image": CompressImage,
@@ -29,6 +36,13 @@ const TOOL_PAGES: Record<string, ComponentType> = {
   "merge-pdf": MergePdf,
   "images-to-pdf": ImagesToPdf,
   "extract-pdf-images": ExtractPdfImages,
+  "upscale-image": UpscaleImage,
+  "upscale-video": UpscaleVideo,
+  "remove-watermark": RemoveWatermark,
+  "remove-watermark-video": RemoveWatermarkVideo,
+  "photo-editor": PhotoEditor,
+  "ai-image": AiImage,
+  "ai-video": AiVideo,
 };
 
 function PageLoader() {

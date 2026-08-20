@@ -195,6 +195,104 @@ const P: Record<string, ReactNode> = {
       <path d="M19 13l.6 1.4L21 15l-1.4.6L19 17l-.6-1.4L17 15l1.4-.6z" />
     </>
   ),
+  video: (
+    <>
+      <rect x="3" y="6.5" width="12.5" height="11" rx="2.5" />
+      <path d="M15.5 10.75l5.5-3.25v9l-5.5-3.25" />
+    </>
+  ),
+  film: (
+    <>
+      <rect x="3" y="4.5" width="18" height="15" rx="2" />
+      <path d="M7 4.5v15M17 4.5v15M3 9h4M3 15h4M17 9h4M17 15h4" />
+    </>
+  ),
+  ai: (
+    <>
+      <rect x="6.5" y="6.5" width="11" height="11" rx="2" />
+      <path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4M6.5 6.5L4.5 4.5M17.5 6.5l2-2M6.5 17.5l-2 2M17.5 17.5l2 2" />
+      <path d="M12 9.6l.8 1.6 1.6.8-1.6.8-.8 1.6-.8-1.6-1.6-.8 1.6-.8z" />
+    </>
+  ),
+  expand: (
+    <>
+      <path d="M9 3.5H5A1.5 1.5 0 0 0 3.5 5v4M15 3.5h4A1.5 1.5 0 0 1 20.5 5v4M9 20.5H5A1.5 1.5 0 0 1 3.5 19v-4M15 20.5h4a1.5 1.5 0 0 0 1.5-1.5v-4" />
+      <path d="M12 8.5v7M8.5 12h7" />
+    </>
+  ),
+  eraser: (
+    <>
+      <path d="M8 20h12.5" />
+      <path d="M6.2 16.2l8-8.2a2 2 0 0 1 2.8 0l3 3a2 2 0 0 1 0 2.8l-8 8.2a2 2 0 0 1-2.8 0l-3-3a2 2 0 0 1 0-2.8z" />
+      <path d="M9.8 12.5l5.7 5.7" />
+    </>
+  ),
+  brush: (
+    <>
+      <path d="M14.5 4.5l5 5L9.5 19.5l-5.5.5.5-5.5z" />
+      <path d="M12.5 6.5l5 5" />
+      <path d="M4.5 14.5c-1.5 1.5-1.5 4-1 5.5 1.5.5 4 .5 5.5-1" />
+    </>
+  ),
+  type: <path d="M5 7V4.5h14V7M12 4.5v15M9 19.5h6" />,
+  crop: (
+    <>
+      <path d="M7 2.5V15a2 2 0 0 0 2 2h12.5" />
+      <path d="M2.5 7H15a2 2 0 0 1 2 2v12.5" />
+    </>
+  ),
+  undo: (
+    <>
+      <path d="M8 4.5L3.5 9 8 13.5" />
+      <path d="M3.5 9H15a5.5 5.5 0 0 1 0 11H9.5" />
+    </>
+  ),
+  redo: (
+    <>
+      <path d="M16 4.5L20.5 9 16 13.5" />
+      <path d="M20.5 9H9a5.5 5.5 0 0 0 0 11h5.5" />
+    </>
+  ),
+  rotateL: (
+    <>
+      <path d="M4.5 9.5a8 8 0 1 1-1 4.5" />
+      <path d="M4.5 4.5v5h5" />
+    </>
+  ),
+  rotateR: (
+    <>
+      <path d="M19.5 9.5a8 8 0 1 0 1 4.5" />
+      <path d="M19.5 4.5v5h-5" />
+    </>
+  ),
+  flipH: (
+    <>
+      <path d="M12 3.5v17" strokeDasharray="2.5 2.5" />
+      <path d="M8.5 8L3.5 12l5 4V8zM15.5 8l5 4-5 4V8z" />
+    </>
+  ),
+  flipV: (
+    <>
+      <path d="M3.5 12h17" strokeDasharray="2.5 2.5" />
+      <path d="M8 8.5L12 3.5l4 5h-8zM8 15.5l4 5 4-5H8z" />
+    </>
+  ),
+  palette: (
+    <>
+      <path d="M12 3.5a8.5 8.5 0 1 0 .3 17c1.6 0 2.2-1.1 1.6-2.2-.5-1-.2-2.3 1.3-2.3h1.6a3.7 3.7 0 0 0 3.7-3.7c0-4.9-3.9-8.8-8.5-8.8z" />
+      <circle cx="8.2" cy="10" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="7.6" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="15.8" cy="10" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="8.6" cy="14.4" r="0.9" fill="currentColor" stroke="none" />
+    </>
+  ),
+  plus: <path d="M12 5v14M5 12h14" />,
+  timer: (
+    <>
+      <circle cx="12" cy="13.5" r="7.5" />
+      <path d="M12 9.5v4l2.8 1.8M9.5 2.5h5" />
+    </>
+  ),
 };
 
 export type IconName = keyof typeof P;

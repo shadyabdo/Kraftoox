@@ -3,7 +3,7 @@ import type { ToolDef } from "../data/tools";
 import { TOOLS } from "../data/tools";
 import { Link } from "../lib/router";
 import { usePageMeta, useToolJsonLd } from "../lib/seo";
-import { Icon } from "../components/Icons";
+import { Icon, type IconName } from "../components/Icons";
 import { Reveal } from "../components/Reveal";
 import { Spinner } from "../components/bits";
 
@@ -13,8 +13,14 @@ export function ToolShell({ tool, children }: { tool: ToolDef; children: ReactNo
   useToolJsonLd({ slug: tool.slug, name: tool.name, desc: tool.long });
 
   const related = TOOLS.filter((t) => t.category === tool.category && t.slug !== tool.slug).slice(0, 3);
-  const catLabel = tool.category === "image" ? "أدوات الصور" : "أدوات PDF";
-  const catTo = tool.category === "image" ? "/tools" : "/tools";
+  const CAT_LABELS: Record<string, string> = {
+    image: "أدوات الصور",
+    pdf: "أدوات PDF",
+    video: "أدوات الفيديو",
+    ai: "الذكاء الاصطناعي",
+  };
+  const catLabel = CAT_LABELS[tool.category] ?? "الأدوات";
+  const catTo = "/tools";
 
   return (
     <main className="mx-auto max-w-4xl px-4 pb-10">
@@ -168,7 +174,7 @@ export function ProcessBtn({
   disabled?: boolean;
   busy?: boolean;
   color?: string;
-  icon?: "wand" | "merge" | "download" | "link" | "extract" | "img2pdf" | "resize" | "convert" | "image" | "pdf";
+  icon?: IconName;
 }) {
   return (
     <button

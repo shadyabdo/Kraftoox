@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cx, copyText } from "../lib/utils";
 import { Icon, type IconName } from "./Icons";
 
@@ -155,6 +155,60 @@ export function SectionHead({
         <h2 className="font-display text-2xl font-bold leading-snug sm:text-3xl">{title}</h2>
         {desc && <p className="c-muted mt-2 text-sm leading-relaxed sm:text-base">{desc}</p>}
       </div>
+    </div>
+  );
+}
+
+/* ===== منزلق مقارنة قبل/بعد ===== */
+export function CompareSlider({ before, after }: { before: string; after: string }) {
+  const [pos, setPos] = useState(50);
+  const ref = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
+
+  const update = (clientX: number) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const p = ((clientX - rect.left) / rect.width) * 100;
+    setPos(Math.min(97, Math.max(3, p)));
+  };
+
+  return (
+    <div
+      ref={ref}
+      className="relative mx-auto w-full max-w-2xl cursor-ew-resize select-none overflow-hidden rounded-xl border bd-line bg-surface2"
+      onPointerDown={(e) => {
+        dragging.current = true;
+        (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+        update(e.clientX);
+      }}
+      onPointerMove={(e) => dragging.current && update(e.clientX)}
+      onPointerUp={() => (dragging.current = false)}
+      onPointerLeave={() => (dragging.current = false)}
+      role="slider"
+      aria-label="مقارنة قبل وبعد"
+      aria-valuenow={Math.round(pos)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "ArrowLeft") setPos((p) => Math.max(3, p - 4));
+        if (e.key === "ArrowRight") setPos((p) => Math.min(97, p + 4));
+      }}
+    >
+      <img src={after} alt="بعد المعالجة" className="block w-full" draggable={false} />
+      <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}>
+        <img src={before} alt="قبل المعالجة" className="block h-full w-full object-cover" draggable={false} />
+      </div>
+      {/* المقبض */}
+      <div className="absolute inset-y-0" style={{ insetInlineStart: `${pos}%` }}>
+        <div className="absolute inset-y-0 -ms-px w-0.5 bg-white/90 shadow-[0_0_12px_rgba(0,0,0,0.5)]" />
+        <div className="absolute top-1/2 grid h-9 w-9 -translate-y-1/2 -ms-[18px] place-items-center rounded-full border-2 border-white bg-[var(--teal)] text-white shadow-lg">
+          <Icon name="flipH" size={16} />
+        </div>
+      </div>
+      <span className="absolute top-2 start-2 rounded-md bg-[color-mix(in_srgb,var(--ink)_75%,transparent)] px-2 py-0.5 text-[10px] font-bold text-white">قبل</span>
+      <span className="absolute top-2 end-2 rounded-md bg-[var(--teal)] px-2 py-0.5 text-[10px] font-bold text-white">بعد</span>
     </div>
   );
 }
