@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Dropzone } from "../components/Dropzone";
-import { InfoNote } from "../components/bits";
+import { BlobLink, InfoNote } from "../components/bits";
 import { getTool } from "../data/tools";
 import { bumpProcessedCount, downloadBlob, formatBytes, showToast } from "../lib/utils";
 import { ToolShell } from "./shared";
@@ -62,6 +62,7 @@ export default function PhotoEditor() {
   const [exportFormat, setExportFormat] = useState<"png" | "jpeg" | "webp">("png");
   const [quality, setQuality] = useState(0.92);
   const [version, setVersion] = useState(0);
+  const [exported, setExported] = useState<{ blob: Blob; name: string } | null>(null);
 
   const render = useCallback(() => {
     const base = baseRef.current;
@@ -314,7 +315,9 @@ export default function PhotoEditor() {
     c.toBlob(
       (b) => {
         if (!b) return;
-        downloadBlob(b, `${fileName.replace(/\.[^.]+$/, "")}-edited.${exportFormat === "jpeg" ? "jpg" : exportFormat}`);
+        const name = `${fileName.replace(/\.[^.]+$/, "")}-edited.${exportFormat === "jpeg" ? "jpg" : exportFormat}`;
+        downloadBlob(b, name);
+        setExported({ blob: b, name });
         bumpProcessedCount(1);
         showToast("تم تنزيل الصورة المعدّلة");
       },
@@ -556,6 +559,15 @@ export default function PhotoEditor() {
                 <Icon name="download" size={17} />
                 تنزيل الصورة المعدّلة
               </button>
+              {exported && (
+                <BlobLink
+                  blob={exported.blob}
+                  filename={exported.name}
+                  className="btn-amber mt-2 w-full !text-sm"
+                  iconSize={15}
+                  label="لم يبدأ التنزيل؟ احفظ من هنا"
+                />
+              )}
             </div>
           </div>
         </div>

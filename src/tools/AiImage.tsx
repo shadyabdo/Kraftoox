@@ -4,7 +4,7 @@ import { getTool } from "../data/tools";
 import { AI_STYLES, aiImageUrl, fetchAiImage } from "../lib/ai";
 import { bumpProcessedCount, downloadBlob, showToast } from "../lib/utils";
 import { ToolShell, FieldLabel } from "./shared";
-import { CopyBtn } from "../components/bits";
+import { BlobLink, CopyBtn } from "../components/bits";
 import { Icon } from "../components/Icons";
 
 const TOOL = getTool("ai-image")!;
@@ -182,17 +182,13 @@ export default function AiImage() {
                   «{current.prompt}» · <span dir="ltr" className="font-mono">{current.w}×{current.h}</span>
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    className="btn btn-teal !py-2 !text-sm"
-                    onClick={() => {
-                      downloadBlob(current.blob, `kraftoox-ai-${current.id}.png`);
-                      showToast("تم تنزيل الصورة");
-                    }}
-                  >
-                    <Icon name="download" size={15} />
-                    تنزيل PNG
-                  </button>
+                  <BlobLink
+                    blob={current.blob}
+                    className="btn-teal !py-2 !text-sm"
+                    iconSize={15}
+                    label="تنزيل PNG"
+                    filename={`kraftoox-ai-${current.id}.png`}
+                  />
                   <a href={current.url} target="_blank" rel="noopener noreferrer" className="btn btn-ghost !py-2 !text-sm">
                     <Icon name="eye" size={15} />
                     فتح

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import JSZip from "jszip";
 import { Dropzone } from "../components/Dropzone";
-import { InfoNote, ProgressBar } from "../components/bits";
+import { BlobLink, InfoNote, ProgressBar } from "../components/bits";
 import { getTool } from "../data/tools";
 import { convertImage, extForFormat, baseName, type OutputFormat } from "../lib/img";
 import { bumpProcessedCount, downloadBlob, formatBytes, showToast, uid } from "../lib/utils";
@@ -168,15 +168,13 @@ export default function ConvertImage() {
                 }
                 actions={
                   it.status === "done" && it.out ? (
-                    <button
-                      type="button"
-                      className="btn btn-teal !px-3 !py-2 !text-xs"
-                      style={{ background: TOOL.color }}
-                      onClick={() => downloadBlob(it.out!, `${baseName(it.file.name)}.${extForFormat(format)}`)}
-                    >
-                      <Icon name="download" size={14} />
-                      تحميل
-                    </button>
+                    <BlobLink
+                      small
+                      className="btn-teal"
+                      blob={it.out}
+                      label="تحميل"
+                      filename={`${baseName(it.file.name)}.${extForFormat(format)}`}
+                    />
                   ) : undefined
                 }
               />

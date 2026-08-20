@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ComponentType, type ReactNode } from "react";
+import { Component, lazy, Suspense, type ComponentType, type ErrorInfo, type ReactNode } from "react";
 import { Link, useRoute } from "./lib/router";
 import { usePageMeta } from "./lib/seo";
 import { Header } from "./components/Header";
@@ -12,24 +12,35 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Privacy from "./pages/Privacy";
 
-/* تحميل كسول لمكتبات المعالجة الثقيلة (pdf-lib, pako, jszip…) */
-const CompressImage = lazy(() => import("./tools/CompressImage"));
-const ResizeImage = lazy(() => import("./tools/ResizeImage"));
-const ConvertImage = lazy(() => import("./tools/ConvertImage"));
-const ImageHost = lazy(() => import("./tools/ImageHost"));
-const CompressPdf = lazy(() => import("./tools/CompressPdf"));
-const MergePdf = lazy(() => import("./tools/MergePdf"));
-const ImagesToPdf = lazy(() => import("./tools/ImagesToPdf"));
-const ExtractPdfImages = lazy(() => import("./tools/ExtractPdfImages"));
-const UpscaleImage = lazy(() => import("./tools/UpscaleImage"));
-const UpscaleVideo = lazy(() => import("./tools/UpscaleVideo"));
-const RemoveWatermark = lazy(() => import("./tools/RemoveWatermark"));
-const RemoveWatermarkVideo = lazy(() => import("./tools/RemoveWatermarkVideo"));
-const PhotoEditor = lazy(() => import("./tools/PhotoEditor"));
-const AiImage = lazy(() => import("./tools/AiImage"));
-const AiVideo = lazy(() => import("./tools/AiVideo"));
-const VideoEditor = lazy(() => import("./tools/VideoEditor"));
-const ScreenRecorder = lazy(() => import("./tools/ScreenRecorder"));
+/* تحميل كسول مع إعادة محاولة تلقائية عند فشل جلب الحزمة */
+function lazyRetry(factory: () => Promise<{ default: ComponentType }>, retries = 2) {
+  return lazy(() => {
+    const attempt = (left: number): Promise<{ default: ComponentType }> =>
+      factory().catch((err) => {
+        if (left <= 0) throw err;
+        return new Promise((r) => setTimeout(r, 350)).then(() => attempt(left - 1));
+      });
+    return attempt(retries);
+  });
+}
+
+const CompressImage = lazyRetry(() => import("./tools/CompressImage"));
+const ResizeImage = lazyRetry(() => import("./tools/ResizeImage"));
+const ConvertImage = lazyRetry(() => import("./tools/ConvertImage"));
+const ImageHost = lazyRetry(() => import("./tools/ImageHost"));
+const CompressPdf = lazyRetry(() => import("./tools/CompressPdf"));
+const MergePdf = lazyRetry(() => import("./tools/MergePdf"));
+const ImagesToPdf = lazyRetry(() => import("./tools/ImagesToPdf"));
+const ExtractPdfImages = lazyRetry(() => import("./tools/ExtractPdfImages"));
+const UpscaleImage = lazyRetry(() => import("./tools/UpscaleImage"));
+const UpscaleVideo = lazyRetry(() => import("./tools/UpscaleVideo"));
+const RemoveWatermark = lazyRetry(() => import("./tools/RemoveWatermark"));
+const RemoveWatermarkVideo = lazyRetry(() => import("./tools/RemoveWatermarkVideo"));
+const PhotoEditor = lazyRetry(() => import("./tools/PhotoEditor"));
+const AiImage = lazyRetry(() => import("./tools/AiImage"));
+const AiVideo = lazyRetry(() => import("./tools/AiVideo"));
+const VideoEditor = lazyRetry(() => import("./tools/VideoEditor"));
+const ScreenRecorder = lazyRetry(() => import("./tools/ScreenRecorder"));
 
 const TOOL_PAGES: Record<string, ComponentType> = {
   "compress-image": CompressImage,
@@ -52,6 +63,49 @@ const TOOL_PAGES: Record<string, ComponentType> = {
 };
 
 const CATEGORY_SLUGS = ["images", "pdf", "video", "ai"];
+
+/* حاجز أخطاء: يعرض رسالة واضحة بدل الشاشة البيضاء عند أي عطل */
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state: { error: Error | null } = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("Kraftoox — خطأ في الصفحة:", error, info);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <main className="mx-auto flex max-w-xl flex-col items-center px-4 py-24 text-center">
+          <span className="grid h-16 w-16 place-items-center rounded-2xl bg-[var(--red-soft)] c-red">
+            <Icon name="alert" size={30} />
+          </span>
+          <h1 className="font-display mt-5 text-3xl font-bold">حدث عطل مفاجئ في هذه الصفحة</h1>
+          <p className="c-muted mt-2 text-sm leading-relaxed">
+            لا تقلق — ملفاتك سليمة ولم يحدث أي فقدان. أعد تحميل الصفحة وسيعود كل شيء للعمل.
+          </p>
+          <p className="font-mono mt-3 max-w-full truncate rounded-lg bg-surface2 px-3 py-1.5 text-[10.5px] c-muted" dir="ltr">
+            {String(this.state.error?.message ?? this.state.error).slice(0, 120)}
+          </p>
+          <div className="mt-6 flex gap-3">
+            <button type="button" className="btn btn-teal" onClick={() => window.location.reload()}>
+              <Icon name="refresh" size={17} />
+              إعادة التحميل
+            </button>
+            <Link to="/" className="btn btn-ghost">
+              <Icon name="sparkle" size={17} />
+              الرئيسية
+            </Link>
+          </div>
+        </main>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function PageLoader() {
   return (
@@ -129,7 +183,9 @@ export default function App() {
       <div className="dotgrid" aria-hidden="true" />
 
       <Header route={route} />
-      <Suspense fallback={<PageLoader />}>{page}</Suspense>
+      <ErrorBoundary key={route.path}>
+        <Suspense fallback={<PageLoader />}>{page}</Suspense>
+      </ErrorBoundary>
       <Footer />
       <Toaster />
     </div>

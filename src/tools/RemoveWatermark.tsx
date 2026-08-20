@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Dropzone } from "../components/Dropzone";
-import { CompareSlider, InfoNote, IndeterminateBar } from "../components/bits";
+import { BlobLink, CompareSlider, InfoNote, IndeterminateBar } from "../components/bits";
 import { getTool } from "../data/tools";
 import { bumpProcessedCount, downloadBlob, showToast } from "../lib/utils";
 import { ProcessBtn, ToolShell, FieldLabel } from "./shared";
@@ -73,6 +73,7 @@ export default function RemoveWatermark() {
   const [brush, setBrush] = useState(24);
   const [busy, setBusy] = useState(false);
   const [resultUrl, setResultUrl] = useState("");
+  const [resultBlob, setResultBlob] = useState<Blob | null>(null);
   const [hasMask, setHasMask] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -174,7 +175,7 @@ export default function RemoveWatermark() {
       const blob = await new Promise<Blob>((res) => finalC.toBlob((b) => res(b!), "image/png"));
       const url = URL.createObjectURL(blob);
       setResultUrl(url);
-      (window as unknown as { __wmBlob?: Blob }).__wmBlob = blob;
+      setResultBlob(blob);
       bumpProcessedCount(1);
       showToast("تمت إزالة العلامة المائية — اسحب للمقارنة");
     } catch {
@@ -258,21 +259,16 @@ export default function RemoveWatermark() {
               />
               {!hasMask && !busy && <span className="c-muted text-xs">لم تحدد أي منطقة بعد — ارسم فوق العلامة أولاً</span>}
               {resultUrl && (
-                <button
-                  type="button"
-                  className="btn btn-teal"
-                  onClick={() => {
-                    const b = (window as unknown as { __wmBlob?: Blob }).__wmBlob;
-                    if (b) downloadBlob(b, `${fileRef.current?.name.replace(/\.[^.]+$/, "") ?? "image"}-clean.png`);
-                  }}
-                >
-                  <Icon name="download" size={17} />
-                  تحميل النتيجة
-                </button>
+                <BlobLink
+                  blob={resultBlob}
+                  className="btn-teal"
+                  label="تحميل النتيجة"
+                  filename={`${fileRef.current?.name.replace(/\.[^.]+$/, "") ?? "image"}-clean.png`}
+                />
               )}
               <button
                 type="button"
-                onClick={() => { setReady(false); setResultUrl(""); }}
+                onClick={() => { setReady(false); setResultUrl(""); setResultBlob(null); }}
                 className="btn btn-ghost !px-3"
               >
                 <Icon name="refresh" size={16} />

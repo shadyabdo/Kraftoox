@@ -2,7 +2,7 @@ import { useState } from "react";
 import imageCompression from "browser-image-compression";
 import JSZip from "jszip";
 import { Dropzone } from "../components/Dropzone";
-import { InfoNote, ProgressBar } from "../components/bits";
+import { BlobLink, InfoNote, ProgressBar } from "../components/bits";
 import { getTool } from "../data/tools";
 import { bumpProcessedCount, downloadBlob, formatBytes, percentSavings, showToast, uid } from "../lib/utils";
 import { FileRow, OptionsPanel, ProcessBtn, ToolShell, FieldLabel } from "./shared";
@@ -48,7 +48,13 @@ export default function CompressImage() {
         };
         if (mode === "target") opts.maxSizeMB = targetMB;
         if (toWebp) opts.fileType = "image/webp";
-        const out = await imageCompression(it.file, opts);
+        let out: Blob;
+        try {
+          out = await imageCompression(it.file, opts);
+        } catch {
+          /* احتياطي: بعض البيئات تحجب Web Workers — نعيد المحاولة على الخيط الرئيسي */
+          out = await imageCompression(it.file, { ...opts, useWebWorker: false });
+        }
         patch(it.id, { status: "done", out });
         ok++;
       } catch {
@@ -206,19 +212,13 @@ export default function CompressImage() {
                 }
                 actions={
                   it.status === "done" && it.out ? (
-                    <button
-                      type="button"
-                      className="btn btn-teal !px-3 !py-2 !text-xs"
-                      onClick={() =>
-                        downloadBlob(
-                          it.out!,
-                          `${it.file.name.replace(/\.[^.]+$/, "")}-compressed.${toWebp ? "webp" : it.file.type.includes("png") ? "png" : "jpg"}`
-                        )
-                      }
-                    >
-                      <Icon name="download" size={14} />
-                      تحميل
-                    </button>
+                    <BlobLink
+                      small
+                      className="btn-teal"
+                      blob={it.out}
+                      label="تحميل"
+                      filename={`${it.file.name.replace(/\.[^.]+$/, "")}-compressed.${toWebp ? "webp" : it.file.type.includes("png") ? "png" : "jpg"}`}
+                    />
                   ) : undefined
                 }
               />

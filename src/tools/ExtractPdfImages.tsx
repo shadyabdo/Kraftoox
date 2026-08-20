@@ -155,9 +155,11 @@ export default function ExtractPdfImages() {
               <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 {images.map((img, i) => (
                   <li key={img.id} className="anim-pop card group overflow-hidden !rounded-xl" style={{ animationDelay: `${Math.min(i * 40, 400)}ms` }}>
-                    <button
-                      type="button"
-                      onClick={() => downloadBlob(img.blob, `extracted-${String(i + 1).padStart(2, "0")}.${img.ext}`)}
+                    <a
+                      href={img.url}
+                      download={`extracted-${String(i + 1).padStart(2, "0")}.${img.ext}`}
+                      target="_blank"
+                      rel="noopener"
                       className="relative block w-full cursor-pointer"
                       aria-label={`تحميل الصورة ${i + 1}`}
                     >
@@ -168,7 +170,7 @@ export default function ExtractPdfImages() {
                           تحميل
                         </span>
                       </span>
-                    </button>
+                    </a>
                     <div className="flex items-center justify-between px-3 py-2">
                       <span className="font-mono text-[10px] c-muted" dir="ltr">
                         {img.width}×{img.height}

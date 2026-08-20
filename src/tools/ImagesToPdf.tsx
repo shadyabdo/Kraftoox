@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Dropzone } from "../components/Dropzone";
-import { InfoNote, IndeterminateBar } from "../components/bits";
+import { BlobLink, InfoNote, IndeterminateBar } from "../components/bits";
 import { getTool } from "../data/tools";
 import { imagesToPdf } from "../lib/pdf";
 import { bumpProcessedCount, bytesToBlob, downloadBlob, formatBytes, showToast, uid } from "../lib/utils";
@@ -22,6 +22,11 @@ export default function ImagesToPdf() {
   const [margin, setMargin] = useState(24);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ bytes: Uint8Array } | null>(null);
+
+  const outBlob = useMemo(
+    () => (result ? bytesToBlob(result.bytes, "application/pdf") : null),
+    [result]
+  );
 
   const addFiles = (files: File[]) => {
     setItems((prev) => [
@@ -154,14 +159,12 @@ export default function ImagesToPdf() {
                 icon="img2pdf"
               />
               {result && (
-                <button
-                  type="button"
-                  className="btn btn-teal"
-                  onClick={() => downloadBlob(bytesToBlob(result.bytes, "application/pdf"), "kraftoox-images.pdf")}
-                >
-                  <Icon name="download" size={17} />
-                  تحميل الملف
-                </button>
+                <BlobLink
+                  blob={outBlob}
+                  className="btn-teal"
+                  label="تحميل الملف"
+                  filename="kraftoox-images.pdf"
+                />
               )}
               <button type="button" onClick={() => { setItems([]); setResult(null); }} className="btn btn-ghost !px-3">
                 <Icon name="refresh" size={16} />

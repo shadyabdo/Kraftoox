@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Dropzone } from "../components/Dropzone";
-import { InfoNote, IndeterminateBar } from "../components/bits";
+import { BlobLink, InfoNote, IndeterminateBar } from "../components/bits";
 import { getTool } from "../data/tools";
 import { getPdfPageCount, mergePdfs } from "../lib/pdf";
 import { bumpProcessedCount, bytesToBlob, downloadBlob, formatBytes, showToast, uid } from "../lib/utils";
@@ -19,6 +19,11 @@ export default function MergePdf() {
   const [items, setItems] = useState<Item[]>([]);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ bytes: Uint8Array; pages: number } | null>(null);
+
+  const outBlob = useMemo(
+    () => (result ? bytesToBlob(result.bytes, "application/pdf") : null),
+    [result]
+  );
 
   const addFiles = async (files: File[]) => {
     const list: Item[] = [];
@@ -147,16 +152,12 @@ export default function MergePdf() {
                 icon="merge"
               />
               {result && (
-                <button
-                  type="button"
-                  className="btn btn-teal"
-                  onClick={() =>
-                    downloadBlob(bytesToBlob(result.bytes, "application/pdf"), "kraftoox-merged.pdf")
-                  }
-                >
-                  <Icon name="download" size={17} />
-                  تحميل الملف المدموج
-                </button>
+                <BlobLink
+                  blob={outBlob}
+                  className="btn-teal"
+                  label="تحميل الملف المدموج"
+                  filename="kraftoox-merged.pdf"
+                />
               )}
             </div>
 

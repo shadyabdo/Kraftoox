@@ -55,6 +55,48 @@ export function CopyBtn({
   );
 }
 
+/* ===== رابط تنزيل حقيقي — يعمل حتى في البيئات المقيّدة لأنه وسم <a> فعلي ===== */
+export function BlobLink({
+  blob,
+  filename,
+  label = "تحميل",
+  className = "",
+  small = false,
+  iconSize = 17,
+}: {
+  blob: Blob | null | undefined;
+  filename: string;
+  label?: string;
+  className?: string;
+  small?: boolean;
+  iconSize?: number;
+}) {
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    if (!blob) {
+      setUrl("");
+      return;
+    }
+    const u = URL.createObjectURL(blob);
+    setUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [blob]);
+
+  if (!blob) return null;
+  return (
+    <a
+      href={url || undefined}
+      download={filename}
+      target="_blank"
+      rel="noopener"
+      className={cx("btn", small ? "!px-3 !py-2 !text-xs" : "", className)}
+    >
+      <Icon name="download" size={small ? 14 : iconSize} />
+      {label}
+    </a>
+  );
+}
+
 /* ===== شريط تقدم ===== */
 export function ProgressBar({ value, color = "var(--teal)" }: { value: number; color?: string }) {
   return (

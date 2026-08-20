@@ -27,9 +27,18 @@ export function Dropzone({
   const acceptList = accept.split(",").map((s) => s.trim().toLowerCase());
 
   const validate = (files: File[]): File[] => {
+    /* بعض الأنظمة لا ترسل نوع MIME — نستنتجه من الامتداد كي لا يُرفض ملف سليم */
+    const EXT_MIME: Record<string, string> = {
+      ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
+      ".webp": "image/webp", ".gif": "image/gif", ".svg": "image/svg+xml",
+      ".bmp": "image/bmp", ".pdf": "application/pdf",
+      ".mp4": "video/mp4", ".webm": "video/webm", ".mov": "video/quicktime",
+      ".mkv": "video/x-matroska", ".m4v": "video/mp4", ".avi": "video/x-msvideo",
+    };
     const ok = files.filter((f) => {
-      const type = f.type.toLowerCase();
-      const ext = `.${f.name.split(".").pop()?.toLowerCase()}`;
+      const ext = `.${(f.name.split(".").pop() ?? "").toLowerCase()}`;
+      const type = f.type.toLowerCase() || EXT_MIME[ext] || "";
+      if (!type) return true; /* ملف بلا نوع معروف — نمرّره ونترك الأداة تتعامل معه */
       return acceptList.some(
         (a) =>
           (a.startsWith(".") && a === ext) ||

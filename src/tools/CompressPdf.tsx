@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Dropzone } from "../components/Dropzone";
-import { InfoNote, IndeterminateBar } from "../components/bits";
+import { BlobLink, InfoNote, IndeterminateBar } from "../components/bits";
 import { getTool } from "../data/tools";
 import { compressPdf } from "../lib/pdf";
 import { bumpProcessedCount, bytesToBlob, downloadBlob, formatBytes, percentSavings, showToast } from "../lib/utils";
@@ -21,6 +21,11 @@ export default function CompressPdf() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ bytes: Uint8Array; replaced: number; skipped: number } | null>(null);
   const [error, setError] = useState("");
+
+  const outBlob = useMemo(
+    () => (result ? bytesToBlob(result.bytes, "application/pdf") : null),
+    [result]
+  );
 
   const run = async () => {
     if (!file) return;
@@ -103,19 +108,12 @@ export default function CompressPdf() {
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <ProcessBtn label={result ? "أعد الضغط" : "اضغط الملف الآن"} onClick={run} busy={busy} color={TOOL.color} icon="pdf" />
               {result && (
-                <button
-                  type="button"
-                  className="btn btn-teal"
-                  onClick={() =>
-                    downloadBlob(
-                      bytesToBlob(result.bytes, "application/pdf"),
-                      file.name.replace(/\.pdf$/i, "") + "-compressed.pdf"
-                    )
-                  }
-                >
-                  <Icon name="download" size={17} />
-                  تحميل الملف المضغوط
-                </button>
+                <BlobLink
+                  blob={outBlob}
+                  className="btn-teal"
+                  label="تحميل الملف المضغوط"
+                  filename={file.name.replace(/\.pdf$/i, "") + "-compressed.pdf"}
+                />
               )}
               <button
                 type="button"

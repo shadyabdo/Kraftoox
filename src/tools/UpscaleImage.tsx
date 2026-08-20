@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Dropzone } from "../components/Dropzone";
-import { CompareSlider, InfoNote, IndeterminateBar } from "../components/bits";
+import { BlobLink, CompareSlider, InfoNote, IndeterminateBar } from "../components/bits";
 import { getTool } from "../data/tools";
 import { loadImageEl } from "../lib/img";
 import { bumpProcessedCount, downloadBlob, formatBytes, showToast } from "../lib/utils";
@@ -45,6 +45,7 @@ export default function UpscaleImage() {
   const [sharpen, setSharpen] = useState(true);
   const [busy, setBusy] = useState(false);
   const [resultUrl, setResultUrl] = useState("");
+  const [resultBlob, setResultBlob] = useState<Blob | null>(null);
   const [result, setResult] = useState<{ w: number; h: number; size: number } | null>(null);
 
   const onFile = async (files: File[]) => {
@@ -90,7 +91,7 @@ export default function UpscaleImage() {
       setResult({ w: canvas.width, h: canvas.height, size: blob.size });
       bumpProcessedCount(1);
       showToast(`تم التكبير إلى ${canvas.width}×${canvas.height}`);
-      (window as unknown as { __lastBlob?: Blob }).__lastBlob = blob;
+      setResultBlob(blob);
     } catch {
       showToast("فشلت عملية التكبير", "err");
     } finally {
@@ -148,17 +149,12 @@ export default function UpscaleImage() {
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <ProcessBtn label={`كبّر ×${factor} الآن`} onClick={run} busy={busy} color={TOOL.color} icon="expand" />
               {resultUrl && (
-                <button
-                  type="button"
-                  className="btn btn-teal"
-                  onClick={() => {
-                    const b = (window as unknown as { __lastBlob?: Blob }).__lastBlob;
-                    if (b) downloadBlob(b, `${file!.name.replace(/\.[^.]+$/, "")}-${factor}x.png`);
-                  }}
-                >
-                  <Icon name="download" size={17} />
-                  تحميل المكبّرة
-                </button>
+                <BlobLink
+                  blob={resultBlob}
+                  className="btn-teal"
+                  label="تحميل المكبّرة"
+                  filename={`${file!.name.replace(/\.[^.]+$/, "")}-${factor}x.png`}
+                />
               )}
               <button
                 type="button"
@@ -166,6 +162,7 @@ export default function UpscaleImage() {
                   setFile(null);
                   setImg(null);
                   setResultUrl("");
+                  setResultBlob(null);
                   setResult(null);
                 }}
                 className="btn btn-ghost !px-3"
