@@ -1,0 +1,7 @@
+# Kraftoox — robots.txt
+User-agent: *
+Allow: /
+Disallow: /server/
+
+# Sitemap
+Sitemap: https://kraftoox.app/sitemap.xml

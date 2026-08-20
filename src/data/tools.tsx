@@ -1,0 +1,453 @@
+import type { IconName } from "../components/Icons";
+
+export type ToolCategory = "image" | "pdf" | "video" | "ai";
+
+export interface ToolDef {
+  slug: string;
+  name: string;
+  short: string;
+  long: string;
+  category: ToolCategory;
+  icon: IconName;
+  color: string;
+  accept: string;
+  multiple: boolean;
+  badge: string;
+  keywords: string;
+  features: string[];
+  isNew?: boolean;
+}
+
+export const CATEGORY_META: Record<ToolCategory, { label: string; color: string }> = {
+  image: { label: "الصور", color: "var(--teal)" },
+  pdf: { label: "PDF", color: "var(--red)" },
+  video: { label: "الفيديو", color: "var(--blue)" },
+  ai: { label: "ذكاء اصطناعي", color: "var(--amber)" },
+};
+
+export const TOOLS: ToolDef[] = [
+  {
+    slug: "compress-image",
+    name: "ضغط الصور",
+    short: "قلّل حجم صور JPG وPNG وWebP حتى 90% مع الحفاظ على جودة ممتازة.",
+    long: "اضغط صورك محلياً داخل المتصفح عبر خوارزمية بحث متكررة عن أفضل جودة عند الحجم المستهدف — مثالية للويب والمتاجر ومنصات التواصل.",
+    category: "image",
+    icon: "image",
+    color: "#0c7a63",
+    accept: "image/jpeg,image/png,image/webp",
+    multiple: true,
+    badge: "JPG · PNG · WEBP",
+    keywords: "ضغط الصور تصغير الصور تقليل حجم الصورة compress image jpg png webp optimizer تخفيف الصور للواتس",
+    features: [
+      "تحديد حجم مستهدف بالميغابايت أو جودة يدوية",
+      "معالجة دفعات كاملة دفعة واحدة",
+      "مقارنة فورية بين الحجم قبل وبعد",
+      "تحميل النتائج فرادى أو كملف ZIP",
+    ],
+  },
+  {
+    slug: "resize-image",
+    name: "تغيير حجم الصور",
+    short: "صغّر أو كبّر صورك بالنسبة المئوية أو بأبعاد دقيقة مع قفل نسبة الأبعاد.",
+    long: "غيّر أبعاد صورك بدقة البكسل أو بالنسبة المئوية، مع الحفاظ التلقائي على نسبة الأبعاد وجودة إعادة عينات عالية.",
+    category: "image",
+    icon: "resize",
+    color: "#1d8a8a",
+    accept: "image/jpeg,image/png,image/webp,image/gif",
+    multiple: true,
+    badge: "JPG · PNG · WEBP · GIF",
+    keywords: "تغيير حجم الصورة تصغير ابعاد الصورة resize image dimensions تكبير الصورة مقاس الصورة",
+    features: [
+      "وضع النسبة المئوية (25%، 50%، 75% أو مخصص)",
+      "أبعاد دقيقة بالبكسل مع قفل نسبة الأبعاد",
+      "إعادة عينات عالية الجودة High-Quality Resampling",
+      "يعالج عدة صور في نفس الوقت",
+    ],
+  },
+  {
+    slug: "convert-image",
+    name: "تحويل صيغ الصور",
+    short: "حوّل صورك بين JPG وPNG وWebP بجودة قابلة للتحكم الكامل.",
+    long: "تحويل فوري بين الصيغ الثلاث الأشهر: انتقل إلى WebP لتوفير الحجم، أو PNG للجودة، أو JPG للتوافق — مع تحكم كامل بالجودة وخلفية بيضاء تلقائية للصور الشفافة.",
+    category: "image",
+    icon: "convert",
+    color: "#35845c",
+    accept: "image/jpeg,image/png,image/webp",
+    multiple: true,
+    badge: "JPG ↔ PNG ↔ WEBP",
+    keywords: "تحويل الصور تحويل صيغة الصورة convert image jpg to png webp to jpg تحويل webp الى jpg",
+    features: [
+      "تحويل جماعي لعدة صور معاً",
+      "شريط تحكم بجودة الناتج",
+      "معالجة ذكية للشفافية عند التحويل إلى JPG",
+      "تحميل ZIP لكل النتائج",
+    ],
+  },
+  {
+    slug: "image-host",
+    name: "رفع الصور برابط مباشر",
+    short: "ارفع صورتك واحصل فوراً على رابط مباشر وروابط HTML وMarkdown وBBCode.",
+    long: "احصل على روابط جاهزة للمشاركة: رابط مباشر، كود HTML، رابط Markdown للمنتديات التقنية، وBBCode للمنتديات العربية — مع خيار نشر مؤقت عبر خدمة مجانية.",
+    category: "image",
+    icon: "link",
+    color: "#e8930c",
+    accept: "image/jpeg,image/png,image/webp,image/gif",
+    multiple: false,
+    badge: "رابط مباشر · HTML · MD · BBCode",
+    keywords: "رفع الصور رفع صور برابط مباشر استضافة الصور direct image link رفع صورة والحصول على رابط image hosting",
+    features: [
+      "رابط مباشر فوري للمعاينة والمشاركة",
+      "أكواد جاهزة: HTML وMarkdown وBBCode",
+      "نشر اختياري لرابط مؤقت قابل للمشاركة العامة",
+      "معاينة الصورة قبل المشاركة",
+    ],
+  },
+  {
+    slug: "upscale-image",
+    name: "تكبير الصور وتحسينها",
+    short: "كبّر صورك حتى 4 أضعاف بدقة تصل إلى 7680 بكسل مع تعزيز الحواف والتفاصيل.",
+    long: "محرك تكبير متدرج متعدد المراحل يعيد بناء الصورة بمضاعفات صغيرة متتالية للحصول على تفاصيل أفضل من التكبير المباشر، مع خيار تعزيز الحواف ومقارنة فورية قبل/بعد.",
+    category: "image",
+    icon: "expand",
+    color: "#0f6e6e",
+    accept: "image/jpeg,image/png,image/webp",
+    multiple: false,
+    badge: "×2 · ×3 · ×4 حتى 7680px",
+    keywords: "تكبير الصور تحسين جودة الصورة upscale image enhance photo تكبير الصورة بدون فقدان الجودة زيادة دقة الصورة",
+    features: [
+      "معاملات تكبير ×2 و×3 و×4",
+      "تكبير متدرج متعدد المراحل للحفاظ على الحواف",
+      "تعزيز اختياري للحواف والتفاصيل",
+      "منزلق مقارنة فوري قبل/بعد",
+    ],
+    isNew: true,
+  },
+  {
+    slug: "remove-watermark",
+    name: "إزالة العلامة المائية من الصور",
+    short: "لوّن فوق العلامة المائية ودع خوارزمية الترميم تعيد بناء المنطقة من محيطها.",
+    long: "حدّد العلامة المائية بفرشاة دقيقة، ثم تعيد خوارزمية الترميم الانتشاري (Diffusion Inpainting) بناء البكسلات من محيط المنطقة — النتيجة صورة نظيفة تقارنها بالأصل بمنزلق واحد.",
+    category: "image",
+    icon: "eraser",
+    color: "#2f7d5c",
+    accept: "image/jpeg,image/png,image/webp",
+    multiple: false,
+    badge: "Inpainting محلي",
+    keywords: "ازالة العلامة المائية حذف الشعار من الصورة remove watermark ازالة حقوق الصورة مسح اللوجو من الصورة",
+    features: [
+      "فرشاة تحديد دقيقة بحجم قابل للضبط",
+      "خوارزمية ترميم انتشاري تعمل محلياً",
+      "منزلق مقارنة قبل/بعد",
+      "تصدير PNG بدقة كاملة",
+    ],
+    isNew: true,
+  },
+  {
+    slug: "photo-editor",
+    name: "محرر الصور أونلاين (فوتوشوب)",
+    short: "محرر متكامل: فرشاة، نصوص عربية، قص، تدوير، فلاتر وتعديلات لونية وتصدير بكل الصيغ.",
+    long: "استوديو تحرير كامل داخل متصفحك: ارسم وامحُ وأضف نصوصاً عربية وقُصّ ودوّر واقلب، مع 7 فلاتر جاهزة و7 تعديلات لونية غير مدمّرة وتراجع/إعادة حتى 25 خطوة وتصدير PNG أو JPG أو WebP.",
+    category: "image",
+    icon: "brush",
+    color: "#0c7a63",
+    accept: "image/jpeg,image/png,image/webp",
+    multiple: false,
+    badge: "Brush · Text · Crop · Filters",
+    keywords: "فوتوشوب اونلاين محرر صور تعديل الصور photoshop online photo editor اضافة نص على صورة قص صورة فلاتر صور",
+    features: [
+      "فرشاة وممحاة بألوان وأحجام حرة",
+      "نصوص عربية بأي حجم ولون ومكان",
+      "قص وتدوير وقلب أفقي/رأسي",
+      "فلاتر جاهزة + تعديلات لونية غير مدمّرة + تراجع/إعادة",
+    ],
+    isNew: true,
+  },
+  {
+    slug: "compress-pdf",
+    name: "ضغط ملفات PDF",
+    short: "قلّل حجم ملفات PDF الكبيرة بإعادة ضغط الصور المضمنة وتحسين بنية الملف.",
+    long: "محرك ضغط يعمل على مستويين: إعادة ترميز الصور المضمنة داخل الملف بجودة تختارها، وتحسين بنية الملف الداخلية (Object Streams) وإزالة البيانات الوصفية الزائدة.",
+    category: "pdf",
+    icon: "pdf",
+    color: "#d64550",
+    accept: "application/pdf,.pdf",
+    multiple: false,
+    badge: "PDF",
+    keywords: "ضغط pdf تصغير حجم pdf تقليل حجم ملف pdf compress pdf pdf compressor تخفيف pdf",
+    features: [
+      "ثلاثة مستويات ضغط: خفيف، متوازن، أقصى",
+      "إعادة ترميز الصور المضمنة داخل الملف",
+      "إزالة البيانات الوصفية الزائدة",
+      "تقرير شفاف: كم صورة عُولجت وكم وُفّر",
+    ],
+  },
+  {
+    slug: "merge-pdf",
+    name: "دمج ملفات PDF",
+    short: "ادمج عدة ملفات PDF في ملف واحد بالترتيب الذي تختاره.",
+    long: "أضف ملفاتك، رتّبها بأسهم الترتيب أو بالسحب، ثم ادمجها في ملف PDF واحد منظم — بدون فقدان أي صفحة وبدون رفع الملفات لأي خادم.",
+    category: "pdf",
+    icon: "merge",
+    color: "#e0762e",
+    accept: "application/pdf,.pdf",
+    multiple: true,
+    badge: "PDF + PDF → PDF",
+    keywords: "دمج pdf دمج ملفات pdf جمع ملفات pdf merge pdf combine pdf تجميع pdf",
+    features: [
+      "دمج عدد غير محدود من الملفات",
+      "إعادة ترتيب الملفات قبل الدمج",
+      "عرض عدد صفحات كل ملف",
+      "ملف ناتج واحد محسّن البنية",
+    ],
+  },
+  {
+    slug: "images-to-pdf",
+    name: "تحويل الصور إلى PDF",
+    short: "حوّل مجموعة صور إلى ملف PDF واحد بمقاس A4 أو بمقاس الصور نفسها.",
+    long: "اجمع صورك في مستند PDF أنيق: صورة في كل صفحة، بمقاس A4 أو بمقاس الصور نفسها، مع تحكم بالاتجاه والهوامش — مثالي للمستندات الممسوحة والألبومات.",
+    category: "pdf",
+    icon: "img2pdf",
+    color: "#c04a78",
+    accept: "image/jpeg,image/png,image/webp",
+    multiple: true,
+    badge: "JPG · PNG · WEBP → PDF",
+    keywords: "تحويل الصور الى pdf تحويل صورة الى pdf images to pdf jpg to pdf انشاء pdf من الصور",
+    features: [
+      "مقاس A4 أو مقاس مطابق لكل صورة",
+      "اتجاه تلقائي حسب شكل الصورة",
+      "هوامش قابلة للتحكم",
+      "ترتيب الصور بالسحب أو بالأسهم",
+    ],
+  },
+  {
+    slug: "extract-pdf-images",
+    name: "استخراج الصور من PDF",
+    short: "استخرج كل الصور المضمنة في ملف PDF وحمّلها دفعة واحدة كملف ZIP.",
+    long: "يفكك محركنا بنية ملف PDF ويعثر على كل الصور المضمنة — صور JPEG تُستخرج بصيغتها الأصلية، والصور المضغوطة تُفك وتُعاد بصيغة PNG — ثم يجمعها لك في ملف ZIP واحد.",
+    category: "pdf",
+    icon: "extract",
+    color: "#9c4040",
+    accept: "application/pdf,.pdf",
+    multiple: false,
+    badge: "PDF → JPG · PNG · ZIP",
+    keywords: "استخراج الصور من pdf سحب الصور من pdf extract images from pdf تحميل الصور من ملف pdf",
+    features: [
+      "استخراج الصور بدقة أصلية بدون فقدان",
+      "معاينة كل صورة مستخرجة مع أبعادها",
+      "تحميل جماعي بصيغة ZIP",
+      "تحميل فردي لأي صورة",
+    ],
+  },
+  {
+    slug: "upscale-video",
+    name: "تكبير دقة الفيديو",
+    short: "ارفع دقة فيديوهاتك حتى ×3 بإعادة ترميز إطاري يحافظ على الصوت الأصلي.",
+    long: "يعيد المحرك ترميز الفيديو إطاراً بإطار داخل متصفحك عبر Canvas وMediaRecorder مع الحفاظ على المسار الصوتي — كبّر مقاطعك من 480p إلى HD أو من HD إلى 4K.",
+    category: "video",
+    icon: "video",
+    color: "#1e7ec2",
+    accept: "video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov",
+    multiple: false,
+    badge: "MP4 · WEBM · MOV",
+    keywords: "تكبير الفيديو تحسين جودة الفيديو upscale video زيادة دقة الفيديو video enhancer تكبير مقطع",
+    features: [
+      "معاملات تكبير ×1.5 و×2 و×3",
+      "الحفاظ على الصوت الأصلي",
+      "شريط تقدم حي مع إمكانية الإلغاء",
+      "معالجة محلية بالكامل — الفيديو لا يُرفع",
+    ],
+    isNew: true,
+  },
+  {
+    slug: "remove-watermark-video",
+    name: "إزالة العلامة المائية من الفيديو",
+    short: "حدّد مكان العلامة المائية بمستطيل قابل للسحب وصدّر فيديو نظيفاً بصوت أصلي.",
+    long: "ضع مستطيل التحديد فوق العلامة المائية (قوالب جاهزة للزوايا الأربع والمنتصف)، ويستبدل المحرك المنطقة بتمويه منطقي يمتزج مع كل إطار — ثم يصدّر الفيديو كاملاً مع صوته الأصلي.",
+    category: "video",
+    icon: "film",
+    color: "#2b6cb0",
+    accept: "video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov",
+    multiple: false,
+    badge: "إزالة شعارات · زوايا · وسط",
+    keywords: "ازالة العلامة المائية من الفيديو حذف الشعار من الفيديو remove watermark from video ازالة حقوق الفيديو تنظيف الفيديو",
+    features: [
+      "مستطيل تحديد بالسحب والتحجيم",
+      "قوالب جاهزة لمواضع العلامات الشائعة",
+      "تمويه منطقي يمتزج مع حركة الفيديو",
+      "الحفاظ على الصوت الأصلي في الناتج",
+    ],
+    isNew: true,
+  },
+  {
+    slug: "ai-image",
+    name: "توليد الصور بالذكاء الاصطناعي",
+    short: "حوّل أوصافك العربية إلى صور احترافية بنماذج FLUX وTurbo — بلا حدود وبلا علامة مائية.",
+    long: "اكتب وصفك بالعربية أو الإنجليزية، اختر النمط الفني (سينمائي، واقعي، أنمي، ثلاثي الأبعاد…) والأبعاد، وولّد صوراً احترافية عبر نماذج مفتوحة المصدر مجانية — مع سجل جلسة وتنزيل فوري.",
+    category: "ai",
+    icon: "ai",
+    color: "#e8930c",
+    accept: "",
+    multiple: false,
+    badge: "FLUX · TURBO · بلا حدود",
+    keywords: "توليد الصور بالذكاء الاصطناعي ai image generator صنع صور بالذكاء الاصطناعي توليد صور عربية text to image",
+    features: [
+      "يفهم الأوصاف العربية بالكامل",
+      "6 أنماط فنية وأبعاد شورتز ويوتيوب ومربع",
+      "نموذجا FLUX وTurbo بدون مفاتيح API",
+      "سجل جلسة مع تنزيل ونسخ رابط لكل صورة",
+    ],
+    isNew: true,
+  },
+  {
+    slug: "ai-video",
+    name: "توليد الفيديو بالذكاء الاصطناعي",
+    short: "من فكرة واحدة إلى فيديو يوتيوب جاهز: سيناريو عربي، مشاهد AI، وتعليقات — حتى ساعة كاملة.",
+    long: "يكتب الذكاء الاصطناعي سيناريو عربياً قابلًا للتعديل، يولّد مشهداً مصوراً لكل جملة، ثم يركّب فيديوك بحركة سينمائية وتعليقات عربية — شورتز 9:16 أو 16:9، من 15 ثانية حتى ساعة، بلا حدود وبلا علامة مائية.",
+    category: "ai",
+    icon: "film",
+    color: "#c77a06",
+    accept: "",
+    multiple: false,
+    badge: "شورتز · طويل · عربي",
+    keywords: "توليد فيديو بالذكاء الاصطناعي ai video generator صناعة فيديو يوتيوب عمل شورتز فيديو عربي مولد فيديو",
+    features: [
+      "سيناريو عربي يولّده الذكاء الاصطناعي ويمكنك تعديله",
+      "صيغتا يوتيوب شورتز 9:16 والفيديو العادي 16:9",
+      "مدد من 15 ثانية حتى ساعة كاملة",
+      "تعليقات عربية وحركة سينمائية بلا علامة مائية",
+    ],
+    isNew: true,
+  },
+  {
+    slug: "video-editor",
+    name: "محرر الفيديو أونلاين",
+    short: "قصّ وركّب فيديوهاتك على خط زمن حقيقي مع فلاتر ونصوص عربية — تصدير محلي فوري أو سحابي عبر Shotstack.",
+    long: "محرر فيديو كامل بخط زمني: أضف مقاطع فيديو وصوراً، قصّها، غيّر سرعتها، طبّق فلاتر سينمائية وأضف نصوصاً عربية. صدّر محلياً داخل متصفحك مجاناً، أو اربط مفتاح Shotstack المجاني للتصدير السحابي الاحترافي بصيغة MP4.",
+    category: "video",
+    icon: "timeline",
+    color: "#2b6ca8",
+    accept: "video/mp4,video/webm,video/quicktime,image/jpeg,image/png,image/webp",
+    multiple: true,
+    badge: "قص · فلاتر · نصوص · MP4",
+    keywords: "محرر فيديو اونلاين تحرير الفيديو online video editor قص الفيديو مونتاج اونلاين تحرير فيديو مجاني video trimmer",
+    features: [
+      "خط زمني بمقاطع متعددة مع قصّ دقيق بالثانية",
+      "تحكم بالسرعة وفلاتر سينمائية جاهزة",
+      "نصوص عربية على المقاطع مع انتقالات تلاشي",
+      "تصدير محلي مجاني أو سحابي عبر Shotstack API",
+    ],
+    isNew: true,
+  },
+  {
+    slug: "screen-recorder",
+    name: "تسجيل الشاشة",
+    short: "سجّل شاشتك بجودة عالية مع صوت النظام والميكروفون — تنزيل تلقائي فور إنهاء التسجيل.",
+    long: "مسجّل شاشة متكامل داخل المتصفح: اختر مشاركة الشاشة كاملة أو نافذة أو تبويباً، أضف صوت النظام أو الميكروفون، أوقف مؤقتاً متى شئت — وعند الضغط على «إنهاء» يبدأ التنزيل التلقائي للفيديو فوراً.",
+    category: "video",
+    icon: "monitor",
+    color: "#155e9e",
+    accept: "",
+    multiple: false,
+    badge: "شاشة · ميكروفون · تنزيل فوري",
+    keywords: "تسجيل الشاشة record screen تسجيل الشاشة اونلاين screen recorder عربي تسجيل شاشة مع صوت سكرين ريكورد",
+    features: [
+      "تسجيل الشاشة كاملة أو نافذة أو تبويب",
+      "صوت النظام والميكروفون اختياريان",
+      "إيقاف مؤقت واستئناف أثناء التسجيل",
+      "تنزيل تلقائي فور الضغط على إنهاء",
+    ],
+    isNew: true,
+  },
+];
+
+export const IMAGE_TOOLS = TOOLS.filter((t) => t.category === "image");
+export const PDF_TOOLS = TOOLS.filter((t) => t.category === "pdf");
+export const VIDEO_TOOLS = TOOLS.filter((t) => t.category === "video");
+export const AI_TOOLS = TOOLS.filter((t) => t.category === "ai");
+
+export function getTool(slug: string): ToolDef | undefined {
+  return TOOLS.find((t) => t.slug === slug);
+}
+
+/* ===== أقسام الخدمات — لكل قسم صفحته الخاصة ===== */
+export interface CategoryDef {
+  id: ToolCategory;
+  slug: string;
+  name: string;
+  icon: IconName;
+  color: string;
+  tagline: string;
+  desc: string;
+  useCases: string[];
+}
+
+export const CATEGORIES: CategoryDef[] = [
+  {
+    id: "image",
+    slug: "images",
+    name: "أدوات الصور",
+    icon: "image",
+    color: "var(--teal)",
+    tagline: "من الضغط إلى التكبير — كل ما تحتاجه صورك",
+    desc: "سبع أدوات تتعامل مع صورك بمعالجة محلية بالكامل: ضغط ذكي بحجم مستهدف، تغيير أبعاد، تحويل صيغ، روابط مشاركة، تكبير متعدد المراحل، إزالة علامات مائية، ومحرر فوتوشوب متكامل.",
+    useCases: [
+      "تجهيز صور المنتجات للمتاجر الإلكترونية",
+      "تصغير صور الواتساب والبريد دون فقدان الجودة الملحوظ",
+      "تحويل لقطات الشاشة إلى WebP خفيفة للمواقع",
+      "تكبير صور قديمة للطباعة أو العروض",
+    ],
+  },
+  {
+    id: "pdf",
+    slug: "pdf",
+    name: "أدوات PDF",
+    icon: "pdf",
+    color: "var(--red)",
+    tagline: "مستنداتك تبقى عندك — والمعالجة في متصفحك",
+    desc: "أربع أدوات مبنية على محرك pdf-lib تعمل داخل المتصفح: ضغط بإعادة ترميز الصور المضمنة، دمج بلا فقدان، تحويل الصور إلى مستندات PDF أنيقة، واستخراج الصور بدقة أصلية.",
+    useCases: [
+      "تصغير ملفات PDF الكبيرة للإرسال بالبريد",
+      "جمع فواتير الشهر في ملف واحد مرتب",
+      "تحويل الأوراق الممسوحة إلى مستند PDF",
+      "سحب الصور من المراجع والأبحاث دفعة واحدة",
+    ],
+  },
+  {
+    id: "video",
+    slug: "video",
+    name: "أدوات الفيديو",
+    icon: "video",
+    color: "var(--blue)",
+    tagline: "قصّ، كبّر، سجّل — وأزل ما يعكر صفو اللقطة",
+    desc: "أربع أدوات فيديو تعمل بإعادة الترميز الإطاري داخل متصفحك مع الحفاظ على الصوت: محرر خط زمني مع تصدير سحابي عبر Shotstack، تكبير دقة حتى 4K، إزالة العلامات المائية، ومسجّل شاشة بتنزيل فوري.",
+    useCases: [
+      "مونتاج سريع لمقاطع السوشيال ميديا",
+      "رفع دقة مقاطع قديمة قبل نشرها على يوتيوب",
+      "تنظيف اللقطات من شعارات التصوير",
+      "تسجيل شروحات ودورات من شاشتك مباشرة",
+    ],
+  },
+  {
+    id: "ai",
+    slug: "ai",
+    name: "الذكاء الاصطناعي",
+    icon: "ai",
+    color: "var(--amber)",
+    tagline: "من الكلمة إلى الصورة… ومن الفكرة إلى فيديو يوتيوب",
+    desc: "مولّد صور يفهم العربية بنماذج FLUX وTurbo بلا حدود وبلا علامة مائية، ومولّد فيديوهات يكتب سيناريو عربياً، يرسم مشاهد لكل جملة، ويركّبها في شورتز أو فيديو طويل حتى ساعة كاملة.",
+    useCases: [
+      "صور مصغّرة احترافية لفيديوهات يوتيوب",
+      "شورتز يومي لقناتك من فكرة واحدة",
+      "فيديوهات شرح طويلة بمشاهد مولّدة",
+      "لوحات فنية بأنماط متنوعة لمشاريعك",
+    ],
+  },
+];
+
+export function getCategory(slug: string): CategoryDef | undefined {
+  return CATEGORIES.find((c) => c.slug === slug);
+}
+
+export function toolsOf(category: ToolCategory): ToolDef[] {
+  return TOOLS.filter((t) => t.category === category);
+}
