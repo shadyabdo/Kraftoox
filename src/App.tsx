@@ -5,7 +5,9 @@ import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { Spinner, Toaster } from "./components/bits";
 import { Icon } from "./components/Icons";
+import Landing from "./pages/Landing";
 import Home from "./pages/Home";
+import Category from "./pages/Category";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Privacy from "./pages/Privacy";
@@ -26,6 +28,8 @@ const RemoveWatermarkVideo = lazy(() => import("./tools/RemoveWatermarkVideo"));
 const PhotoEditor = lazy(() => import("./tools/PhotoEditor"));
 const AiImage = lazy(() => import("./tools/AiImage"));
 const AiVideo = lazy(() => import("./tools/AiVideo"));
+const VideoEditor = lazy(() => import("./tools/VideoEditor"));
+const ScreenRecorder = lazy(() => import("./tools/ScreenRecorder"));
 
 const TOOL_PAGES: Record<string, ComponentType> = {
   "compress-image": CompressImage,
@@ -43,7 +47,11 @@ const TOOL_PAGES: Record<string, ComponentType> = {
   "photo-editor": PhotoEditor,
   "ai-image": AiImage,
   "ai-video": AiVideo,
+  "video-editor": VideoEditor,
+  "screen-recorder": ScreenRecorder,
 };
+
+const CATEGORY_SLUGS = ["images", "pdf", "video", "ai"];
 
 function PageLoader() {
   return (
@@ -88,14 +96,18 @@ export default function App() {
   usePageMeta(isTool ? `/tool/${route.parts[1] ?? ""}` : route.path);
 
   let page: ReactNode;
-  if (route.path === "/" || route.path === "/tools") {
+  if (route.path === "/") {
+    page = <Landing />;
+  } else if (route.path === "/tools") {
     page = (
       <Home
         query={route.query.get("q") ?? ""}
         focusSearch={route.query.get("focus") === "search"}
-        scrollToTools={route.path === "/tools"}
+        scrollToTools
       />
     );
+  } else if (route.parts.length === 1 && CATEGORY_SLUGS.includes(route.parts[0])) {
+    page = <Category slug={route.parts[0]} />;
   } else if (isTool) {
     const slug = route.parts[1] ?? "";
     const ToolPage = TOOL_PAGES[slug];

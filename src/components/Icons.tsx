@@ -293,6 +293,46 @@ const P: Record<string, ReactNode> = {
       <path d="M12 9.5v4l2.8 1.8M9.5 2.5h5" />
     </>
   ),
+  monitor: (
+    <>
+      <rect x="3" y="4.5" width="18" height="12.5" rx="2" />
+      <path d="M9 21h6M12 17v4" />
+    </>
+  ),
+  record: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="3.5" fill="currentColor" stroke="none" />
+    </>
+  ),
+  mic: (
+    <>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M9.5 21h5" />
+    </>
+  ),
+  timeline: (
+    <>
+      <rect x="3.5" y="4.5" width="9" height="3.4" rx="1.4" />
+      <rect x="15" y="4.5" width="5.5" height="3.4" rx="1.4" />
+      <rect x="3.5" y="10.3" width="4.5" height="3.4" rx="1.4" />
+      <rect x="10.5" y="10.3" width="10" height="3.4" rx="1.4" />
+      <rect x="3.5" y="16.1" width="12" height="3.4" rx="1.4" />
+    </>
+  ),
+  play: <path d="M8.5 5.5v13l10.5-6.5z" />,
+  pause: <path d="M9 5.5v13M15 5.5v13" />,
+  stop: <rect x="6.5" y="6.5" width="11" height="11" rx="2" />,
+  cloud: (
+    <path d="M6.8 18.5h10.7a3.5 3.5 0 0 0 .5-6.97 5.5 5.5 0 0 0-10.7-1.9A4.5 4.5 0 0 0 6.8 18.5z" />
+  ),
+  scissors: (
+    <>
+      <circle cx="6" cy="6.5" r="2.5" />
+      <circle cx="6" cy="17.5" r="2.5" />
+      <path d="M8.2 7.9L20 19M8.2 16.1L20 5" />
+    </>
+  ),
 };
 
 export type IconName = keyof typeof P;

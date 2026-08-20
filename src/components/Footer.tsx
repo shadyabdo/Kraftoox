@@ -40,7 +40,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="c-muted mt-3 max-w-xs text-sm leading-relaxed">
-              خمس عشرة أداة مجانية لمعالجة الصور وملفات PDF والفيديو وتوليد المحتوى بالذكاء
+              سبع عشرة أداة مجانية لمعالجة الصور وملفات PDF والفيديو وتوليد المحتوى بالذكاء
               الاصطناعي — تعمل داخل متصفحك، بدون تسجيل، وبدون أن تغادر ملفاتك جهازك أبداً.
             </p>
             <div className="mt-4 flex items-center gap-2 rounded-xl border bd-line bg-surface2 px-3 py-2 text-xs font-medium">
@@ -154,6 +154,10 @@ export function Footer() {
             <ul className="space-y-2">
               <li><Link to="/" className="c-muted text-sm transition-colors hover:text-[var(--teal)]">الرئيسية</Link></li>
               <li><Link to="/tools" className="c-muted text-sm transition-colors hover:text-[var(--teal)]">كل الأدوات</Link></li>
+              <li><Link to="/images" className="c-muted text-sm transition-colors hover:text-[var(--teal)]">قسم الصور</Link></li>
+              <li><Link to="/pdf" className="c-muted text-sm transition-colors hover:text-[var(--teal)]">قسم PDF</Link></li>
+              <li><Link to="/video" className="c-muted text-sm transition-colors hover:text-[var(--teal)]">قسم الفيديو</Link></li>
+              <li><Link to="/ai" className="c-muted text-sm transition-colors hover:text-[var(--teal)]">قسم الذكاء الاصطناعي</Link></li>
               <li><Link to="/about" className="c-muted text-sm transition-colors hover:text-[var(--teal)]">من نحن</Link></li>
               <li><Link to="/privacy" className="c-muted text-sm transition-colors hover:text-[var(--teal)]">سياسة الخصوصية</Link></li>
               <li><Link to="/contact" className="c-muted text-sm transition-colors hover:text-[var(--teal)]">اتصل بنا</Link></li>

@@ -8,7 +8,7 @@ import { Reveal } from "../components/Reveal";
 import { SectionHead } from "../components/bits";
 
 /* ===== عدّاد متحرك ===== */
-function Counter({ to, suffix = "", label }: { to: number; suffix?: string; label: string }) {
+export function Counter({ to, suffix = "", label }: { to: number; suffix?: string; label: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [val, setVal] = useState(0);
 
@@ -59,7 +59,7 @@ const LIVE_JOBS = [
   { file: "shot.png", task: "إزالة العلامة المائية", color: "#2f7d5c", icon: "eraser" as IconName },
 ];
 
-function LiveStack() {
+export function LiveStack() {
   const [job, setJob] = useState(0);
   const [done, setDone] = useState(false);
 
@@ -219,7 +219,7 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
           <Reveal>
             <p className="inline-flex items-center gap-2 rounded-full border bd-line bg-surface px-3.5 py-1.5 text-xs font-semibold">
               <span className="anim-pulse-soft inline-block h-2 w-2 rounded-full" style={{ background: "var(--teal)" }} />
-              ١٥ أداة مجانية · ذكاء اصطناعي · بدون تسجيل · ملفاتك لا تغادر جهازك
+              ١٧ أداة مجانية · محرر فيديو · تسجيل شاشة · ذكاء اصطناعي · بدون تسجيل
             </p>
           </Reveal>
 
