@@ -3,12 +3,16 @@ import { Dropzone } from "../components/Dropzone";
 import { BlobLink, InfoNote, Spinner } from "../components/bits";
 import { getTool } from "../data/tools";
 import { useI18n } from "../i18n";
-import { formatBytes, showToast } from "../lib/utils";
+import { cx, formatBytes, showToast } from "../lib/utils";
 import { ToolShell, FieldLabel } from "./shared";
 import { Icon } from "../components/Icons";
 
 const TOOL = getTool("photo-editor")!;
 const PHOTOPEA_ORIGIN = "https://www.photopea.com";
+
+/* ارتفاع شريط Photopea الإعلاني العلوي (يحمل الشعار) — نقصّه من أعلى الإطار
+   فنُظهر شريط القوائم مباشرة وتخفى العلامة */
+const AD_CROP = 30;
 
 /* تحديد نوع الملف الناتج من بايتاته الأولى */
 function sniff(buf: ArrayBuffer): { mime: string; ext: string } {
@@ -37,7 +41,9 @@ export default function PhotoEditor() {
   const [frameReady, setFrameReady] = useState(false);
   const [sent, setSent] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
+  const [full, setFull] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const bufferRef = useRef<ArrayBuffer | null>(null);
 
   /* بيئة Photopea: لغة الواجهة + صيغة الحفظ الافتراضية */
@@ -93,6 +99,39 @@ export default function PhotoEditor() {
     return () => window.clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opened, frameReady]);
+
+  /* ===== وضع ملء الصفحة للمحرر ===== */
+  /* مزامنة مع ملء الشاشة الأصلي للمتصفح */
+  useEffect(() => {
+    const onFs = () => setFull(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
+  }, []);
+
+  /* الخروج بـ Esc عند استخدام الوضع الموسّع الاحتياطي */
+  useEffect(() => {
+    if (!full) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !document.fullscreenElement) setFull(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [full]);
+
+  const toggleFull = () => {
+    const el = stageRef.current;
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => setFull(false));
+      return;
+    }
+    if (el?.requestFullscreen) {
+      /* ملء شاشة أصلي — وإن رفضه المتصفح ننتقل للوضع الموسّع */
+      el.requestFullscreen().catch(() => setFull(true));
+      setFull(true);
+    } else {
+      setFull((v) => !v);
+    }
+  };
 
   const onFile = async (files: File[]) => {
     const f = files[0];
@@ -176,7 +215,18 @@ export default function PhotoEditor() {
               )}
               <button
                 type="button"
+                onClick={toggleFull}
+                className={cx("btn !py-2 !text-sm", full ? "btn-amber" : "btn-ghost")}
+                title={full ? (isAr ? "تصغير المحرر" : "Shrink editor") : (isAr ? "تشغيل المحرر بكامل الصفحة" : "Run the editor on the full page")}
+              >
+                <Icon name={full ? "shrink" : "expand"} size={16} />
+                {full ? (isAr ? "تصغير" : "Shrink") : (isAr ? "كامل الصفحة" : "Full page")}
+              </button>
+              <button
+                type="button"
                 onClick={() => {
+                  if (document.fullscreenElement) document.exitFullscreen().catch(() => undefined);
+                  setFull(false);
                   setOpened(false);
                   setFile(null);
                   setResult(null);
@@ -190,17 +240,36 @@ export default function PhotoEditor() {
             </div>
           </div>
 
-          {/* المحرر المدمج */}
-          <div className="card relative overflow-hidden !rounded-xl">
+          {/* المحرر المدمج — الشريط الإعلاني العلوي (شعار Photopea) مقصوص،
+              مع وضع ملء الصفحة الكامل */}
+          <div
+            ref={stageRef}
+            className={cx(
+              "card overflow-hidden transition-all duration-300",
+              full ? "fixed inset-0 z-[95] !rounded-none border-0" : "relative !rounded-xl"
+            )}
+            style={full ? { height: "100dvh", background: "#1d1d1d" } : { height: "min(74vh, 820px)", minHeight: 480, background: "#1d1d1d" }}
+          >
             <iframe
               ref={iframeRef}
               src={env}
               title="Photopea — Kraftoox"
-              className="block w-full border-0"
-              style={{ height: "min(74vh, 820px)", minHeight: 480, background: "#1d1d1d" }}
+              className="absolute inset-x-0 bottom-0 border-0"
+              style={{ top: -AD_CROP, background: "#1d1d1d" }}
               allow="clipboard-read; clipboard-write; fullscreen"
               onLoad={() => setFrameReady(true)}
             />
+            {full && (
+              <button
+                type="button"
+                onClick={toggleFull}
+                className="btn btn-ghost absolute bottom-4 end-4 z-20 !border-[#3d3d3d] !bg-[#262626] !py-2 !text-xs !text-white shadow-xl"
+              >
+                <Icon name="shrink" size={14} />
+                {isAr ? "إنهاء ملء الصفحة" : "Exit full page"}
+                <kbd className="font-mono opacity-60">Esc</kbd>
+              </button>
+            )}
           </div>
 
           {/* النتيجة */}
@@ -209,14 +278,15 @@ export default function PhotoEditor() {
               {isAr ? (
                 <>
                   عدّل بحرية داخل المحرر: طبقات، أقنعة، فرشاة الاستنساخ، أدوات التحديد الذكية وأكثر.
-                  عند الانتهاء اضغط <b dir="ltr" className="font-mono">Ctrl+S</b> أو{" "}
-                  <b dir="ltr">File → Save as</b> — وسيصلك الملف الناتج في البطاقة المجاورة جاهزاً للتنزيل،
-                  ويتجدد مع كل حفظ.
+                  اضغط <b>«كامل الصفحة»</b> ليملأ المحرر شاشتك بلا شريط الشعار، وعند الانتهاء اضغط{" "}
+                  <b dir="ltr" className="font-mono">Ctrl+S</b> أو <b dir="ltr">File → Save as</b> —
+                  وسيصلك الملف الناتج في البطاقة المجاورة جاهزاً للتنزيل، ويتجدد مع كل حفظ.
                 </>
               ) : (
                 <>
                   Edit freely: layers, masks, clone stamp, smart selection tools and more.
-                  When done, press <b dir="ltr" className="font-mono">Ctrl+S</b> or{" "}
+                  Hit <b>“Full page”</b> to run the editor across your whole screen with the branding
+                  bar hidden, and when done press <b dir="ltr" className="font-mono">Ctrl+S</b> or{" "}
                   <b dir="ltr">File → Save as</b> — the output file lands in the side card, ready to
                   download, refreshed on every save.
                 </>
@@ -246,7 +316,7 @@ export default function PhotoEditor() {
                     className="btn-teal"
                     iconSize={17}
                     label={isAr ? "تنزيل النتيجة" : "Download result"}
-                    filename={`${baseName}.${result.ext}`}
+                    filename={`kraftoox-${baseName}.${result.ext}`}
                   />
                   <p className="c-muted text-center text-[10.5px]">
                     {isAr
