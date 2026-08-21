@@ -10,10 +10,6 @@ import { Icon } from "../components/Icons";
 const TOOL = getTool("photo-editor")!;
 const PHOTOPEA_ORIGIN = "https://www.photopea.com";
 
-/* ارتفاع شريط Photopea الإعلاني العلوي (يحمل الشعار) — نقصّه من أعلى الإطار
-   فنُظهر شريط القوائم مباشرة وتخفى العلامة */
-const AD_CROP = 30;
-
 /* تحديد نوع الملف الناتج من بايتاته الأولى */
 function sniff(buf: ArrayBuffer): { mime: string; ext: string } {
   const b = new Uint8Array(buf.slice(0, 8));
@@ -240,22 +236,26 @@ export default function PhotoEditor() {
             </div>
           </div>
 
-          {/* المحرر المدمج — الشريط الإعلاني العلوي (شعار Photopea) مقصوص،
-              مع وضع ملء الصفحة الكامل */}
+          {/* المحرر المدمج — إطار Photopea الطبيعي يملأ كامل المساحة المتاحة،
+              مع زر ملء الصفحة الكامل */}
           <div
             ref={stageRef}
             className={cx(
               "card overflow-hidden transition-all duration-300",
               full ? "fixed inset-0 z-[95] !rounded-none border-0" : "relative !rounded-xl"
             )}
-            style={full ? { height: "100dvh", background: "#1d1d1d" } : { height: "min(74vh, 820px)", minHeight: 480, background: "#1d1d1d" }}
+            style={
+              full
+                ? { height: "100dvh", background: "#1d1d1d" }
+                : { height: "calc(100dvh - 262px)", minHeight: 560, background: "#1d1d1d" }
+            }
           >
             <iframe
               ref={iframeRef}
               src={env}
               title="Photopea — Kraftoox"
-              className="absolute inset-x-0 bottom-0 border-0"
-              style={{ top: -AD_CROP, background: "#1d1d1d" }}
+              className="absolute inset-0 h-full w-full border-0"
+              style={{ background: "#1d1d1d" }}
               allow="clipboard-read; clipboard-write; fullscreen"
               onLoad={() => setFrameReady(true)}
             />
@@ -278,17 +278,18 @@ export default function PhotoEditor() {
               {isAr ? (
                 <>
                   عدّل بحرية داخل المحرر: طبقات، أقنعة، فرشاة الاستنساخ، أدوات التحديد الذكية وأكثر.
-                  اضغط <b>«كامل الصفحة»</b> ليملأ المحرر شاشتك بلا شريط الشعار، وعند الانتهاء اضغط{" "}
-                  <b dir="ltr" className="font-mono">Ctrl+S</b> أو <b dir="ltr">File → Save as</b> —
-                  وسيصلك الملف الناتج في البطاقة المجاورة جاهزاً للتنزيل، ويتجدد مع كل حفظ.
+                  الإطار يملأ المساحة المتاحة تلقائياً، واضغط <b>«كامل الصفحة»</b> ليعمل بملء شاشتك
+                  بالكامل. عند الانتهاء اضغط <b dir="ltr" className="font-mono">Ctrl+S</b> أو{" "}
+                  <b dir="ltr">File → Save as</b> — وسيصلك الملف الناتج في البطاقة المجاورة جاهزاً
+                  للتنزيل، ويتجدد مع كل حفظ.
                 </>
               ) : (
                 <>
                   Edit freely: layers, masks, clone stamp, smart selection tools and more.
-                  Hit <b>“Full page”</b> to run the editor across your whole screen with the branding
-                  bar hidden, and when done press <b dir="ltr" className="font-mono">Ctrl+S</b> or{" "}
-                  <b dir="ltr">File → Save as</b> — the output file lands in the side card, ready to
-                  download, refreshed on every save.
+                  The frame fills the available space automatically, and hitting <b>“Full page”</b> runs
+                  the editor across your entire screen. When done, press{" "}
+                  <b dir="ltr" className="font-mono">Ctrl+S</b> or <b dir="ltr">File → Save as</b> —
+                  the output file lands in the side card, ready to download, refreshed on every save.
                 </>
               )}
             </InfoNote>
