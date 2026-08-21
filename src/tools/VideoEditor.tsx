@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import CreativeEditorSDK from "@cesdk/cesdk-js";
 import { Dropzone } from "../components/Dropzone";
 import { InfoNote, Spinner } from "../components/bits";
 import { getTool } from "../data/tools";
@@ -10,138 +11,142 @@ import { Icon } from "../components/Icons";
 
 const TOOL = getTool("video-editor")!;
 
-/* محرر الفيديو الاحترافي — محرك CreativeEditor (img.ly) يعمل داخل المتصفح */
-const CESDK_SRC = "https://cdn.img.ly/packages/@creative-sdk/cesdk-web/1.74.2/umd/index.js";
+/* المحرك يُحمَّل من الحزمة المثبتة محلياً — لا اعتماد على رابط خارجي للكود.
+   فقط أصول المحرك (wasm/خطوط/وسائط) تُجلب من CDN الرسمي الخاص بـ img.ly. */
+const SDK_VERSION =
+  (CreativeEditorSDK as unknown as { version?: string }).version ?? "1.80.0";
+const BASE_URL = `https://cdn.img.ly/packages/imgly/cesdk-js/${SDK_VERSION}/assets`;
 
-function editorDocument(): string {
-  return `<!doctype html>
-<html>
-<head>
-<meta charset="utf-8" />
-<title>CreativeEditor — Kraftoox</title>
-<style>
-  html, body, #root { height: 100%; margin: 0; padding: 0; overflow: hidden; background: #101114; }
-  #status {
-    position: fixed; inset: 0; display: flex; flex-direction: column; gap: 12px;
-    align-items: center; justify-content: center; color: #9aa3ad;
-    font-family: "Rubik", "IBM Plex Sans Arabic", sans-serif; font-size: 14px;
-  }
-  #status .bar { width: 200px; height: 4px; border-radius: 99px; background: #23262c; overflow: hidden; }
-  #status .bar span { display: block; height: 100%; width: 40%; border-radius: 99px; background: #5aa7e0; animation: slide 1.3s ease-in-out infinite alternate; }
-  @keyframes slide { from { transform: translateX(-60%); } to { transform: translateX(160%); } }
-</style>
-<script src="${CESDK_SRC}"></script>
-</head>
-<body>
-<div id="root"></div>
-<div id="status">
-  <div class="bar"><span></span></div>
-  <div id="status-text">جارٍ تشغيل محرر الفيديو الاحترافي…</div>
-</div>
-<script>
-(function () {
-  var statusEl = document.getElementById("status");
-  var textEl = document.getElementById("status-text");
-
-  function fail(msg) {
-    if (textEl) textEl.textContent = msg;
-  }
-
-  function waitForSdk(tries) {
-    if (window.CreativeEditorSDK) return start();
-    if (tries <= 0) return fail("تعذّر تحميل المحرر — تحقق من اتصال الإنترنت ثم أعد تحميل الصفحة.");
-    setTimeout(function () { waitForSdk(tries - 1); }, 350);
-  }
-
-  function start() {
-    window.CreativeEditorSDK.create("#root", {
-      ui: { elements: { panels: { settings: true } } }
-    })
-      .then(function (instance) {
-        if (statusEl && statusEl.parentNode) statusEl.parentNode.removeChild(statusEl);
-        if (instance.ui && instance.ui.setTheme) instance.ui.setTheme("dark");
-        window.__cesdk = instance;
-
-        window.addEventListener("message", function (e) {
-          var d = e.data;
-          if (!d || d.type !== "kraftoox-open-video" || !d.buffer) return;
-          try {
-            var blob = new Blob([d.buffer], { type: d.mime || "video/mp4" });
-            if (typeof instance.createVideoFromBlob === "function") {
-              instance.createVideoFromBlob(blob).catch(function () {
-                window.parent.postMessage({ type: "kraftoox-open-failed" }, "*");
-              });
-            } else {
-              window.parent.postMessage({ type: "kraftoox-open-failed" }, "*");
-            }
-          } catch (err) {
-            window.parent.postMessage({ type: "kraftoox-open-failed" }, "*");
-          }
-        });
-
-        return instance.createVideo();
-      })
-      .then(function () {
-        window.parent.postMessage({ type: "kraftoox-editor-ready" }, "*");
-      })
-      .catch(function () {
-        fail("تعذّر تشغيل المحرر — جرّب متصفح كروم أو إيدج حديثاً.");
-      });
-  }
-
-  waitForSdk(60);
-})();
-</script>
-</body>
-</html>`;
-}
+type Status = "idle" | "loading" | "ready" | "error";
 
 export default function VideoEditor() {
   const { isAr } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [opened, setOpened] = useState(false);
-  const [ready, setReady] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [status, setStatus] = useState<Status>("idle");
+  const [errorMsg, setErrorMsg] = useState("");
   const [full, setFull] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
-  const bufferRef = useRef<ArrayBuffer | null>(null);
 
-  const srcDoc = useMemo(() => editorDocument(), []);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const instanceRef = useRef<Awaited<ReturnType<typeof CreativeEditorSDK.create>> | null>(null);
+  const fileRef = useRef<File | null>(null);
 
   /* التقاط ملف محوَّل من صفحة الهبوط أو ساحة الأدوات */
   useEffect(() => {
     const pending = takePendingFiles();
-    if (pending && pending[0]) {
-      void onFile([pending[0]]);
-    }
+    if (pending && pending[0]) void openWith(pending[0]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* رسائل المحرر: جاهزية + فشل فتح الملف */
+  /* إنشاء المحرر عند الفتح */
   useEffect(() => {
-    const onMessage = (e: MessageEvent) => {
-      const d = e.data as { type?: string } | null;
-      if (!d || typeof d !== "object") return;
-      if (d.type === "kraftoox-editor-ready") setReady(true);
-      if (d.type === "kraftoox-open-failed") {
-        showToast(
-          isAr
-            ? "افتح الفيديو من داخل المحرر: File → Import"
-            : "Import the video from inside the editor: File → Import",
-          "info"
-        );
+    if (!opened || !containerRef.current) return;
+    let disposed = false;
+
+    const boot = async () => {
+      setStatus("loading");
+      setErrorMsg("");
+      try {
+        const instance = await CreativeEditorSDK.create(containerRef.current!, {
+          baseURL: BASE_URL,
+          ui: { elements: { panels: { settings: true } } },
+        });
+        if (disposed) {
+          instance.dispose();
+          return;
+        }
+        instanceRef.current = instance;
+
+        try {
+          instance.ui.setTheme("dark");
+        } catch {
+          /* الثيم اختياري */
+        }
+
+        /* مصادر الأصول: الافتراضية + التجريبية مع تفعيل رفع الفيديو والصور */
+        try {
+          await instance.addDefaultAssetSources();
+        } catch {
+          /* غير حرج */
+        }
+        try {
+          await instance.addDemoAssetSources({
+            sceneMode: "Video",
+            withUploadAssetSources: true,
+          });
+        } catch {
+          /* غير حرج */
+        }
+
+        await instance.createVideoScene();
+
+        /* محاولة فتح الفيديو المُفلَت إن وُجد */
+        const f = fileRef.current;
+        if (f) await tryOpenVideo(instance, f);
+
+        if (!disposed) setStatus("ready");
+      } catch (err) {
+        if (disposed) return;
+        const msg =
+          err instanceof Error && err.message
+            ? err.message
+            : String(err);
+        setErrorMsg(msg);
+        setStatus("error");
       }
     };
-    window.addEventListener("message", onMessage);
-    return () => window.removeEventListener("message", onMessage);
-  }, [isAr]);
 
-  /* ملء الصفحة — Fullscreen API مع وضع موسّع احتياطي */
+    void boot();
+
+    return () => {
+      disposed = true;
+      try {
+        instanceRef.current?.dispose();
+      } catch {
+        /* ignore */
+      }
+      instanceRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [opened]);
+
+  /* إدخال ملف فيديو إلى المشهد — أفضل محاولة مع مسار بديل آمن */
+  const tryOpenVideo = async (instance: NonNullable<typeof instanceRef.current>, f: File) => {
+    try {
+      const anyInstance = instance as unknown as {
+        createVideoFromBlob?: (b: Blob) => Promise<unknown>;
+      };
+      if (typeof anyInstance.createVideoFromBlob === "function") {
+        await anyInstance.createVideoFromBlob(f);
+        return;
+      }
+      /* مسار المحرك: إنشاء مقطع فيديو من الملف على الصفحة الحالية */
+      const engine = (instance as unknown as { engine: any }).engine;
+      const url = URL.createObjectURL(f);
+      const page = engine.scene.getCurrentPage();
+      const video = engine.block.create("video");
+      engine.block.appendChild(page, video);
+      try {
+        const fill = engine.block.getFill(video);
+        engine.block.setString(fill, "fill/video/fileURI", url);
+      } catch {
+        /* إن اختلف اسم الخاصية نترك المقطع ويستورد المستخدم الملف من الواجهة */
+      }
+    } catch {
+      showToast(
+        isAr
+          ? "اسحب الفيديو إلى الخط الزمني داخل المحرر أو استخدم زر الرفع"
+          : "Drag the video onto the timeline inside the editor or use its upload button",
+        "info"
+      );
+    }
+  };
+
+  /* ملء الصفحة */
   const enterFull = () => {
     setFull(true);
-    const el = stageRef.current;
-    if (el?.requestFullscreen) el.requestFullscreen().catch(() => undefined);
+    stageRef.current?.requestFullscreen?.().catch(() => undefined);
   };
   const exitFull = () => {
     setFull(false);
@@ -157,52 +162,24 @@ export default function VideoEditor() {
     return () => document.removeEventListener("fullscreenchange", onFsChange);
   }, []);
 
-  /* إرسال الملف إلى المحرر بعد جاهزيته */
-  const sendFile = () => {
-    const win = iframeRef.current?.contentWindow;
-    const buf = bufferRef.current;
-    if (!win || !buf) return;
-    win.postMessage(
-      { type: "kraftoox-open-video", buffer: buf, mime: file?.type || "video/mp4" },
-      "*"
-    );
-    setSent(true);
-  };
-
-  useEffect(() => {
-    if (!opened || !bufferRef.current) return;
-    let tries = 0;
-    const timer = window.setInterval(() => {
-      if (!ready) {
-        if (++tries > 40) window.clearInterval(timer);
-        return;
-      }
-      sendFile();
-      window.clearInterval(timer);
-    }, 600);
-    return () => window.clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [opened, ready]);
-
-  const onFile = async (files: File[]) => {
-    const f = files[0];
+  const openWith = async (f: File) => {
+    fileRef.current = f;
     setFile(f);
-    setSent(false);
-    setReady(false);
-    try {
-      bufferRef.current = await f.arrayBuffer();
-      setOpened(true);
-    } catch {
-      showToast(isAr ? "تعذّر قراءة الفيديو" : "Could not read the video", "err");
-    }
+    setOpened(true);
   };
 
   const openEmpty = () => {
+    fileRef.current = null;
     setFile(null);
-    bufferRef.current = null;
-    setSent(false);
-    setReady(false);
     setOpened(true);
+  };
+
+  const close = () => {
+    exitFull();
+    setOpened(false);
+    setStatus("idle");
+    setFile(null);
+    fileRef.current = null;
   };
 
   return (
@@ -212,7 +189,7 @@ export default function VideoEditor() {
           <Dropzone
             accept={TOOL.accept}
             multiple={false}
-            onFiles={onFile}
+            onFiles={(files) => void openWith(files[0])}
             color={TOOL.color}
             title={isAr ? TOOL.drop[0] : TOOL.drop[1]}
             subtitle={isAr ? TOOL.dropSub[0] : TOOL.dropSub[1]}
@@ -244,17 +221,13 @@ export default function VideoEditor() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {!ready ? (
+              {status === "loading" && (
                 <span className="flex items-center gap-2 rounded-xl border bd-line bg-surface2 px-3 py-2 text-xs font-semibold c-muted">
                   <Spinner size={15} />
-                  {isAr ? "جارٍ تشغيل المحرر…" : "Starting the editor…"}
+                  {isAr ? "جارٍ تشغيل المحرك…" : "Booting the engine…"}
                 </span>
-              ) : file && !sent ? (
-                <button type="button" onClick={sendFile} className="btn btn-teal !py-2 !text-sm">
-                  <Icon name="upload" size={16} />
-                  {isAr ? "افتح الفيديو داخل المحرر" : "Open video in editor"}
-                </button>
-              ) : (
+              )}
+              {status === "ready" && (
                 <span className="flex items-center gap-1.5 rounded-xl bg-[var(--teal-soft)] px-3 py-2 text-xs font-bold c-teal">
                   <Icon name="check" size={15} />
                   {isAr ? "المحرر جاهز" : "Editor ready"}
@@ -263,34 +236,26 @@ export default function VideoEditor() {
               <button
                 type="button"
                 onClick={toggleFull}
+                disabled={status !== "ready"}
                 className={cx("btn !py-2 !text-sm", full ? "btn-amber" : "btn-ghost")}
-                title={full ? (isAr ? "تصغير المحرر" : "Shrink editor") : (isAr ? "تشغيل المحرر بكامل الصفحة" : "Run the editor on the full page")}
+                title={full ? (isAr ? "تصغير المحرر" : "Shrink editor") : (isAr ? "كامل الصفحة" : "Full page")}
               >
                 <Icon name={full ? "shrink" : "expand"} size={16} />
                 {full ? (isAr ? "تصغير" : "Shrink") : (isAr ? "كامل الصفحة" : "Full page")}
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  exitFull();
-                  setOpened(false);
-                  setFile(null);
-                  bufferRef.current = null;
-                }}
-                className="btn btn-ghost !py-2 !text-sm"
-              >
+              <button type="button" onClick={close} className="btn btn-ghost !py-2 !text-sm">
                 <Icon name="refresh" size={15} />
                 {isAr ? "فيديو آخر" : "Different video"}
               </button>
             </div>
           </div>
 
-          {/* المحرر المدمج */}
+          {/* إطار المحرر */}
           <div
             ref={stageRef}
             className={cx(
-              "card overflow-hidden transition-all duration-300",
-              full ? "fixed inset-0 z-[95] !rounded-none border-0" : "relative !rounded-xl"
+              "card relative overflow-hidden transition-all duration-300",
+              full ? "fixed inset-0 z-[95] !rounded-none border-0" : "!rounded-xl"
             )}
             style={{
               height: full ? "100dvh" : "calc(100dvh - 262px)",
@@ -298,14 +263,45 @@ export default function VideoEditor() {
               background: "#101114",
             }}
           >
-            <iframe
-              ref={iframeRef}
-              srcDoc={srcDoc}
-              title="CreativeEditor — Kraftoox"
-              className="block h-full w-full border-0"
-              allow="clipboard-read; clipboard-write; fullscreen"
-            />
-            {full && (
+            <div ref={containerRef} className="h-full w-full" />
+
+            {status === "loading" && (
+              <div className="absolute inset-0 z-10 grid place-items-center bg-[#101114]">
+                <div className="flex flex-col items-center gap-3">
+                  <span className="c-teal"><Spinner size={34} /></span>
+                  <p className="font-display text-sm font-semibold text-white/80">
+                    {isAr ? "نُشغّل محرك الفيديو الاحترافي… قد يستغرق التحميل الأول ثوانٍ" : "Booting the pro video engine… first load takes a few seconds"}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {status === "error" && (
+              <div className="absolute inset-0 z-10 grid place-items-center bg-[#101114] p-6">
+                <div className="flex max-w-md flex-col items-center gap-3 text-center">
+                  <span className="grid h-14 w-14 place-items-center rounded-2xl bg-[var(--red-soft)] c-red">
+                    <Icon name="alert" size={26} />
+                  </span>
+                  <p className="font-display text-base font-bold text-white">
+                    {isAr ? "تعذّر تشغيل المحرر" : "Could not start the editor"}
+                  </p>
+                  <p className="font-mono break-all text-[11px] leading-relaxed text-white/60" dir="ltr">
+                    {errorMsg}
+                  </p>
+                  <p className="text-xs leading-relaxed text-white/70">
+                    {isAr
+                      ? "تأكد من اتصال الإنترنت (تُجلب أصول المحرك من CDN رسمي) ثم أعد المحاولة. جرّب متصفح كروم أو إيدج حديثاً."
+                      : "Check your internet connection (engine assets load from the official CDN) and retry. A recent Chrome or Edge is recommended."}
+                  </p>
+                  <button type="button" onClick={() => { setStatus("idle"); setOpened(false); setTimeout(() => setOpened(true), 30); }} className="btn btn-red !py-2 !text-sm">
+                    <Icon name="refresh" size={15} />
+                    {isAr ? "إعادة المحاولة" : "Retry"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {full && status === "ready" && (
               <button
                 type="button"
                 onClick={exitFull}
@@ -323,20 +319,17 @@ export default function VideoEditor() {
             <InfoNote>
               {isAr ? (
                 <>
-                  المحرر يملأ المساحة المتاحة تلقائياً، وزر <b>«كامل الصفحة»</b> يوسّعه لملء الشاشة.
-                  اعمل على الخط الزمني: أضف مقاطع وصوراً ونصوصاً وموسيقى، ثم صدّر من زر{" "}
-                  <b dir="ltr">Export</b> بصيغة MP4. المحرك يعمل داخل متصفحك بالكامل — ملفك لا يُرفع
-                  لأي خادم تابع لنا. وضع التشغيل الحالي تجريبي وقد تظهر علامة مائية خفيفة على التصدير
-                  حتى ربط ترخيص دائم.
+                  اعمل على الخط الزمني: قصّ ودمج، نصوص وعناوين متحركة، موسيقى، فلاتر وانتقالات، ثم
+                  صدّر من زر <b dir="ltr">Export</b> بصيغة MP4. لإدخال فيديو: اسحبه إلى الخط الزمني
+                  أو استخدم زر الرفع داخل المحرر. الوضع الحالي تجريبي وقد تظهر علامة مائية خفيفة على
+                  التصدير حتى ربط ترخيص دائم.
                 </>
               ) : (
                 <>
-                  The frame fills the available space automatically, and <b>“Full page”</b> runs the
-                  editor across your entire screen. Work on the timeline: add clips, images, text and
-                  music, then export as MP4 via the <b dir="ltr">Export</b> button. The engine runs
-                  entirely in your browser — your file is never uploaded to our servers. The current
-                  mode is a trial and exports may carry a light watermark until a permanent license
-                  is connected.
+                  Work on the timeline: trim & merge, animated text and titles, music, filters and
+                  transitions, then export as MP4 via the <b dir="ltr">Export</b> button. To bring a
+                  video in, drag it onto the timeline or use the editor's upload button. The current
+                  mode is a trial — exports may carry a light watermark until a license is connected.
                 </>
               )}
             </InfoNote>
@@ -348,8 +341,8 @@ export default function VideoEditor() {
         <div className="mt-8">
           <InfoNote>
             {isAr
-              ? "نعرض داخل المنصة محرك CreativeEditor الاحترافي من img.ly — قصّ ودمج ونصوص وعناوين متحركة وانتقالات وموسيقى، مع معالجة داخل المتصفح وتصدير MP4. للحصول على تصدير بلا علامة مائية لموقعك، أضف ترخيصك الخاص في ملف الأداة."
-              : "We embed the professional CreativeEditor engine by img.ly — trimming, merging, animated text and titles, transitions and music, with in-browser processing and MP4 export. For watermark-free export on your own site, add your license key in the tool file."}
+              ? "نعرض داخل المنصة محرك CreativeEditor الاحترافي من img.ly — يعمل داخل متصفحك بالكامل، وملفك لا يُرفع لأي خادم تابع لنا. للحصول على تصدير بلا علامة مائية لموقعك، أضف ترخيصك الخاص في ملف الأداة."
+              : "We embed the professional CreativeEditor engine by img.ly — it runs entirely in your browser and your file is never uploaded to our servers. For watermark-free export on your own site, add your license key in the tool file."}
           </InfoNote>
         </div>
       )}
