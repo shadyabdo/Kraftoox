@@ -59,13 +59,21 @@
       })();
     </script>
 
-    <!-- ====== الخطوط: Changa للعناوين + IBM Plex Sans Arabic للنصوص + IBM Plex Mono للأرقام ====== -->
+    <!-- ====== الخطوط: Rubik (عربي + لاتيني) للعناوين والنصوص + JetBrains Mono للتفاصيل التقنية ====== -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Changa:wght@400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap"
       rel="stylesheet"
     />
+    <script>
+      /* حماية من وميض الاتجاه/اللغة قبل تحميل React */
+      try {
+        var kxLang = localStorage.getItem("kraftoox-lang");
+        document.documentElement.dir = kxLang === "en" ? "ltr" : "rtl";
+        document.documentElement.lang = kxLang === "en" ? "en" : "ar";
+      } catch (e) {}
+    </script>
 
     <!-- ====== Schema.org: WebSite + SoftwareApplication ====== -->
     <script type="application/ld+json">
