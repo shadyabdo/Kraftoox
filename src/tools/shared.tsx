@@ -3,34 +3,42 @@ import type { ToolDef } from "../data/tools";
 import { TOOLS } from "../data/tools";
 import { Link } from "../lib/router";
 import { usePageMeta, useToolJsonLd } from "../lib/seo";
+import { useI18n } from "../i18n";
 import { Icon, type IconName } from "../components/Icons";
 import { Reveal } from "../components/Reveal";
 import { Spinner } from "../components/bits";
 
 /* ===== هيكل صفحة الأداة:breadcrumb + ترويسة + مميزات + روابط ذات صلة ===== */
 export function ToolShell({ tool, children }: { tool: ToolDef; children: ReactNode }) {
+  const { isAr } = useI18n();
   usePageMeta(`/tool/${tool.slug}`);
-  useToolJsonLd({ slug: tool.slug, name: tool.name, desc: tool.long });
+  useToolJsonLd({
+    slug: tool.slug,
+    name: isAr ? tool.name : tool.nameEn,
+    desc: isAr ? tool.long : tool.longEn,
+  });
 
   const related = TOOLS.filter((t) => t.category === tool.category && t.slug !== tool.slug).slice(0, 3);
-  const CAT_LABELS: Record<string, string> = {
-    image: "أدوات الصور",
-    pdf: "أدوات PDF",
-    video: "أدوات الفيديو",
-    ai: "الذكاء الاصطناعي",
+  const CAT_LABELS: Record<string, [string, string]> = {
+    image: ["أدوات الصور", "Image Tools"],
+    pdf: ["أدوات PDF", "PDF Tools"],
+    video: ["أدوات الفيديو", "Video Tools"],
+    ai: ["الذكاء الاصطناعي", "AI Studio"],
   };
-  const catLabel = CAT_LABELS[tool.category] ?? "الأدوات";
+  const catLabel = isAr
+    ? CAT_LABELS[tool.category]?.[0] ?? "الأدوات"
+    : CAT_LABELS[tool.category]?.[1] ?? "Tools";
   const catTo = "/tools";
 
   return (
     <main className="mx-auto max-w-4xl px-4 pb-10">
       {/* breadcrumb */}
-      <nav className="flex items-center gap-1.5 py-5 text-xs c-muted" aria-label="مسار التنقل">
-        <Link to="/" className="transition-colors hover:text-[var(--teal)]">الرئيسية</Link>
+      <nav className="flex items-center gap-1.5 py-5 text-xs c-muted" aria-label={isAr ? "مسار التنقل" : "Breadcrumb"}>
+        <Link to="/" className="transition-colors hover:text-[var(--teal)]">{isAr ? "الرئيسية" : "Home"}</Link>
         <Icon name="arrow" size={12} className="opacity-50" />
         <Link to={catTo} className="transition-colors hover:text-[var(--teal)]">{catLabel}</Link>
         <Icon name="arrow" size={12} className="opacity-50" />
-        <span className="font-semibold" style={{ color: tool.color }}>{tool.name}</span>
+        <span className="font-semibold" style={{ color: tool.color }}>{isAr ? tool.name : tool.nameEn}</span>
       </nav>
 
       {/* ترويسة الأداة */}
@@ -46,10 +54,14 @@ export function ToolShell({ tool, children }: { tool: ToolDef; children: ReactNo
           <Icon name={tool.icon} size={32} />
         </span>
         <div className="flex-1">
-          <h1 className="font-display text-3xl font-bold leading-tight sm:text-4xl">{tool.name}</h1>
-          <p className="c-muted mt-2 max-w-2xl text-sm leading-relaxed sm:text-[15px]">{tool.long}</p>
+          <h1 className="font-display text-3xl font-extrabold leading-tight sm:text-4xl">
+            {isAr ? tool.name : tool.nameEn}
+          </h1>
+          <p className="c-muted mt-2 max-w-2xl text-sm leading-relaxed sm:text-[15px]">
+            {isAr ? tool.long : tool.longEn}
+          </p>
           <ul className="mt-4 grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
-            {tool.features.map((f) => (
+            {(isAr ? tool.features : tool.featuresEn).map((f) => (
               <li key={f} className="flex items-start gap-2 text-[13px]">
                 <span className="mt-0.5 shrink-0" style={{ color: tool.color }}>
                   <Icon name="check" size={14} />
@@ -67,7 +79,7 @@ export function ToolShell({ tool, children }: { tool: ToolDef; children: ReactNo
             background: `color-mix(in srgb, ${tool.color} 9%, transparent)`,
           }}
         >
-          {tool.badge}
+          {isAr ? tool.badge : tool.badgeEn}
         </span>
       </header>
 
@@ -75,9 +87,9 @@ export function ToolShell({ tool, children }: { tool: ToolDef; children: ReactNo
 
       {/* أدوات ذات صلة */}
       <Reveal className="mt-14">
-        <h2 className="font-display mb-4 flex items-center gap-2 text-lg font-bold">
+        <h2 className="font-display mb-4 flex items-center gap-2 text-lg font-extrabold">
           <span className="c-amber"><Icon name="sparkle" size={18} /></span>
-          أدوات قد تحتاجها أيضاً
+          {isAr ? "أدوات قد تحتاجها أيضاً" : "You may also need"}
         </h2>
         <div className="grid gap-3 sm:grid-cols-3">
           {related.map((t) => (
@@ -93,7 +105,7 @@ export function ToolShell({ tool, children }: { tool: ToolDef; children: ReactNo
               >
                 <Icon name={t.icon} size={20} />
               </span>
-              <span className="font-display text-sm font-bold leading-snug">{t.name}</span>
+              <span className="font-display text-sm font-bold leading-snug">{isAr ? t.name : t.nameEn}</span>
             </Link>
           ))}
         </div>

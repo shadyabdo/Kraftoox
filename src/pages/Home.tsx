@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { TOOLS, IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS, AI_TOOLS, getTool, type ToolDef } from "../data/tools";
 import { Link } from "../lib/router";
+import { useI18n } from "../i18n";
 import { getProcessedCount, matchesQuery, copyText, showToast } from "../lib/utils";
 import { Icon, type IconName } from "../components/Icons";
 import { ToolCard } from "../components/ToolCard";
@@ -162,6 +163,7 @@ export function LiveStack() {
 
 /* ===== الصفحة الرئيسية ===== */
 export default function Home({ query, focusSearch, scrollToTools }: { query: string; focusSearch: boolean; scrollToTools: boolean }) {
+  const { isAr } = useI18n();
   const [q, setQ] = useState(query);
   const [processed, setProcessed] = useState(getProcessedCount());
   const searchRef = useRef<HTMLInputElement>(null);
@@ -200,7 +202,12 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
   const filtered = useMemo(
     () =>
       q.trim()
-        ? TOOLS.filter((t) => matchesQuery(`${t.name} ${t.short} ${t.keywords} ${t.badge}`, q))
+        ? TOOLS.filter((t) =>
+            matchesQuery(
+              `${t.name} ${t.nameEn} ${t.short} ${t.shortEn} ${t.keywords} ${t.keywordsEn} ${t.badge} ${t.badgeEn}`,
+              q
+            )
+          )
         : [],
     [q]
   );
@@ -219,16 +226,18 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
           <Reveal>
             <p className="inline-flex items-center gap-2 rounded-full border bd-line bg-surface px-3.5 py-1.5 text-xs font-semibold">
               <span className="anim-pulse-soft inline-block h-2 w-2 rounded-full" style={{ background: "var(--teal)" }} />
-              ١٧ أداة مجانية · محرر فيديو · تسجيل شاشة · ذكاء اصطناعي · بدون تسجيل
+              {isAr
+                ? "١٧ أداة مجانية · محرر فيديو · تسجيل شاشة · ذكاء اصطناعي · بدون تسجيل"
+                : "17 free tools · video editor · screen recorder · AI · no sign-up"}
             </p>
           </Reveal>
 
           <Reveal delay={90}>
             <h1 className="font-display mt-5 text-4xl font-extrabold leading-[1.15] sm:text-5xl lg:text-[3.4rem]">
-              كل أدوات ملفاتك…
+              {isAr ? "كل أدوات ملفاتك…" : "All your file tools…"}
               <br />
               <span className="relative inline-block c-teal">
-                داخل متصفحك
+                {isAr ? "داخل متصفحك" : "in your browser"}
                 <svg className="absolute -bottom-2 start-0 w-full" viewBox="0 0 220 14" fill="none" aria-hidden="true">
                   <path
                     d="M4 10 C60 2, 150 2, 216 8"
@@ -248,9 +257,19 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
 
           <Reveal delay={180}>
             <p className="c-muted mt-6 max-w-xl text-base leading-relaxed sm:text-lg">
-              اضغط صورك وكبّرها، أزل العلامات المائية، حرّر صورك كمحترف، ادمج ملفات PDF — بل
-              و<b className="text-[var(--ink)]">ولّد صوراً وفيديوهات بالذكاء الاصطناعي بالعربية</b>.
-              بسرعة المواقع الكبرى وخصوصية لا تضاهى: المعالجة كلها على جهازك، ولا يُرفع أي ملف.
+              {isAr ? (
+                <>
+                  اضغط صورك وكبّرها، أزل العلامات المائية، حرّر صورك كمحترف، ادمج ملفات PDF — بل
+                  و<b className="text-[var(--ink)]">ولّد صوراً وفيديوهات بالذكاء الاصطناعي بالعربية</b>.
+                  بسرعة المواقع الكبرى وخصوصية لا تضاهى: المعالجة كلها على جهازك، ولا يُرفع أي ملف.
+                </>
+              ) : (
+                <>
+                  Compress and upscale images, remove watermarks, edit photos like a pro, merge PDFs —
+                  and even <b className="text-[var(--ink)]">generate AI images and videos in Arabic</b>.
+                  Big-site speed with unmatched privacy: everything runs on your device, nothing is uploaded.
+                </>
+              )}
             </p>
           </Reveal>
 
@@ -265,9 +284,9 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
                 type="search"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="ما الذي تريد فعله؟ جرّب: ضغط، دمج، webp…"
+                placeholder={isAr ? "ما الذي تريد فعله؟ جرّب: ضغط، دمج، webp…" : "What do you need? Try: compress, merge, webp…"}
                 className="input !rounded-2xl !border-2 !py-3.5 !pe-14 !ps-11 !text-[15px]"
-                aria-label="ابحث عن أداة"
+                aria-label={isAr ? "ابحث عن أداة" : "Search for a tool"}
               />
               {q ? (
                 <button
@@ -286,11 +305,11 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
 
           <Reveal delay={330}>
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="c-muted text-xs">الأكثر استخداماً:</span>
+              <span className="c-muted text-xs">{isAr ? "الأكثر استخداماً:" : "Most used:"}</span>
               {QUICK.map((t) => (
                 <Link key={t.slug} to={`/tool/${t.slug}`} className="chip">
                   <span style={{ color: t.color }}><Icon name={t.icon} size={13} /></span>
-                  {t.name}
+                  {isAr ? t.name : t.nameEn}
                 </Link>
               ))}
             </div>
@@ -298,9 +317,9 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
 
           <Reveal delay={400}>
             <div className="mt-9 grid max-w-xl grid-cols-3 gap-4 border-t bd-line pt-6">
-              <Counter to={Math.max(processed, 0)} label={`ملفاً عولج على هذا الجهاز${processed === 0 ? " (ابدأ الآن!)" : ""}`} />
-              <Counter to={TOOLS.length} label="أداة متخصصة" />
-              <Counter to={0} label="ملفات رُفعت لخوادم" />
+              <Counter to={Math.max(processed, 0)} label={isAr ? `ملفاً عولج على هذا الجهاز${processed === 0 ? " (ابدأ الآن!)" : ""}` : `files processed on this device${processed === 0 ? " (start now!)" : ""}`} />
+              <Counter to={TOOLS.length} label={isAr ? "أداة متخصصة" : "specialized tools"} />
+              <Counter to={0} label={isAr ? "ملفات رُفعت لخوادم" : "files uploaded to servers"} />
             </div>
           </Reveal>
         </div>
@@ -331,8 +350,8 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
         {searching ? (
           <div>
             <SectionHead
-              kicker={`${filtered.length} نتيجة`}
-              title={filtered.length ? `نتائج البحث عن «${q.trim()}»` : "لا توجد نتائج"}
+              kicker={isAr ? `${filtered.length} نتيجة` : `${filtered.length} result${filtered.length === 1 ? "" : "s"}`}
+              title={filtered.length ? (isAr ? `نتائج البحث عن «${q.trim()}»` : `Results for “${q.trim()}”`) : (isAr ? "لا توجد نتائج" : "No results")}
               icon="search"
             />
             {filtered.length ? (
@@ -346,13 +365,15 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
                 <span className="grid h-14 w-14 place-items-center rounded-2xl bg-[var(--amber-soft)] c-amber">
                   <Icon name="search" size={26} />
                 </span>
-                <p className="font-display text-lg font-bold">لم نجد أداة تطابق «{q.trim()}»</p>
+                <p className="font-display text-lg font-bold">{isAr ? <>لم نجد أداة تطابق «{q.trim()}»</> : <>No tool matches “{q.trim()}”</>}</p>
                 <p className="c-muted max-w-md text-sm">
-                  جرّب كلمات مثل: ضغط، تحويل، دمج، استخراج، رابط — أو تصفح كل الأدوات بالأسفل.
+                  {isAr
+                    ? "جرّب كلمات مثل: ضغط، تحويل، دمج، استخراج، رابط — أو تصفح كل الأدوات بالأسفل."
+                    : "Try words like: compress, convert, merge, extract, link — or browse all tools below."}
                 </p>
                 <button type="button" onClick={() => setQ("")} className="btn btn-ghost mt-2">
                   <Icon name="close" size={15} />
-                  مسح البحث
+                  {isAr ? "مسح البحث" : "Clear search"}
                 </button>
               </div>
             )}
@@ -361,9 +382,9 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
           <>
             <div id="image-tools">
               <SectionHead
-                kicker="قسم الصور"
-                title="أدوات الصور"
-                desc="كل ما تحتاجه لصورك: ضغط ذكي، تغيير أبعاد، تحويل صيغ، وروابط مشاركة مباشرة."
+                kicker={isAr ? "قسم الصور" : "Image section"}
+                title={isAr ? "أدوات الصور" : "Image Tools"}
+                desc={isAr ? "كل ما تحتاجه لصورك: ضغط ذكي، تغيير أبعاد، تحويل صيغ، وروابط مشاركة مباشرة." : "Everything your images need: smart compression, resizing, format conversion and direct share links."}
                 icon="image"
                 color="var(--teal)"
               />
@@ -376,9 +397,9 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
 
             <div id="pdf-tools" className="mt-14">
               <SectionHead
-                kicker="قسم ملفات PDF"
-                title="أدوات PDF"
-                desc="ضغط ودمج وتحويل واستخراج — بمحرك pdf-lib يعمل بالكامل داخل متصفحك."
+                kicker={isAr ? "قسم ملفات PDF" : "PDF section"}
+                title={isAr ? "أدوات PDF" : "PDF Tools"}
+                desc={isAr ? "ضغط ودمج وتحويل واستخراج — بمحرك pdf-lib يعمل بالكامل داخل متصفحك." : "Compress, merge, convert and extract — powered by pdf-lib, running entirely in your browser."}
                 icon="pdf"
                 color="var(--red)"
               />
@@ -391,9 +412,9 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
 
             <div id="video-tools" className="mt-14">
               <SectionHead
-                kicker="قسم الفيديو — جديد"
-                title="أدوات الفيديو"
-                desc="تكبير الدقة وإزالة العلامات المائية — إعادة ترميز إطارية كاملة داخل متصفحك مع الحفاظ على الصوت."
+                kicker={isAr ? "قسم الفيديو — جديد" : "Video section — new"}
+                title={isAr ? "أدوات الفيديو" : "Video Tools"}
+                desc={isAr ? "تكبير الدقة وإزالة العلامات المائية — إعادة ترميز إطارية كاملة داخل متصفحك مع الحفاظ على الصوت." : "Upscaling and watermark removal — full frame-by-frame re-encoding in your browser, audio preserved."}
                 icon="video"
                 color="var(--blue)"
               />
@@ -406,9 +427,9 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
 
             <div id="ai-tools" className="mt-14">
               <SectionHead
-                kicker="قسم الذكاء الاصطناعي — جديد"
-                title="التوليد بالذكاء الاصطناعي"
-                desc="صور احترافية وفيديوهات يوتيوب كاملة بالسيناريو العربي — بلا حدود، بلا علامات مائية، ومجاني للأبد."
+                kicker={isAr ? "قسم الذكاء الاصطناعي — جديد" : "AI section — new"}
+                title={isAr ? "التوليد بالذكاء الاصطناعي" : "AI Generation"}
+                desc={isAr ? "صور احترافية وفيديوهات يوتيوب كاملة بالسيناريو العربي — بلا حدود، بلا علامات مائية، ومجاني للأبد." : "Professional images and full YouTube videos with an Arabic script — unlimited, watermark-free, free forever."}
                 icon="ai"
                 color="var(--amber)"
               />

@@ -1,5 +1,7 @@
-import { useRef, useState, type CSSProperties, type DragEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type DragEvent } from "react";
 import { cx, showToast } from "../lib/utils";
+import { t as tr } from "../i18n";
+import { takePendingFiles } from "../lib/pending";
 import { Icon } from "./Icons";
 
 interface DropzoneProps {
@@ -17,14 +19,26 @@ export function Dropzone({
   accept,
   multiple = false,
   onFiles,
-  title = "اسحب ملفاتك هنا",
-  subtitle = "أو انقر للاختيار من جهازك — يمكنك أيضاً اللصق بـ Ctrl+V",
+  title,
+  subtitle,
   color = "var(--teal)",
   compact = false,
 }: DropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [live, setLive] = useState(false);
   const acceptList = accept.split(",").map((s) => s.trim().toLowerCase());
+
+  const dzTitle = title ?? tr("اسحب ملفاتك هنا", "Drop your files here");
+  const dzSubtitle = subtitle ?? tr("أو انقر للاختيار من جهازك", "or click to browse your device");
+
+  /* التقاط ملف مُمرَّر من صفحة الهبوط أو من قسم آخر */
+  useEffect(() => {
+    const files = takePendingFiles();
+    if (!files?.length) return;
+    const ok = validate(files);
+    if (ok.length) onFiles(multiple ? ok : ok.slice(0, 1));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const validate = (files: File[]): File[] => {
     /* بعض الأنظمة لا ترسل نوع MIME — نستنتجه من الامتداد كي لا يُرفض ملف سليم */
@@ -112,9 +126,9 @@ export function Dropzone({
 
       <div>
         <p className={cx("font-display font-bold", compact ? "text-base" : "text-lg sm:text-xl")}>
-          {title}
+          {dzTitle}
         </p>
-        <p className="c-muted mt-1 text-xs sm:text-sm">{subtitle}</p>
+        <p className="c-muted mt-1 text-xs sm:text-sm">{dzSubtitle}</p>
       </div>
 
       <span
@@ -122,7 +136,7 @@ export function Dropzone({
         style={{ background: color, color: color.includes("amber") ? "#2b1c02" : undefined }}
       >
         <Icon name="file" size={16} />
-        اختر {multiple ? "الملفات" : "ملفاً"}
+        {tr(multiple ? "اختر الملفات" : "اختر ملفاً", multiple ? "Choose files" : "Choose a file")}
       </span>
 
       <input
