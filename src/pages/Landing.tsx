@@ -11,7 +11,7 @@ import { Reveal } from "../components/Reveal";
 type FileKind = "image" | "pdf" | "video";
 
 const KIND_TOOLS: Record<FileKind, string[]> = {
-  image: ["compress-image", "convert-image", "upscale-image", "photo-editor"],
+  image: ["image-translator", "photo-editor", "compress-image", "upscale-image", "remove-watermark"],
   pdf: ["compress-pdf", "merge-pdf", "extract-pdf-images", "images-to-pdf"],
   video: ["video-editor"],
 };
@@ -260,7 +260,7 @@ export default function Landing() {
           <Reveal delay={300}>
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <span className="c-muted text-xs font-semibold">{t("الأكثر استخداماً:", "Most used:")}</span>
-              {["compress-image", "photo-editor", "video-editor", "merge-pdf"].map((s) => {
+              {["compress-image", "image-to-url", "photo-editor", "video-editor", "merge-pdf"].map((s) => {
                 const tool = getTool(s)!;
                 return (
                   <Link key={s} to={`/tool/${s}`} className="chip !text-xs">

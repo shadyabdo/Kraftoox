@@ -36,6 +36,8 @@ const ExtractPdfImages = lazyRetry(() => import("./tools/ExtractPdfImages"));
 const UpscaleImage = lazyRetry(() => import("./tools/UpscaleImage"));
 const RemoveWatermark = lazyRetry(() => import("./tools/RemoveWatermark"));
 const PhotoEditor = lazyRetry(() => import("./tools/PhotoEditor"));
+const ImageTranslator = lazyRetry(() => import("./tools/ImageTranslator"));
+const ImageToUrl = lazyRetry(() => import("./tools/ImageToUrl"));
 const VideoEditor = lazyRetry(() => import("./tools/VideoEditor"));
 
 const TOOL_PAGES: Record<string, ComponentType> = {
@@ -50,6 +52,8 @@ const TOOL_PAGES: Record<string, ComponentType> = {
   "upscale-image": UpscaleImage,
   "remove-watermark": RemoveWatermark,
   "photo-editor": PhotoEditor,
+  "image-translator": ImageTranslator,
+  "image-to-url": ImageToUrl,
   "video-editor": VideoEditor,
 };
 
