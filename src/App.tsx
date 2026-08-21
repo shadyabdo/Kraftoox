@@ -5,6 +5,7 @@ import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { Spinner, Toaster } from "./components/bits";
 import { Icon } from "./components/Icons";
+import { LangProvider, useI18n } from "./i18n";
 import Landing from "./pages/Landing";
 import Home from "./pages/Home";
 import Category from "./pages/Category";
@@ -33,14 +34,9 @@ const MergePdf = lazyRetry(() => import("./tools/MergePdf"));
 const ImagesToPdf = lazyRetry(() => import("./tools/ImagesToPdf"));
 const ExtractPdfImages = lazyRetry(() => import("./tools/ExtractPdfImages"));
 const UpscaleImage = lazyRetry(() => import("./tools/UpscaleImage"));
-const UpscaleVideo = lazyRetry(() => import("./tools/UpscaleVideo"));
 const RemoveWatermark = lazyRetry(() => import("./tools/RemoveWatermark"));
-const RemoveWatermarkVideo = lazyRetry(() => import("./tools/RemoveWatermarkVideo"));
 const PhotoEditor = lazyRetry(() => import("./tools/PhotoEditor"));
-const AiImage = lazyRetry(() => import("./tools/AiImage"));
-const AiVideo = lazyRetry(() => import("./tools/AiVideo"));
 const VideoEditor = lazyRetry(() => import("./tools/VideoEditor"));
-const ScreenRecorder = lazyRetry(() => import("./tools/ScreenRecorder"));
 
 const TOOL_PAGES: Record<string, ComponentType> = {
   "compress-image": CompressImage,
@@ -52,17 +48,12 @@ const TOOL_PAGES: Record<string, ComponentType> = {
   "images-to-pdf": ImagesToPdf,
   "extract-pdf-images": ExtractPdfImages,
   "upscale-image": UpscaleImage,
-  "upscale-video": UpscaleVideo,
   "remove-watermark": RemoveWatermark,
-  "remove-watermark-video": RemoveWatermarkVideo,
   "photo-editor": PhotoEditor,
-  "ai-image": AiImage,
-  "ai-video": AiVideo,
   "video-editor": VideoEditor,
-  "screen-recorder": ScreenRecorder,
 };
 
-const CATEGORY_SLUGS = ["images", "pdf", "video", "ai"];
+const CATEGORY_SLUGS = ["images", "pdf", "video"];
 
 /* حاجز أخطاء: يعرض رسالة واضحة بدل الشاشة البيضاء عند أي عطل */
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -121,29 +112,31 @@ function PageLoader() {
 }
 
 function NotFound() {
+  const { t } = useI18n();
   return (
     <main className="mx-auto flex max-w-xl flex-col items-center px-4 py-24 text-center">
-      <span className="grid h-16 w-16 place-items-center rounded-2xl bg-[var(--amber-soft)] c-amber">
-        <Icon name="file" size={30} />
-      </span>
-      <h1 className="font-display mt-5 text-3xl font-bold">الصفحة غير موجودة</h1>
+      <p className="font-mono text-6xl font-bold c-amber" dir="ltr">404</p>
+      <h1 className="font-display mt-4 text-3xl font-bold">{t("الصفحة غير موجودة", "Page not found")}</h1>
       <p className="c-muted mt-2 text-sm leading-relaxed">
-        يبدو أن الرابط الذي فتحته غير صحيح — لكن كل أدواتنا ما تزال في انتظارك.
+        {t(
+          "الرابط الذي فتحته غير صحيح — لكن كل الأدوات ما تزال في انتظارك.",
+          "The link you opened doesn't exist — but all the tools are still waiting for you."
+        )}
       </p>
       <div className="mt-6 flex gap-3">
         <Link to="/" className="btn btn-teal">
           <Icon name="sparkle" size={17} />
-          الصفحة الرئيسية
+          {t("الصفحة الرئيسية", "Home")}
         </Link>
         <Link to="/tools" className="btn btn-ghost">
-          كل الأدوات
+          {t("كل الأدوات", "All tools")}
         </Link>
       </div>
     </main>
   );
 }
 
-export default function App() {
+function AppInner() {
   const route = useRoute();
 
   const isTool = route.parts[0] === "tool";
@@ -176,9 +169,11 @@ export default function App() {
     page = <NotFound />;
   }
 
+  /* الاشتراك في اللغة يعيد رسم الشجرة كاملة فتتحدث كل النصوص فور التبديل */
+  const { lang } = useI18n();
+
   return (
-    <div className="min-h-screen">
-      {/* خلفية محيطية: تدرجات إشعاعية ناعمة + شبكة نقاط */}
+    <div className="min-h-screen" data-lang={lang}>
       <div className="ambient" aria-hidden="true" />
       <div className="dotgrid" aria-hidden="true" />
 
@@ -189,5 +184,14 @@ export default function App() {
       <Footer />
       <Toaster />
     </div>
+  );
+}
+
+/* الجذر يلف التطبيق بمزوّد اللغة (عربي/إنجليزي) */
+export default function App() {
+  return (
+    <LangProvider>
+      <AppInner />
+    </LangProvider>
   );
 }

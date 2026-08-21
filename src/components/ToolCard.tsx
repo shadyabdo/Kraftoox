@@ -1,10 +1,12 @@
 import type { CSSProperties } from "react";
 import type { ToolDef } from "../data/tools";
 import { Link } from "../lib/router";
+import { useI18n } from "../i18n";
 import { Icon } from "./Icons";
 import { Reveal } from "./Reveal";
 
 export function ToolCard({ tool, delay = 0 }: { tool: ToolDef; delay?: number }) {
+  const { isAr } = useI18n();
   return (
     <Reveal delay={delay} className="h-full">
       <Link
@@ -25,7 +27,7 @@ export function ToolCard({ tool, delay = 0 }: { tool: ToolDef; delay?: number })
           <span className="flex items-center gap-1.5">
             {tool.isNew && (
               <span className="font-display anim-pulse-soft rounded-md bg-[var(--red)] px-2 py-1 text-[10px] font-bold text-white">
-                جديد
+                {isAr ? "جديد" : "NEW"}
               </span>
             )}
             <span
@@ -35,25 +37,31 @@ export function ToolCard({ tool, delay = 0 }: { tool: ToolDef; delay?: number })
                 background: `color-mix(in srgb, ${tool.color} 9%, transparent)`,
               }}
             >
-              {tool.category === "image" ? "صور" : tool.category === "pdf" ? "PDF" : tool.category === "video" ? "فيديو" : "AI"}
+              {tool.category === "image"
+                ? isAr ? "صور" : "Images"
+                : tool.category === "pdf"
+                ? "PDF"
+                : tool.category === "video"
+                ? isAr ? "فيديو" : "Video"
+                : "AI"}
             </span>
           </span>
         </div>
 
         <div className="flex-1">
-          <h3 className="font-display text-lg font-bold leading-tight">{tool.name}</h3>
-          <p className="c-muted mt-1.5 text-[13px] leading-relaxed">{tool.short}</p>
+          <h3 className="font-display text-lg font-extrabold leading-tight">{isAr ? tool.name : tool.nameEn}</h3>
+          <p className="c-muted mt-1.5 text-[13px] leading-relaxed">{isAr ? tool.short : tool.shortEn}</p>
         </div>
 
         <div className="flex items-center justify-between border-t bd-line pt-3">
           <span className="font-mono text-[10px] tracking-wider c-muted" dir="ltr">
-            {tool.badge}
+            {isAr ? tool.badge : tool.badgeEn}
           </span>
           <span
             className="flex items-center gap-1 text-xs font-semibold transition-transform duration-300 group-hover:-translate-x-1"
             style={{ color: tool.color }}
           >
-            فتح الأداة
+            {isAr ? "فتح الأداة" : "Open tool"}
             <Icon name="arrow" size={15} />
           </span>
         </div>

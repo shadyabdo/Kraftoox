@@ -1,584 +1,352 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Dropzone } from "../components/Dropzone";
-import { BlobLink, InfoNote } from "../components/bits";
+import { BlobLink, InfoNote, Spinner } from "../components/bits";
 import { getTool } from "../data/tools";
-import { bumpProcessedCount, downloadBlob, formatBytes, showToast } from "../lib/utils";
-import { ToolShell } from "./shared";
-import { Icon, type IconName } from "../components/Icons";
-import { cx } from "../lib/utils";
+import { useI18n } from "../i18n";
+import { cx, formatBytes, showToast } from "../lib/utils";
+import { ToolShell, FieldLabel } from "./shared";
+import { Icon } from "../components/Icons";
 
 const TOOL = getTool("photo-editor")!;
+const PHOTOPEA_ORIGIN = "https://www.photopea.com";
 
-interface Adjust {
-  brightness: number;
-  contrast: number;
-  saturate: number;
-  grayscale: number;
-  sepia: number;
-  hue: number;
-  blur: number;
+/* تحديد نوع الملف الناتج من بايتاته الأولى */
+function sniff(buf: ArrayBuffer): { mime: string; ext: string } {
+  const b = new Uint8Array(buf.slice(0, 8));
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47)
+    return { mime: "image/png", ext: "png" };
+  if (b[0] === 0xff && b[1] === 0xd8) return { mime: "image/jpeg", ext: "jpg" };
+  if (b[0] === 0x38 && b[1] === 0x42 && b[2] === 0x50 && b[3] === 0x53)
+    return { mime: "image/vnd.adobe.photoshop", ext: "psd" };
+  if (b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46) return { mime: "image/gif", ext: "gif" };
+  return { mime: "image/vnd.adobe.photoshop", ext: "psd" };
 }
 
-const DEFAULT_ADJ: Adjust = { brightness: 100, contrast: 100, saturate: 100, grayscale: 0, sepia: 0, hue: 0, blur: 0 };
-
-const PRESETS: Array<{ id: string; label: string; adj: Adjust }> = [
-  { id: "none", label: "طبيعي", adj: DEFAULT_ADJ },
-  { id: "warm", label: "دافئ", adj: { ...DEFAULT_ADJ, brightness: 105, saturate: 118, sepia: 22, contrast: 104 } },
-  { id: "cold", label: "بارد", adj: { ...DEFAULT_ADJ, brightness: 102, saturate: 96, hue: 12, contrast: 106 } },
-  { id: "bw", label: "أبيض وأسود", adj: { ...DEFAULT_ADJ, grayscale: 100, contrast: 112 } },
-  { id: "vintage", label: "فينتاج", adj: { ...DEFAULT_ADJ, sepia: 48, contrast: 92, brightness: 106, saturate: 85 } },
-  { id: "drama", label: "درامي", adj: { ...DEFAULT_ADJ, contrast: 128, saturate: 110, brightness: 96 } },
-  { id: "soft", label: "ناعم", adj: { ...DEFAULT_ADJ, blur: 0.6, brightness: 106, saturate: 92 } },
-];
-
-function filterString(a: Adjust): string {
-  return `brightness(${a.brightness}%) contrast(${a.contrast}%) saturate(${a.saturate}%) grayscale(${a.grayscale}%) sepia(${a.sepia}%) hue-rotate(${a.hue}deg) blur(${a.blur}px)`;
+interface Result {
+  blob: Blob;
+  ext: string;
+  size: number;
+  at: number;
+  version: number;
 }
-
-type ToolId = "brush" | "eraser" | "text" | "crop";
 
 export default function PhotoEditor() {
-  const baseRef = useRef<HTMLCanvasElement | null>(null);
-  const previewRef = useRef<HTMLCanvasElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const history = useRef<string[]>([]);
-  const histIdx = useRef(-1);
-  const drawing = useRef(false);
-  const lastPt = useRef<{ x: number; y: number } | null>(null);
-  const cropStart = useRef<{ x: number; y: number } | null>(null);
+  const { isAr } = useI18n();
+  const [file, setFile] = useState<File | null>(null);
+  const [opened, setOpened] = useState(false);
+  const [frameReady, setFrameReady] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [result, setResult] = useState<Result | null>(null);
+  const [full, setFull] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const bufferRef = useRef<ArrayBuffer | null>(null);
 
-  const [loaded, setLoaded] = useState(false);
-  const [fileName, setFileName] = useState("");
-  const [fileSize, setFileSize] = useState(0);
-  const [tool, setTool] = useState<ToolId>("brush");
-  const [adj, setAdj] = useState<Adjust>(DEFAULT_ADJ);
-  const [preset, setPreset] = useState("none");
-  const [brushSize, setBrushSize] = useState(16);
-  const [brushColor, setBrushColor] = useState("#d64550");
-  const [textVal, setTextVal] = useState("نصّك هنا");
-  const [textSize, setTextSize] = useState(72);
-  const [textColor, setTextColor] = useState("#ffffff");
-  const [cropSel, setCropSel] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
-  const [exportFormat, setExportFormat] = useState<"png" | "jpeg" | "webp">("png");
-  const [quality, setQuality] = useState(0.92);
-  const [version, setVersion] = useState(0);
-  const [exported, setExported] = useState<{ blob: Blob; name: string } | null>(null);
+  /* بيئة Photopea: لغة الواجهة + صيغة الحفظ الافتراضية */
+  const env = useMemo(
+    () =>
+      `${PHOTOPEA_ORIGIN}/?p=${encodeURIComponent(
+        JSON.stringify({
+          language: isAr ? "ar" : "en",
+          output: "psd",
+          photoshopUI: 1,
+        })
+      )}`,
+    [isAr]
+  );
 
-  const render = useCallback(() => {
-    const base = baseRef.current;
-    const pv = previewRef.current;
-    if (!base || !pv) return;
-    pv.width = base.width;
-    pv.height = base.height;
-    const ctx = pv.getContext("2d")!;
-    ctx.filter = filterString(adj);
-    ctx.drawImage(base, 0, 0);
-    ctx.filter = "none";
-  }, [adj]);
+  /* استقبال النتائج من Photopea عبر postMessage */
+  useEffect(() => {
+    const onMessage = (e: MessageEvent) => {
+      if (e.origin !== PHOTOPEA_ORIGIN) return;
+      if (e.data instanceof ArrayBuffer && e.data.byteLength > 8) {
+        const { mime, ext } = sniff(e.data);
+        setResult((prev) => ({
+          blob: new Blob([e.data as ArrayBuffer], { type: mime }),
+          ext,
+          size: (e.data as ArrayBuffer).byteLength,
+          at: Date.now(),
+          version: prev ? prev.version + 1 : 1,
+        }));
+        showToast(isAr ? "وصلتك نتيجة جديدة من المحرر — جاهزة للتنزيل" : "New result received from the editor — ready to download");
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [isAr]);
+
+  /* إرسال الملف إلى المحرر بعد جاهزيته */
+  const sendFile = () => {
+    const win = iframeRef.current?.contentWindow;
+    const buf = bufferRef.current;
+    if (!win || !buf) return;
+    win.postMessage(buf, PHOTOPEA_ORIGIN);
+    setSent(true);
+  };
 
   useEffect(() => {
-    if (loaded) render();
-  }, [loaded, render]);
+    if (!opened || !bufferRef.current) return;
+    let tries = 0;
+    const timer = window.setInterval(() => {
+      tries++;
+      sendFile();
+      if (tries >= 3) window.clearInterval(timer);
+    }, 1400);
+    return () => window.clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [opened, frameReady]);
 
-  const commit = useCallback(() => {
-    const base = baseRef.current;
-    if (!base) return;
-    const snap = base.toDataURL("image/png");
-    history.current = history.current.slice(0, histIdx.current + 1);
-    history.current.push(snap);
-    if (history.current.length > 25) history.current.shift();
-    histIdx.current = history.current.length - 1;
-    setVersion((v) => v + 1);
-    render();
-  }, [render]);
+  /* ===== وضع ملء الصفحة للمحرر ===== */
+  /* مزامنة مع ملء الشاشة الأصلي للمتصفح */
+  useEffect(() => {
+    const onFs = () => setFull(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
+  }, []);
 
-  const loadSnapshot = (dataUrl: string) => {
-    const img = new Image();
-    img.onload = () => {
-      const base = baseRef.current!;
-      base.width = img.width;
-      base.height = img.height;
-      base.getContext("2d")!.drawImage(img, 0, 0);
-      render();
+  /* الخروج بـ Esc عند استخدام الوضع الموسّع الاحتياطي */
+  useEffect(() => {
+    if (!full) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !document.fullscreenElement) setFull(false);
     };
-    img.src = dataUrl;
-  };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [full]);
 
-  const onFile = (files: File[]) => {
-    const f = files[0];
-    const img = new Image();
-    img.onload = () => {
-      const maxDim = 2000;
-      const scale = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight));
-      const base = document.createElement("canvas");
-      base.width = Math.round(img.naturalWidth * scale);
-      base.height = Math.round(img.naturalHeight * scale);
-      base.getContext("2d")!.drawImage(img, 0, 0, base.width, base.height);
-      baseRef.current = base;
-      history.current = [base.toDataURL("image/png")];
-      histIdx.current = 0;
-      setFileName(f.name);
-      setFileSize(f.size);
-      setAdj(DEFAULT_ADJ);
-      setPreset("none");
-      setCropSel(null);
-      setLoaded(true);
-      setVersion((v) => v + 1);
-    };
-    img.onerror = () => showToast("تعذّر قراءة الصورة", "err");
-    img.src = URL.createObjectURL(f);
-  };
-
-  const coords = (e: React.PointerEvent) => {
-    const pv = previewRef.current!;
-    const rect = pv.getBoundingClientRect();
-    return {
-      x: ((e.clientX - rect.left) / rect.width) * pv.width,
-      y: ((e.clientY - rect.top) / rect.height) * pv.height,
-    };
-  };
-
-  const onDown = (e: React.PointerEvent) => {
-    if (!loaded) return;
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    const p = coords(e);
-    if (tool === "brush" || tool === "eraser") {
-      drawing.current = true;
-      lastPt.current = p;
-      const ctx = baseRef.current!.getContext("2d")!;
-      ctx.save();
-      if (tool === "eraser") ctx.globalCompositeOperation = "destination-out";
-      ctx.strokeStyle = brushColor;
-      ctx.fillStyle = brushColor;
-      ctx.lineWidth = brushSize;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, brushSize / 2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-      render();
-    } else if (tool === "text") {
-      const base = baseRef.current!;
-      const ctx = base.getContext("2d")!;
-      const px = Math.max(14, (textSize / 1000) * base.width);
-      ctx.save();
-      ctx.font = `700 ${px}px "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.shadowColor = "rgba(0,0,0,0.45)";
-      ctx.shadowBlur = px / 8;
-      ctx.fillStyle = textColor;
-      ctx.fillText(textVal || "نص", p.x, p.y);
-      ctx.restore();
-      commit();
-      showToast("أُضيف النص — انقر في مكان آخر لإضافة المزيد");
-    } else if (tool === "crop") {
-      cropStart.current = p;
-      setCropSel({ x: p.x, y: p.y, w: 0, h: 0 });
+  const toggleFull = () => {
+    const el = stageRef.current;
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => setFull(false));
+      return;
     }
-  };
-
-  const onMove = (e: React.PointerEvent) => {
-    if (!loaded) return;
-    if (tool === "brush" || tool === "eraser") {
-      if (!drawing.current || !lastPt.current) return;
-      const p = coords(e);
-      const ctx = baseRef.current!.getContext("2d")!;
-      ctx.save();
-      if (tool === "eraser") ctx.globalCompositeOperation = "destination-out";
-      ctx.strokeStyle = brushColor;
-      ctx.lineWidth = brushSize;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.beginPath();
-      ctx.moveTo(lastPt.current.x, lastPt.current.y);
-      ctx.lineTo(p.x, p.y);
-      ctx.stroke();
-      ctx.restore();
-      lastPt.current = p;
-      render();
-    } else if (tool === "crop" && cropStart.current) {
-      const p = coords(e);
-      const s = cropStart.current;
-      setCropSel({
-        x: Math.min(s.x, p.x),
-        y: Math.min(s.y, p.y),
-        w: Math.abs(p.x - s.x),
-        h: Math.abs(p.y - s.y),
-      });
-    }
-  };
-
-  const onUp = () => {
-    if (tool === "brush" || tool === "eraser") {
-      if (drawing.current) commit();
-      drawing.current = false;
-      lastPt.current = null;
-    } else if (tool === "crop") {
-      cropStart.current = null;
-      if (cropSel && (cropSel.w < 8 || cropSel.h < 8)) setCropSel(null);
-    }
-  };
-
-  const applyCrop = () => {
-    if (!cropSel) return;
-    const base = baseRef.current!;
-    const c = document.createElement("canvas");
-    c.width = Math.max(2, Math.round(cropSel.w));
-    c.height = Math.max(2, Math.round(cropSel.h));
-    c.getContext("2d")!.drawImage(
-      base,
-      Math.round(cropSel.x),
-      Math.round(cropSel.y),
-      c.width,
-      c.height,
-      0,
-      0,
-      c.width,
-      c.height
-    );
-    baseRef.current = c;
-    setCropSel(null);
-    commit();
-    showToast("تم القص");
-  };
-
-  const rotate = (dir: 1 | -1) => {
-    const base = baseRef.current!;
-    const c = document.createElement("canvas");
-    c.width = base.height;
-    c.height = base.width;
-    const ctx = c.getContext("2d")!;
-    ctx.translate(c.width / 2, c.height / 2);
-    ctx.rotate((dir * Math.PI) / 2);
-    ctx.drawImage(base, -base.width / 2, -base.height / 2);
-    baseRef.current = c;
-    commit();
-  };
-
-  const flip = (axis: "h" | "v") => {
-    const base = baseRef.current!;
-    const c = document.createElement("canvas");
-    c.width = base.width;
-    c.height = base.height;
-    const ctx = c.getContext("2d")!;
-    if (axis === "h") {
-      ctx.translate(c.width, 0);
-      ctx.scale(-1, 1);
+    if (el?.requestFullscreen) {
+      /* ملء شاشة أصلي — وإن رفضه المتصفح ننتقل للوضع الموسّع */
+      el.requestFullscreen().catch(() => setFull(true));
+      setFull(true);
     } else {
-      ctx.translate(0, c.height);
-      ctx.scale(1, -1);
-    }
-    ctx.drawImage(base, 0, 0);
-    baseRef.current = c;
-    commit();
-  };
-
-  const undo = () => {
-    if (histIdx.current > 0) {
-      histIdx.current--;
-      loadSnapshot(history.current[histIdx.current]);
-      setVersion((v) => v + 1);
-    }
-  };
-  const redo = () => {
-    if (histIdx.current < history.current.length - 1) {
-      histIdx.current++;
-      loadSnapshot(history.current[histIdx.current]);
-      setVersion((v) => v + 1);
-    }
-  };
-  const resetAll = () => {
-    if (history.current.length) {
-      histIdx.current = 0;
-      loadSnapshot(history.current[0]);
-      setAdj(DEFAULT_ADJ);
-      setPreset("none");
-      setCropSel(null);
-      setVersion((v) => v + 1);
+      setFull((v) => !v);
     }
   };
 
-  const exportImage = () => {
-    const base = baseRef.current!;
-    const c = document.createElement("canvas");
-    c.width = base.width;
-    c.height = base.height;
-    const ctx = c.getContext("2d")!;
-    if (exportFormat === "jpeg") {
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(0, 0, c.width, c.height);
+  const onFile = async (files: File[]) => {
+    const f = files[0];
+    setFile(f);
+    setResult(null);
+    setSent(false);
+    setFrameReady(false);
+    try {
+      bufferRef.current = await f.arrayBuffer();
+      setOpened(true);
+    } catch {
+      showToast(isAr ? "تعذّر قراءة الملف" : "Could not read the file", "err");
     }
-    ctx.filter = filterString(adj);
-    ctx.drawImage(base, 0, 0);
-    c.toBlob(
-      (b) => {
-        if (!b) return;
-        const name = `${fileName.replace(/\.[^.]+$/, "")}-edited.${exportFormat === "jpeg" ? "jpg" : exportFormat}`;
-        downloadBlob(b, name);
-        setExported({ blob: b, name });
-        bumpProcessedCount(1);
-        showToast("تم تنزيل الصورة المعدّلة");
-      },
-      `image/${exportFormat}`,
-      exportFormat === "png" ? undefined : quality
-    );
   };
 
-  const TOOLS: Array<{ id: ToolId; icon: IconName; label: string }> = [
-    { id: "brush", icon: "brush", label: "فرشاة" },
-    { id: "eraser", icon: "eraser", label: "ممحاة" },
-    { id: "text", icon: "type", label: "نص" },
-    { id: "crop", icon: "crop", label: "قص" },
-  ];
+  const openEmpty = () => {
+    setFile(null);
+    bufferRef.current = null;
+    setResult(null);
+    setSent(false);
+    setFrameReady(false);
+    setOpened(true);
+  };
 
-  const SLIDERS: Array<{ key: keyof Adjust; label: string; min: number; max: number; unit: string }> = [
-    { key: "brightness", label: "السطوع", min: 30, max: 200, unit: "%" },
-    { key: "contrast", label: "التباين", min: 30, max: 200, unit: "%" },
-    { key: "saturate", label: "التشبع", min: 0, max: 250, unit: "%" },
-    { key: "hue", label: "تدرج اللون", min: -180, max: 180, unit: "°" },
-    { key: "grayscale", label: "رمادي", min: 0, max: 100, unit: "%" },
-    { key: "sepia", label: "بني قديم", min: 0, max: 100, unit: "%" },
-    { key: "blur", label: "ضبابية", min: 0, max: 10, unit: "px" },
-  ];
+  const baseName = (file?.name ?? (isAr ? "تصميم" : "design")).replace(/\.[^.]+$/, "");
 
   return (
     <ToolShell tool={TOOL}>
-      {!loaded ? (
-        <Dropzone
-          accept={TOOL.accept}
-          multiple={false}
-          onFiles={onFile}
-          color={TOOL.color}
-          title="افتح صورة في المحرر"
-          subtitle="فرشاة ونصوص وقص وتدوير وفلاتر وتعديلات لونية كاملة — كل شيء محلي"
-        />
+      {!opened ? (
+        <>
+          <Dropzone
+            accept={TOOL.accept}
+            multiple={false}
+            onFiles={onFile}
+            color={TOOL.color}
+            title={isAr ? TOOL.drop[0] : TOOL.drop[1]}
+            subtitle={isAr ? TOOL.dropSub[0] : TOOL.dropSub[1]}
+          />
+          <div className="mt-4 flex justify-center">
+            <button type="button" onClick={openEmpty} className="btn btn-ghost">
+              <Icon name="plus" size={17} />
+              {isAr ? "أو افتح المحرر بدون ملف — مشروع جديد من الصفر" : "Or open the editor empty — start a new project"}
+            </button>
+          </div>
+        </>
       ) : (
-        <div className="anim-pop grid gap-5 xl:grid-cols-[1fr_300px]">
-          {/* منطقة التحرير */}
-          <div className="card flex flex-col p-4">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-1.5">
-                {TOOLS.map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => { setTool(t.id); setCropSel(null); }}
-                    className={cx(
-                      "chip !px-3 !py-2 !text-xs",
-                      tool === t.id && "!border-[var(--teal)] !bg-[var(--teal-soft)] !text-[var(--teal)]"
-                    )}
-                    aria-pressed={tool === t.id}
-                  >
-                    <Icon name={t.icon} size={15} />
-                    {t.label}
-                  </button>
-                ))}
-                <span className="mx-1 h-6 w-px bg-[var(--line)]" />
-                <button type="button" onClick={undo} disabled={histIdx.current <= 0} className="chip !px-2.5 !py-2 disabled:opacity-40" title="تراجع" aria-label="تراجع">
-                  <Icon name="undo" size={15} />
-                </button>
-                <button type="button" onClick={redo} disabled={histIdx.current >= history.current.length - 1} className="chip !px-2.5 !py-2 disabled:opacity-40" title="إعادة" aria-label="إعادة">
-                  <Icon name="redo" size={15} />
-                </button>
-                <button type="button" onClick={() => rotate(-1)} className="chip !px-2.5 !py-2" title="تدوير لليسار" aria-label="تدوير لليسار">
-                  <Icon name="rotateL" size={15} />
-                </button>
-                <button type="button" onClick={() => rotate(1)} className="chip !px-2.5 !py-2" title="تدوير لليمين" aria-label="تدوير لليمين">
-                  <Icon name="rotateR" size={15} />
-                </button>
-                <button type="button" onClick={() => flip("h")} className="chip !px-2.5 !py-2" title="قلب أفقي" aria-label="قلب أفقي">
-                  <Icon name="flipH" size={15} />
-                </button>
-                <button type="button" onClick={() => flip("v")} className="chip !px-2.5 !py-2" title="قلب رأسي" aria-label="قلب رأسي">
-                  <Icon name="flipV" size={15} />
-                </button>
-                <button type="button" onClick={resetAll} className="chip !px-2.5 !py-2 c-red" title="إعادة تعيين" aria-label="إعادة تعيين">
-                  <Icon name="refresh" size={15} />
-                </button>
-              </div>
-              <span className="c-muted font-mono text-[10.5px]" dir="ltr">
-                {baseRef.current?.width}×{baseRef.current?.height}
-              </span>
-            </div>
-
-            <div
-              ref={wrapRef}
-              className="checker relative grid flex-1 place-items-center overflow-hidden rounded-xl border bd-line p-2"
-              style={{ background: "var(--surface2)" }}
+        <div className="anim-pop">
+          {/* شريط المحرر */}
+          <div className="card mb-4 flex flex-wrap items-center gap-3 p-4">
+            <span
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-xl"
+              style={{ background: `color-mix(in srgb, ${TOOL.color} 12%, var(--surface))`, color: TOOL.color }}
             >
-              <div className="relative inline-block max-w-full">
-                <canvas
-                  ref={previewRef}
-                  className="block max-h-[540px] w-auto max-w-full touch-none rounded-md"
-                  style={{ cursor: tool === "text" ? "text" : tool === "crop" ? "crosshair" : "crosshair" }}
-                  onPointerDown={onDown}
-                  onPointerMove={onMove}
-                  onPointerUp={onUp}
-                  onPointerLeave={onUp}
-                />
-                {cropSel && tool === "crop" && baseRef.current && (
-                  <div
-                    className="ants pointer-events-none absolute border-2 border-dashed border-[var(--teal)] bg-[color-mix(in_srgb,var(--teal)_12%,transparent)]"
-                    style={{
-                      insetInlineStart: `${(cropSel.x / baseRef.current.width) * 100}%`,
-                      top: `${(cropSel.y / baseRef.current.height) * 100}%`,
-                      width: `${(cropSel.w / baseRef.current.width) * 100}%`,
-                      height: `${(cropSel.h / baseRef.current.height) * 100}%`,
-                    }}
-                  />
-                )}
-              </div>
+              <Icon name="brush" size={22} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="font-display truncate text-sm font-extrabold">
+                {isAr ? "محرر Photopea — فوتوشوب الويب" : "Photopea Editor — Photoshop for the web"}
+              </p>
+              <p className="c-muted truncate text-xs" dir="ltr" style={{ textAlign: "end" }}>
+                <bdi>{file ? `${file.name} · ${formatBytes(file.size)}` : isAr ? "مشروع جديد" : "New project"}</bdi>
+              </p>
             </div>
 
-            {tool === "crop" && cropSel && (
-              <div className="anim-pop mt-3 flex items-center gap-2">
-                <button type="button" onClick={applyCrop} className="btn btn-teal !py-2 !text-sm">
+            <div className="flex flex-wrap items-center gap-2">
+              {!frameReady ? (
+                <span className="flex items-center gap-2 rounded-xl border bd-line bg-surface2 px-3 py-2 text-xs font-semibold c-muted">
+                  <Spinner size={15} />
+                  {isAr ? "جارٍ تشغيل المحرر…" : "Starting the editor…"}
+                </span>
+              ) : file && !sent ? (
+                <button type="button" onClick={sendFile} className="btn btn-teal !py-2 !text-sm">
+                  <Icon name="upload" size={16} />
+                  {isAr ? "افتح الملف داخل المحرر" : "Open file in editor"}
+                </button>
+              ) : (
+                <span className="flex items-center gap-1.5 rounded-xl bg-[var(--teal-soft)] px-3 py-2 text-xs font-bold c-teal">
                   <Icon name="check" size={15} />
-                  تطبيق القص ({Math.round(cropSel.w)}×{Math.round(cropSel.h)})
-                </button>
-                <button type="button" onClick={() => setCropSel(null)} className="btn btn-ghost !py-2 !text-sm">
-                  إلغاء
-                </button>
-              </div>
-            )}
-
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t bd-line pt-3">
-              <p className="truncate text-xs c-muted">
-                <b className="c-muted">{fileName}</b> · <span dir="ltr" className="font-mono">{formatBytes(fileSize)}</span>
-              </p>
-              <button type="button" onClick={() => { setLoaded(false); setCropSel(null); }} className="btn btn-ghost !px-3 !py-1.5 !text-xs">
-                <Icon name="refresh" size={14} />
-                صورة جديدة
+                  {isAr ? "المحرر جاهز" : "Editor ready"}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={toggleFull}
+                className={cx("btn !py-2 !text-sm", full ? "btn-amber" : "btn-ghost")}
+                title={full ? (isAr ? "تصغير المحرر" : "Shrink editor") : (isAr ? "تشغيل المحرر بكامل الصفحة" : "Run the editor on the full page")}
+              >
+                <Icon name={full ? "shrink" : "expand"} size={16} />
+                {full ? (isAr ? "تصغير" : "Shrink") : (isAr ? "كامل الصفحة" : "Full page")}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (document.fullscreenElement) document.exitFullscreen().catch(() => undefined);
+                  setFull(false);
+                  setOpened(false);
+                  setFile(null);
+                  setResult(null);
+                  bufferRef.current = null;
+                }}
+                className="btn btn-ghost !py-2 !text-sm"
+              >
+                <Icon name="refresh" size={15} />
+                {isAr ? "ملف آخر" : "Different file"}
               </button>
             </div>
           </div>
 
-          {/* لوحة التحكم */}
-          <div className="space-y-4">
-            {(tool === "brush" || tool === "eraser") && (
-              <div className="card anim-pop p-4">
-                <h3 className="font-display mb-3 text-sm font-bold">{tool === "brush" ? "الفرشاة" : "الممحاة"}</h3>
-                {tool === "brush" && (
-                  <div className="mb-3 flex items-center gap-2">
-                    <span className="text-xs c-muted">اللون</span>
-                    <input type="color" value={brushColor} onChange={(e) => setBrushColor(e.target.value)} className="h-9 w-12 cursor-pointer rounded-lg border bd-line bg-surface" aria-label="لون الفرشاة" />
-                    {["#d64550", "#0c7a63", "#e8930c", "#12211d", "#ffffff"].map((c) => (
-                      <button key={c} type="button" onClick={() => setBrushColor(c)} className="h-7 w-7 rounded-full border-2 transition-transform hover:scale-110" style={{ background: c, borderColor: brushColor === c ? "var(--teal)" : "var(--line)" }} aria-label={`لون ${c}`} />
-                    ))}
-                  </div>
-                )}
-                <label className="block text-xs c-muted">
-                  الحجم: <b className="font-mono" dir="ltr">{brushSize}px</b>
-                  <input type="range" min={2} max={120} value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))} className="mt-1.5 w-full" />
-                </label>
-              </div>
+          {/* المحرر المدمج — إطار Photopea الطبيعي يملأ كامل المساحة المتاحة،
+              مع زر ملء الصفحة الكامل */}
+          <div
+            ref={stageRef}
+            className={cx(
+              "card overflow-hidden transition-all duration-300",
+              full ? "fixed inset-0 z-[95] !rounded-none border-0" : "relative !rounded-xl"
             )}
-
-            {tool === "text" && (
-              <div className="card anim-pop space-y-3 p-4">
-                <h3 className="font-display text-sm font-bold">النص</h3>
-                <input className="input" value={textVal} onChange={(e) => setTextVal(e.target.value)} placeholder="اكتب النص هنا ثم انقر على الصورة" />
-                <div className="flex items-center gap-2">
-                  <span className="text-xs c-muted">اللون</span>
-                  <input type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="h-9 w-12 cursor-pointer rounded-lg border bd-line bg-surface" aria-label="لون النص" />
-                </div>
-                <label className="block text-xs c-muted">
-                  الحجم النسبي: <b className="font-mono">{textSize}</b>
-                  <input type="range" min={20} max={220} value={textSize} onChange={(e) => setTextSize(Number(e.target.value))} className="mt-1.5 w-full" />
-                </label>
-                <p className="text-[11px] c-muted">انقر في أي مكان على الصورة لوضع النص — يدعم العربية بالكامل.</p>
-              </div>
-            )}
-
-            <div className="card p-4">
-              <h3 className="font-display mb-3 flex items-center gap-1.5 text-sm font-bold">
-                <span className="c-amber"><Icon name="palette" size={15} /></span>
-                فلاتر جاهزة
-              </h3>
-              <div className="flex flex-wrap gap-1.5">
-                {PRESETS.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => { setAdj(p.adj); setPreset(p.id); }}
-                    className={cx("chip !px-3 !py-1.5 !text-xs", preset === p.id && "!border-[var(--amber)] !text-[var(--amber)]")}
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="card p-4">
-              <h3 className="font-display mb-3 flex items-center gap-1.5 text-sm font-bold">
-                <span className="c-teal"><Icon name="wand" size={15} /></span>
-                التعديلات اللونية
-              </h3>
-              <div className="space-y-3">
-                {SLIDERS.map((s) => (
-                  <label key={s.key} className="block text-xs c-muted">
-                    <span className="flex justify-between">
-                      {s.label}
-                      <b className="font-mono" dir="ltr">{adj[s.key]}{s.unit}</b>
-                    </span>
-                    <input
-                      type="range"
-                      min={s.min}
-                      max={s.max}
-                      step={s.key === "blur" ? 0.2 : 1}
-                      value={adj[s.key]}
-                      onChange={(e) => { setAdj((a) => ({ ...a, [s.key]: Number(e.target.value) })); setPreset("custom"); }}
-                      className="mt-1 w-full"
-                    />
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="card p-4">
-              <h3 className="font-display mb-3 flex items-center gap-1.5 text-sm font-bold">
-                <span className="c-teal"><Icon name="download" size={15} /></span>
-                التصدير
-              </h3>
-              <div className="mb-3 flex gap-1.5">
-                {(["png", "jpeg", "webp"] as const).map((f) => (
-                  <button key={f} type="button" onClick={() => setExportFormat(f)} className={cx("chip flex-1 justify-center !py-2 font-mono !text-[11px]", exportFormat === f && "!border-[var(--teal)] !text-[var(--teal)]")}>
-                    {f.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-              {exportFormat !== "png" && (
-                <label className="mb-3 block text-xs c-muted">
-                  الجودة: <b className="font-mono">{Math.round(quality * 100)}%</b>
-                  <input type="range" min={0.4} max={1} step={0.02} value={quality} onChange={(e) => setQuality(Number(e.target.value))} className="mt-1 w-full" />
-                </label>
-              )}
-              <button type="button" onClick={exportImage} className="btn btn-teal w-full">
-                <Icon name="download" size={17} />
-                تنزيل الصورة المعدّلة
+            style={
+              full
+                ? { height: "100dvh", background: "#1d1d1d" }
+                : { height: "calc(100dvh - 262px)", minHeight: 560, background: "#1d1d1d" }
+            }
+          >
+            <iframe
+              ref={iframeRef}
+              src={env}
+              title="Photopea — Kraftoox"
+              className="absolute inset-0 h-full w-full border-0"
+              style={{ background: "#1d1d1d" }}
+              allow="clipboard-read; clipboard-write; fullscreen"
+              onLoad={() => setFrameReady(true)}
+            />
+            {full && (
+              <button
+                type="button"
+                onClick={toggleFull}
+                className="btn btn-ghost absolute bottom-4 end-4 z-20 !border-[#3d3d3d] !bg-[#262626] !py-2 !text-xs !text-white shadow-xl"
+              >
+                <Icon name="shrink" size={14} />
+                {isAr ? "إنهاء ملء الصفحة" : "Exit full page"}
+                <kbd className="font-mono opacity-60">Esc</kbd>
               </button>
-              {exported && (
-                <BlobLink
-                  blob={exported.blob}
-                  filename={exported.name}
-                  className="btn-amber mt-2 w-full !text-sm"
-                  iconSize={15}
-                  label="لم يبدأ التنزيل؟ احفظ من هنا"
-                />
+            )}
+          </div>
+
+          {/* النتيجة */}
+          <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_330px]">
+            <InfoNote>
+              {isAr ? (
+                <>
+                  عدّل بحرية داخل المحرر: طبقات، أقنعة، فرشاة الاستنساخ، أدوات التحديد الذكية وأكثر.
+                  الإطار يملأ المساحة المتاحة تلقائياً، واضغط <b>«كامل الصفحة»</b> ليعمل بملء شاشتك
+                  بالكامل. عند الانتهاء اضغط <b dir="ltr" className="font-mono">Ctrl+S</b> أو{" "}
+                  <b dir="ltr">File → Save as</b> — وسيصلك الملف الناتج في البطاقة المجاورة جاهزاً
+                  للتنزيل، ويتجدد مع كل حفظ.
+                </>
+              ) : (
+                <>
+                  Edit freely: layers, masks, clone stamp, smart selection tools and more.
+                  The frame fills the available space automatically, and hitting <b>“Full page”</b> runs
+                  the editor across your entire screen. When done, press{" "}
+                  <b dir="ltr" className="font-mono">Ctrl+S</b> or <b dir="ltr">File → Save as</b> —
+                  the output file lands in the side card, ready to download, refreshed on every save.
+                </>
+              )}
+            </InfoNote>
+
+            <div className="card flex flex-col justify-center gap-3 p-5">
+              <FieldLabel>{isAr ? "نتيجتك" : "Your result"}</FieldLabel>
+              {result ? (
+                <div className="anim-pop flex flex-col gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[var(--teal-soft)] c-teal">
+                      <Icon name="file" size={19} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold" dir="ltr" style={{ textAlign: "end" }}>
+                        <bdi>{baseName}.{result.ext}</bdi>
+                      </p>
+                      <p className="c-muted font-mono text-[11px]" dir="ltr">
+                        {formatBytes(result.size)} ·{" "}
+                        {new Date(result.at).toLocaleTimeString(isAr ? "ar" : "en")}
+                      </p>
+                    </div>
+                  </div>
+                  <BlobLink
+                    blob={result.blob}
+                    className="btn-teal"
+                    iconSize={17}
+                    label={isAr ? "تنزيل النتيجة" : "Download result"}
+                    filename={`kraftoox-${baseName}.${result.ext}`}
+                  />
+                  <p className="c-muted text-center text-[10.5px]">
+                    {isAr
+                      ? `نسخة #${result.version} — تُحدَّث تلقائياً مع كل حفظ`
+                      : `Version #${result.version} — updates automatically on every save`}
+                  </p>
+                </div>
+              ) : (
+                <p className="c-muted flex items-start gap-2 text-xs leading-relaxed">
+                  <span className="c-amber mt-0.5 shrink-0"><Icon name="info" size={15} /></span>
+                  {isAr
+                    ? "لم تصل نتيجة بعد. احفظ من داخل المحرر (Ctrl+S) وستظهر هنا فوراً."
+                    : "No result yet. Save inside the editor (Ctrl+S) and it will appear here instantly."}
+                </p>
               )}
             </div>
           </div>
         </div>
       )}
 
-      <div className="mt-8">
-        <InfoNote>
-          التعديلات اللونية والفلاتر غير مدمّرة (تُطبَّق عند التصدير) أما الرسم والقص والتدوير
-          فتُدمج في الصورة — استخدم «تراجع» للتراجع عنها. يعمل المحرر بأداء أفضل مع صور حتى 2000 بكسل.
-        </InfoNote>
-      </div>
+      {!opened && (
+        <div className="mt-8">
+          <InfoNote>
+            {isAr
+              ? "Photopea خدمة مستقلة مجانية تدعم العربية، تعمل داخل نافذة مدمجة في منصتنا بواجهة Photopea البرمجية الرسمية — ملفك يُرسل مباشرة من جهازك إلى نافذة المحرر ولا يمر بأي خادم تابع لنا."
+              : "Photopea is an independent free service with Arabic support, running inside an embedded window via Photopea's official API — your file goes directly from your device to the editor window, never through our servers."}
+          </InfoNote>
+        </div>
+      )}
     </ToolShell>
   );
 }
