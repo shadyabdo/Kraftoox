@@ -260,7 +260,7 @@ export default function Landing() {
           <Reveal delay={300}>
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <span className="c-muted text-xs font-semibold">{t("الأكثر استخداماً:", "Most used:")}</span>
-              {["compress-image", "photo-editor", "video-editor", "merge-pdf"].map((s) => {
+              {["compress-image", "image-to-url", "photo-editor", "video-editor", "merge-pdf"].map((s) => {
                 const tool = getTool(s)!;
                 return (
                   <Link key={s} to={`/tool/${s}`} className="chip !text-xs">
