@@ -34,14 +34,8 @@ const MergePdf = lazyRetry(() => import("./tools/MergePdf"));
 const ImagesToPdf = lazyRetry(() => import("./tools/ImagesToPdf"));
 const ExtractPdfImages = lazyRetry(() => import("./tools/ExtractPdfImages"));
 const UpscaleImage = lazyRetry(() => import("./tools/UpscaleImage"));
-const UpscaleVideo = lazyRetry(() => import("./tools/UpscaleVideo"));
 const RemoveWatermark = lazyRetry(() => import("./tools/RemoveWatermark"));
-const RemoveWatermarkVideo = lazyRetry(() => import("./tools/RemoveWatermarkVideo"));
 const PhotoEditor = lazyRetry(() => import("./tools/PhotoEditor"));
-const AiImage = lazyRetry(() => import("./tools/AiImage"));
-const AiVideo = lazyRetry(() => import("./tools/AiVideo"));
-const VideoEditor = lazyRetry(() => import("./tools/VideoEditor"));
-const ScreenRecorder = lazyRetry(() => import("./tools/ScreenRecorder"));
 
 const TOOL_PAGES: Record<string, ComponentType> = {
   "compress-image": CompressImage,
@@ -53,17 +47,11 @@ const TOOL_PAGES: Record<string, ComponentType> = {
   "images-to-pdf": ImagesToPdf,
   "extract-pdf-images": ExtractPdfImages,
   "upscale-image": UpscaleImage,
-  "upscale-video": UpscaleVideo,
   "remove-watermark": RemoveWatermark,
-  "remove-watermark-video": RemoveWatermarkVideo,
   "photo-editor": PhotoEditor,
-  "ai-image": AiImage,
-  "ai-video": AiVideo,
-  "video-editor": VideoEditor,
-  "screen-recorder": ScreenRecorder,
 };
 
-const CATEGORY_SLUGS = ["images", "pdf", "video", "ai"];
+const CATEGORY_SLUGS = ["images", "pdf"];
 
 /* حاجز أخطاء: يعرض رسالة واضحة بدل الشاشة البيضاء عند أي عطل */
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {

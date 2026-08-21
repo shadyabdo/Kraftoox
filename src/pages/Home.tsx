@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { TOOLS, IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS, AI_TOOLS, getTool, type ToolDef } from "../data/tools";
+import { TOOLS, IMAGE_TOOLS, PDF_TOOLS, getTool, type ToolDef } from "../data/tools";
 import { Link } from "../lib/router";
 import { useI18n } from "../i18n";
 import { getProcessedCount, matchesQuery, copyText, showToast } from "../lib/utils";
@@ -214,7 +214,7 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
 
   const searching = q.trim().length > 0;
 
-  const QUICK = ["compress-image", "ai-video", "photo-editor", "upscale-video"]
+  const QUICK = ["compress-image", "photo-editor", "upscale-image", "merge-pdf"]
     .map((s) => getTool(s))
     .filter((t): t is ToolDef => !!t);
 
@@ -410,35 +410,6 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
               </div>
             </div>
 
-            <div id="video-tools" className="mt-14">
-              <SectionHead
-                kicker={isAr ? "قسم الفيديو — جديد" : "Video section — new"}
-                title={isAr ? "أدوات الفيديو" : "Video Tools"}
-                desc={isAr ? "تكبير الدقة وإزالة العلامات المائية — إعادة ترميز إطارية كاملة داخل متصفحك مع الحفاظ على الصوت." : "Upscaling and watermark removal — full frame-by-frame re-encoding in your browser, audio preserved."}
-                icon="video"
-                color="var(--blue)"
-              />
-              <div className="grid gap-4 sm:grid-cols-2">
-                {VIDEO_TOOLS.map((t, i) => (
-                  <ToolCard key={t.slug} tool={t} delay={i * 70} />
-                ))}
-              </div>
-            </div>
-
-            <div id="ai-tools" className="mt-14">
-              <SectionHead
-                kicker={isAr ? "قسم الذكاء الاصطناعي — جديد" : "AI section — new"}
-                title={isAr ? "التوليد بالذكاء الاصطناعي" : "AI Generation"}
-                desc={isAr ? "صور احترافية وفيديوهات يوتيوب كاملة بالسيناريو العربي — بلا حدود، بلا علامات مائية، ومجاني للأبد." : "Professional images and full YouTube videos with an Arabic script — unlimited, watermark-free, free forever."}
-                icon="ai"
-                color="var(--amber)"
-              />
-              <div className="grid gap-4 sm:grid-cols-2">
-                {AI_TOOLS.map((t, i) => (
-                  <ToolCard key={t.slug} tool={t} delay={i * 70} />
-                ))}
-              </div>
-            </div>
           </>
         )}
       </section>

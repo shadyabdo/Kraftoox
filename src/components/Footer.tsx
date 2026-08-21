@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS, AI_TOOLS } from "../data/tools";
+import { IMAGE_TOOLS, PDF_TOOLS } from "../data/tools";
 import { Link } from "../lib/router";
 import { copyText, showToast } from "../lib/utils";
 import { Icon, LogoMark } from "./Icons";
@@ -116,38 +116,6 @@ export function Footer() {
 
           <div>
             <h4 className="font-display mb-3 flex items-center gap-1.5 text-sm font-bold">
-              <span style={{ color: "var(--blue)" }}><Icon name="video" size={15} /></span>
-              أدوات الفيديو
-            </h4>
-            <ul className="space-y-2">
-              {VIDEO_TOOLS.map((t) => (
-                <li key={t.slug}>
-                  <Link to={`/tool/${t.slug}`} className="c-muted text-sm transition-colors hover:text-[var(--blue)]">
-                    {t.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-display mb-3 flex items-center gap-1.5 text-sm font-bold">
-              <span className="c-amber"><Icon name="ai" size={15} /></span>
-              الذكاء الاصطناعي
-            </h4>
-            <ul className="space-y-2">
-              {AI_TOOLS.map((t) => (
-                <li key={t.slug}>
-                  <Link to={`/tool/${t.slug}`} className="c-muted text-sm transition-colors hover:text-[var(--amber)]">
-                    {t.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-display mb-3 flex items-center gap-1.5 text-sm font-bold">
               <span className="c-amber"><Icon name="layers" size={15} /></span>
               الموقع
             </h4>
@@ -156,8 +124,6 @@ export function Footer() {
               <li><Link to="/tools" className="c-muted text-sm transition-colors hover:text-[var(--teal)]">كل الأدوات</Link></li>
               <li><Link to="/images" className="c-muted text-sm transition-colors hover:text-[var(--teal)]">قسم الصور</Link></li>
               <li><Link to="/pdf" className="c-muted text-sm transition-colors hover:text-[var(--teal)]">قسم PDF</Link></li>
-              <li><Link to="/video" className="c-muted text-sm transition-colors hover:text-[var(--teal)]">قسم الفيديو</Link></li>
-              <li><Link to="/ai" className="c-muted text-sm transition-colors hover:text-[var(--teal)]">قسم الذكاء الاصطناعي</Link></li>
               <li><Link to="/about" className="c-muted text-sm transition-colors hover:text-[var(--teal)]">من نحن</Link></li>
               <li><Link to="/privacy" className="c-muted text-sm transition-colors hover:text-[var(--teal)]">سياسة الخصوصية</Link></li>
               <li><Link to="/contact" className="c-muted text-sm transition-colors hover:text-[var(--teal)]">اتصل بنا</Link></li>

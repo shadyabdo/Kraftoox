@@ -8,19 +8,17 @@ import { formatBytes, showToast } from "../lib/utils";
 import { Icon } from "../components/Icons";
 import { Reveal } from "../components/Reveal";
 
-type FileKind = "image" | "pdf" | "video";
+type FileKind = "image" | "pdf";
 
 const KIND_TOOLS: Record<FileKind, string[]> = {
   image: ["compress-image", "convert-image", "upscale-image", "photo-editor"],
   pdf: ["compress-pdf", "merge-pdf", "extract-pdf-images", "images-to-pdf"],
-  video: ["video-editor", "upscale-video", "remove-watermark-video"],
 };
 
 function detectKind(f: File): FileKind | null {
   const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
   if (f.type.startsWith("image/") || ["jpg", "jpeg", "png", "webp", "gif"].includes(ext)) return "image";
   if (f.type === "application/pdf" || ext === "pdf") return "pdf";
-  if (f.type.startsWith("video/") || ["mp4", "webm", "mov", "mkv", "avi"].includes(ext)) return "video";
   return null;
 }
 
@@ -37,7 +35,7 @@ function SmartDrop() {
     const k = detectKind(f);
     setFile(f);
     setKind(k);
-    if (!k) showToast(t("صيغة غير مدعومة — جرّب صورة أو PDF أو فيديو", "Unsupported format — try an image, PDF or video"), "err");
+    if (!k) showToast(t("صيغة غير مدعومة — جرّب صورة أو ملف PDF", "Unsupported format — try an image or a PDF"), "err");
   };
 
   const go = (slug: string) => {
@@ -46,11 +44,10 @@ function SmartDrop() {
     navigate(`/tool/${slug}`);
   };
 
-  const kindColor: Record<FileKind, string> = { image: "var(--teal)", pdf: "var(--red)", video: "var(--blue)" };
+  const kindColor: Record<FileKind, string> = { image: "var(--teal)", pdf: "var(--red)" };
   const kindLabel: Record<FileKind, string> = {
     image: t("صورة", "Image"),
     pdf: "PDF",
-    video: t("فيديو", "Video"),
   };
 
   return (
@@ -104,7 +101,7 @@ function SmartDrop() {
                   background: kind ? `color-mix(in srgb, ${kindColor[kind]} 12%, var(--surface))` : "var(--amber-soft)",
                   color: kind ? kindColor[kind] : "var(--amber)",
                 }}>
-                <Icon name={kind === "pdf" ? "pdf" : kind === "video" ? "video" : "image"} size={22} />
+                <Icon name={kind === "pdf" ? "pdf" : "image"} size={22} />
               </span>
               <div className="min-w-0 flex-1 text-start">
                 <p className="truncate text-sm font-bold" dir="ltr" style={{ textAlign: "end" }}><bdi>{file.name}</bdi></p>
@@ -141,12 +138,12 @@ function SmartDrop() {
                 </p>
               </div>
             ) : (
-              <p className="mt-3 text-center text-xs c-red">{t("جرّب صورة أو PDF أو فيديو", "Try an image, PDF or video")}</p>
+              <p className="mt-3 text-center text-xs c-red">{t("جرّب صورة أو ملف PDF", "Try an image or a PDF")}</p>
             )}
           </div>
         )}
         <input ref={inputRef} type="file" className="hidden"
-          accept="image/*,application/pdf,video/*,.jpg,.png,.webp,.pdf,.mp4,.webm"
+          accept="image/*,application/pdf,.jpg,.png,.webp,.pdf"
           onChange={(e) => { take(e.target.files?.[0]); e.target.value = ""; }} />
       </div>
     </div>
@@ -193,31 +190,6 @@ function HowItWorks() {
   );
 }
 
-/* ===== لوحة الطرفية لاستوديو الذكاء الاصطناعي ===== */
-function AiTerminal() {
-  const { t } = useI18n();
-  return (
-    <div className="term shadow-2xl">
-      <div className="term-head">
-        <span className="term-dot" style={{ background: "#ef767b" }} />
-        <span className="term-dot" style={{ background: "#f0a63b" }} />
-        <span className="term-dot" style={{ background: "#38c49d" }} />
-        <span className="ms-3 text-[11px] text-[#6b8078]">kraftoox — ai-studio</span>
-      </div>
-      <div className="p-5">
-        <p><span className="term-prompt">$</span> kraftoox generate video --topic <span className="term-amber">"عجائب الأندلس"</span> --lang ar --format shorts</p>
-        <p className="term-dim">→ writing script ............ <span className="text-[#38c49d]">8 scenes ✓</span></p>
-        <p className="term-dim">→ painting scenes (FLUX) ..... <span className="text-[#38c49d]">8/8 ✓</span></p>
-        <p className="term-dim">→ assembling · ken burns · arabic captions</p>
-        <p className="cli-bar text-[#38c49d]">
-          rendering 00:27 / 00:32 <span>▮</span><span>▮</span><span>▮</span><span>▮</span>
-        </p>
-        <p className="mt-1"><span className="text-[#38c49d]">✓ done</span> — youtube-shorts.webm · 9:16 · <span className="term-amber">no watermark</span><span className="caret" /></p>
-      </div>
-    </div>
-  );
-}
-
 export default function Landing() {
   usePageMeta("/");
   const { t, isAr } = useI18n();
@@ -259,8 +231,8 @@ export default function Landing() {
           <Reveal delay={160}>
             <p className="mt-7 max-w-xl text-base leading-loose sm:text-[17px]" style={{ color: "var(--muted)" }}>
               {t(
-                "ضغط صور وتكبيرها حتى 4K، إزالة علامات مائية، تحرير فيديو على خط زمني، تسجيل شاشة، وذكاء اصطناعي يولّد صوراً وفيديوهات يوتيوب بالعربية — كل ذلك دون أن يغادر ملف واحد جهازك.",
-                "Compress and upscale images to 4K, remove watermarks, edit video on a timeline, record your screen, and let AI generate Arabic YouTube images and videos — all without a single file leaving your device."
+                "ضغط صور وتكبيرها حتى 4K، إزالة علامات مائية، وتحرير احترافي كامل عبر فوتوشوب الويب Photopea — إضافةً إلى ضغط PDF ودمجه واستخراج صوره — كل ذلك دون أن يغادر ملف واحد جهازك.",
+                "Compress and upscale images to 4K, remove watermarks, and do full professional editing via Photopea web Photoshop — plus PDF compression, merging and image extraction — all without a single file leaving your device."
               )}
             </p>
           </Reveal>
@@ -272,7 +244,7 @@ export default function Landing() {
                 type="search"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder={t("ما الذي تريد إنجازه؟ مثال: شورتز، ضغط، علامة مائية…", "What do you need done? e.g. shorts, compress, watermark…")}
+                placeholder={t("ما الذي تريد إنجازه؟ مثال: ضغط، دمج، علامة مائية…", "What do you need done? e.g. compress, merge, watermark…")}
                 className="input !rounded-xl !border-2 !py-3.5 !pe-24 !ps-11"
                 aria-label={t("ابحث عن أداة", "Search for a tool")}
               />
@@ -285,7 +257,7 @@ export default function Landing() {
           <Reveal delay={300}>
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <span className="c-muted text-xs font-semibold">{t("الأكثر استخداماً:", "Most used:")}</span>
-              {["ai-video", "screen-recorder", "video-editor", "compress-image"].map((s) => {
+              {["compress-image", "photo-editor", "merge-pdf", "upscale-image"].map((s) => {
                 const tool = getTool(s)!;
                 return (
                   <Link key={s} to={`/tool/${s}`} className="chip !text-xs">
@@ -390,49 +362,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ===== استوديو الذكاء الاصطناعي ===== */}
-      <section className="mx-auto max-w-6xl px-4 pt-20">
-        <div className="grid items-center gap-10 lg:grid-cols-2">
-          <Reveal>
-            <p className="kicker c-amber">{t("استوديو الذكاء الاصطناعي", "AI Studio")}</p>
-            <h2 className="font-display mt-2 text-3xl font-extrabold leading-snug sm:text-4xl">
-              {t("من فكرة واحدة… إلى فيديو يوتيوب جاهز", "From one idea… to a ready YouTube video")}
-            </h2>
-            <p className="mt-4 max-w-lg leading-loose c-muted">
-              {t(
-                "مولّد الصور يفهم العربية ويعمل بنماذج FLUX وTurbo المفتوحة — بلا مفاتيح API وبلا علامات مائية. ومولّد الفيديو يكتب سيناريو عربياً، يرسم مشهداً لكل جملة، ويركّبها في شورتز أو فيديو طويل حتى ساعة.",
-                "The image generator understands Arabic and runs on open FLUX and Turbo models — no API keys, no watermarks. The video generator writes an Arabic script, paints a scene per line, and assembles shorts or long-form videos up to an hour."
-              )}
-            </p>
-            <ul className="mt-5 space-y-2">
-              {[
-                t("سيناريو عربي قابل للتعديل جملة جملة", "Arabic script, editable line by line"),
-                t("شورتز 9:16 وفيديوهات حتى 60 دقيقة", "9:16 shorts and videos up to 60 minutes"),
-                t("بلا حدود يومية وبلا علامة مائية", "No daily limits, no watermark"),
-              ].map((f) => (
-                <li key={f} className="flex items-start gap-2.5 text-sm">
-                  <span className="c-amber mt-0.5 shrink-0"><Icon name="check" size={15} /></span>
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <Link to="/tool/ai-video" className="btn btn-amber">
-                <Icon name="film" size={17} />
-                {t("جرّب مولّد الفيديو", "Try the video generator")}
-              </Link>
-              <Link to="/tool/ai-image" className="btn btn-ghost">
-                <Icon name="ai" size={17} />
-                {t("مولّد الصور", "Image generator")}
-              </Link>
-            </div>
-          </Reveal>
-          <Reveal delay={120}>
-            <AiTerminal />
-          </Reveal>
-        </div>
-      </section>
-
       {/* ===== أسئلة شائعة ===== */}
       <section className="mx-auto max-w-3xl px-4 pt-20">
         <Reveal>
@@ -444,29 +373,29 @@ export default function Landing() {
             {
               q: t("هل تُرفع ملفاتي إلى خوادمكم؟", "Are my files uploaded to your servers?"),
               a: t(
-                "لا. كل أدوات المعالجة (ضغط، تحويل، دمج، تحرير، تسجيل شاشة) تعمل داخل متصفحك. الاستثناء الوحيد الاختياري هو زر النشر المؤقت في أداة الروابط والرندر السحابي عبر Shotstack، وكلاهما يتطلب موافقتك الصريحة.",
-                "No. Every processing tool (compress, convert, merge, edit, screen record) runs inside your browser. The only optional exceptions are the temp-publish button in the link tool and Shotstack cloud rendering — both require your explicit action."
+                "لا. كل أدوات المعالجة (ضغط، تحويل، تكبير، دمج، استخراج) تعمل داخل متصفحك ولا يغادر الملف جهازك. الاستثناء الوحيد الاختياري هو زر النشر المؤقت في أداة الروابط، ويتطلب موافقتك الصريحة.",
+                "No. Every processing tool (compress, convert, upscale, merge, extract) runs inside your browser and the file never leaves your device. The only optional exception is the temp-publish button in the link tool, which requires your explicit action."
               ),
             },
             {
-              q: t("هل الذكاء الاصطناعي مجاني فعلاً؟", "Is the AI really free?"),
+              q: t("ما هو محرر الفوتوشوب أونلاين؟", "What is the online Photoshop editor?"),
               a: t(
-                "نعم — نستخدم نماذج مفتوحة المصدر بواجهات مجانية بلا مفاتيح API وبلا حدود يومية وبلا علامات مائية على النتائج.",
-                "Yes — we use open-source models through free endpoints with no API keys, no daily limits and no watermarks on the results."
+                "نعرض داخل المنصة خدمة Photopea الاحترافية عبر واجهتها الرسمية: طبقات وأقنعة وأدوات تحديد وفتح ملفات PSD وAI وSketch. عدّل بحرية وعند الحفظ (Ctrl+S) تصلك النتيجة للتنزيل فوراً — بلا تسجيل وبلا تثبيت.",
+                "We embed the professional Photopea service through its official API: layers, masks, selection tools and support for PSD, AI and Sketch files. Edit freely and when you save (Ctrl+S) the result is ready to download instantly — no sign-up, no install."
               ),
             },
             {
-              q: t("لماذا تسجيل الشاشة ينزّل تلقائياً؟", "Why does screen recording download automatically?"),
+              q: t("هل الأدوات مجانية فعلاً؟", "Are the tools really free?"),
               a: t(
-                "لأن هذه هي اللحظة التي تحتاجها: عند الضغط على «إنهاء» يُغلق المسجّل ويُحفَظ الفيديو بصيغة WebM على جهازك فوراً — تقبلها يوتيوب مباشرة.",
-                "Because that's the moment you need it: pressing “Finish” closes the recorder and saves the WebM video to your device immediately — YouTube accepts it directly."
+                "نعم — كل الأدوات مجانية بالكامل وبلا حدود يومية وبلا علامات مائية على النتائج، لأن المعالجة تتم على جهازك فلا نتحمل تكلفة خوادم ولا نحتاج اشتراكات.",
+                "Yes — every tool is completely free with no daily limits and no watermarks on the results, because processing happens on your device so we bear no server cost and need no subscriptions."
               ),
             },
             {
-              q: t("كيف يعمل التصدير السحابي لمحرر الفيديو؟", "How does the video editor's cloud export work?"),
+              q: t("هل يدعم الموقع اللغة الإنجليزية؟", "Does the site support English?"),
               a: t(
-                "المحرر يعمل محلياً ومجاناً بالكامل. إن أردت MP4 من سحابة احترافية، اربط مفتاح Shotstack المجاني (20 دقيقة رندر شهرياً) — يُرسل مخططك الزمني ويعود رابط MP4.",
-                "The editor is fully local and free. If you want MP4 from a professional cloud, connect a free Shotstack key (20 render minutes/month) — your timeline is sent and an MP4 link comes back."
+                "نعم — بدّل اللغة من القائمة المنسدلة في الهيدر بين العربية والإنجليزية، ويُحفَظ اختيارك تلقائياً. كل الأدوات والصفحات مترجمة بالكامل.",
+                "Yes — switch the language from the header dropdown between Arabic and English, and your choice is saved automatically. All tools and pages are fully translated."
               ),
             },
           ].map((f, i) => (
