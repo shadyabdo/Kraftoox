@@ -1,13 +1,20 @@
-/* تكامل Image2URL — رفع مباشر + تحويل SVG عبر الواجهة الخارجية v1
-   سلسلة مزوّدين: Image2URL مباشرة ← عبر وكيل CORS ← tmpfiles.org ← uguu.se
-   أي مزوّد ينجح تُعاد نتيجته مع اسمه ليُعرض للمستخدم بشفافية */
+/* رفع الصور للحصول على رابط — سباق مزوّدين متوازٍ
+   تُطلَق المحاولات متتابعة بفواصل قصيرة ويُعتمد أول نجاح فوراً (مع إلغاء البقية).
+   الترتيب: الأوثق من المتصفح أولاً (Catbox رابط دائم) ثم Image2URL وبواباته ثم الاحتياطيات. */
 
-const UPLOAD_ENDPOINT = "https://www.image2url.com/api/upload";
-const CORS_PROXY = "https://corsproxy.io/?url=";
+const IMAGE2URL_UPLOAD = "https://www.image2url.com/api/upload";
 const EXTERNAL_BASE = "https://www.image2url.com/api/external/v1";
-const MAX_UPLOAD_BYTES = 2 * 1024 * 1024; /* حد نقطة الرفع العامة */
+const MAX_UPLOAD_BYTES = 2 * 1024 * 1024; /* حد نقطة رفع Image2URL العامة */
 
-export type Provider = "image2url" | "image2url-proxy" | "tmpfiles" | "uguu";
+export type Provider =
+  | "catbox"
+  | "image2url"
+  | "image2url-corsproxy"
+  | "image2url-allorigins"
+  | "tmpninja"
+  | "tmpfiles"
+  | "uguu"
+  | "litterbox";
 
 export interface UploadResult {
   url: string;
@@ -15,14 +22,40 @@ export interface UploadResult {
 }
 
 export const PROVIDER_INFO: Record<Provider, { ar: string; en: string; permanent: boolean }> = {
+  catbox: { ar: "Catbox — رابط دائم لا ينتهي", en: "Catbox — permanent link, never expires", permanent: true },
   image2url: { ar: "Image2URL — رابط دائم لا ينتهي", en: "Image2URL — permanent link, never expires", permanent: true },
-  "image2url-proxy": { ar: "Image2URL (عبر وكيل) — رابط دائم", en: "Image2URL (via proxy) — permanent link", permanent: true },
+  "image2url-corsproxy": { ar: "Image2URL (بوابة ١) — رابط دائم", en: "Image2URL (gateway 1) — permanent link", permanent: true },
+  "image2url-allorigins": { ar: "Image2URL (بوابة ٢) — رابط دائم", en: "Image2URL (gateway 2) — permanent link", permanent: true },
+  tmpninja: { ar: "tmp.ninja — رابط مؤقت (احتياطي)", en: "tmp.ninja — temporary link (fallback)", permanent: false },
   tmpfiles: { ar: "tmpfiles.org — رابط مؤقت (احتياطي)", en: "tmpfiles.org — temporary link (fallback)", permanent: false },
   uguu: { ar: "uguu.se — رابط 48 ساعة (احتياطي)", en: "uguu.se — 48h link (fallback)", permanent: false },
+  litterbox: { ar: "Litterbox — رابط 72 ساعة (احتياطي)", en: "Litterbox — 72h link (fallback)", permanent: false },
 };
 
-function isNetworkFailure(err: unknown): boolean {
-  return err instanceof TypeError || (err instanceof Error && /fetch|network/i.test(err.message));
+/* متحكم مرتبط بإشارة خارجية + مهلة زمنية */
+function linkedController(outer: AbortSignal, ms: number) {
+  const c = new AbortController();
+  const timer = window.setTimeout(() => c.abort(new Error("timeout")), ms);
+  const onOuter = () => c.abort(new Error("aborted"));
+  if (outer.aborted) onOuter();
+  else outer.addEventListener("abort", onOuter, { once: true });
+  return {
+    signal: c.signal,
+    done: () => {
+      window.clearTimeout(timer);
+      outer.removeEventListener("abort", onOuter);
+    },
+  };
+}
+
+function classify(err: unknown): string {
+  if (err instanceof Error) {
+    if (err.message === "timeout") return "انتهت المهلة (timeout)";
+    if (err.message === "aborted") return "أُلغي";
+    if (err.message) return err.message;
+  }
+  if (err instanceof TypeError) return "network/CORS";
+  return String(err);
 }
 
 function extractUrl(json: unknown): string | null {
@@ -42,121 +75,210 @@ function extractUrl(json: unknown): string | null {
   return null;
 }
 
-async function postForm(
-  endpoint: string,
-  blob: Blob,
-  name: string,
-  field: string,
-  timeoutMs: number
-): Promise<Response> {
-  const form = new FormData();
-  form.append(field, blob, name);
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+/* ===== Catbox.moe: دائم، يدعم CORS من المتصفح، حتى 200MB ===== */
+async function tryCatbox(blob: Blob, name: string, outer: AbortSignal): Promise<string> {
+  const { signal, done } = linkedController(outer, 15000);
   try {
-    return await fetch(endpoint, { method: "POST", body: form, signal: ctrl.signal });
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-/* ===== المزوّد ١: Image2URL مباشرة ===== */
-async function tryImage2Url(endpoint: string, blob: Blob, name: string): Promise<string> {
-  const res = await postForm(endpoint, blob, name, "file", 25000);
-  const text = await res.text();
-
-  if (!res.ok) {
-    let msg = `HTTP ${res.status}`;
-    try {
-      const j = JSON.parse(text);
-      const e = (j as Record<string, unknown>).error;
-      if (typeof e === "string") msg = e;
-      else if (e && typeof e === "object") {
-        const m = (e as Record<string, unknown>).message;
-        if (typeof m === "string") msg = m;
-      }
-    } catch {
-      if (text && text.length < 200) msg = text;
-    }
-    throw new Error(msg);
-  }
-
-  try {
-    const url = extractUrl(JSON.parse(text));
-    if (url) return url;
-  } catch {
-    const trimmed = text.trim();
-    if (trimmed.startsWith("http")) return trimmed;
-  }
-  throw new Error("استجابة غير متوقعة من الخدمة");
-}
-
-/* ===== المزوّد ٢: tmpfiles.org (رابط مؤقت) ===== */
-async function tryTmpfiles(blob: Blob, name: string): Promise<string> {
-  const res = await postForm("https://tmpfiles.org/api/v1/upload", blob, name, "file", 20000);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const json = (await res.json()) as { status?: string; data?: { url?: string } };
-  if (json.status === "success" && json.data?.url) {
-    return json.data.url.replace("tmpfiles.org/", "tmpfiles.org/dl/");
-  }
-  throw new Error("bad response");
-}
-
-/* ===== المزوّد ٣: uguu.se (رابط 48 ساعة) ===== */
-async function tryUguu(blob: Blob, name: string): Promise<string> {
-  const form = new FormData();
-  form.append("files[]", blob, name);
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 20000);
-  try {
-    const res = await fetch("https://uguu.se/upload?output=json", {
+    const form = new FormData();
+    form.append("reqtype", "fileupload");
+    form.append("fileToUpload", blob, name);
+    const res = await fetch("https://catbox.moe/user/api.php", {
       method: "POST",
       body: form,
-      signal: ctrl.signal,
+      signal,
     });
+    const text = await res.text();
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = (await res.json()) as {
-      success?: boolean;
-      files?: Array<{ url?: string }>;
-      description?: string;
-    };
+    const t = text.trim();
+    if (t.startsWith("http")) return t;
+    throw new Error(t.slice(0, 120) || "bad response");
+  } finally {
+    done();
+  }
+}
+
+/* ===== Image2URL (مباشرة أو عبر بوابة) ===== */
+async function tryImage2Url(endpoint: string, blob: Blob, name: string, outer: AbortSignal): Promise<string> {
+  const { signal, done } = linkedController(outer, 14000);
+  try {
+    const form = new FormData();
+    form.append("file", blob, name);
+    const res = await fetch(endpoint, { method: "POST", body: form, signal });
+    const text = await res.text();
+    if (!res.ok) {
+      let msg = `HTTP ${res.status}`;
+      try {
+        const j = JSON.parse(text);
+        const e = (j as Record<string, unknown>).error;
+        if (typeof e === "string") msg = e;
+        else if (e && typeof e === "object") {
+          const m = (e as Record<string, unknown>).message;
+          if (typeof m === "string") msg = m;
+        }
+      } catch {
+        if (text && text.length < 200) msg = text;
+      }
+      throw new Error(msg);
+    }
+    try {
+      const url = extractUrl(JSON.parse(text));
+      if (url) return url;
+    } catch {
+      const trimmed = text.trim();
+      if (trimmed.startsWith("http")) return trimmed;
+    }
+    throw new Error("bad response");
+  } finally {
+    done();
+  }
+}
+
+/* ===== tmp.ninja (مؤقت، يدعم CORS) ===== */
+async function tryTmpNinja(blob: Blob, name: string, outer: AbortSignal): Promise<string> {
+  const { signal, done } = linkedController(outer, 15000);
+  try {
+    const form = new FormData();
+    form.append("files[]", blob, name);
+    const res = await fetch("https://tmp.ninja/upload.php?output=json", {
+      method: "POST",
+      body: form,
+      signal,
+    });
+    const text = await res.text();
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    let j: Record<string, unknown>;
+    try {
+      j = JSON.parse(text);
+    } catch {
+      /* بعض الاستجابات تبدأ بسطر حالة قبل الـ JSON */
+      const idx = text.indexOf("{");
+      if (idx === -1) throw new Error("bad response");
+      j = JSON.parse(text.slice(idx));
+    }
+    const files = j.files as Array<Record<string, unknown>> | undefined;
+    const url = files?.[0]?.url;
+    if (typeof url === "string" && url.startsWith("http")) return url;
+    const err = j.error as Record<string, unknown> | undefined;
+    throw new Error(typeof err?.message === "string" ? err.message : "bad response");
+  } finally {
+    done();
+  }
+}
+
+/* ===== tmpfiles.org (مؤقت) ===== */
+async function tryTmpfiles(blob: Blob, name: string, outer: AbortSignal): Promise<string> {
+  const { signal, done } = linkedController(outer, 15000);
+  try {
+    const form = new FormData();
+    form.append("file", blob, name);
+    const res = await fetch("https://tmpfiles.org/api/v1/upload", { method: "POST", body: form, signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = (await res.json()) as { status?: string; data?: { url?: string } };
+    if (json.status === "success" && json.data?.url) {
+      return json.data.url.replace("tmpfiles.org/", "tmpfiles.org/dl/");
+    }
+    throw new Error("bad response");
+  } finally {
+    done();
+  }
+}
+
+/* ===== uguu.se (48 ساعة) ===== */
+async function tryUguu(blob: Blob, name: string, outer: AbortSignal): Promise<string> {
+  const { signal, done } = linkedController(outer, 15000);
+  try {
+    const form = new FormData();
+    form.append("files[]", blob, name);
+    const res = await fetch("https://uguu.se/upload?output=json", { method: "POST", body: form, signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = (await res.json()) as { success?: boolean; files?: Array<{ url?: string }>; description?: string };
     const url = json.files?.[0]?.url;
     if (json.success && url) return url;
     throw new Error(json.description ?? "bad response");
   } finally {
-    clearTimeout(timer);
+    done();
   }
 }
 
-/* رفع صورة والحصول على رابط — يجرّب المزوّدين بالترتيب */
+/* ===== Litterbox من Catbox (72 ساعة، يدعم CORS) ===== */
+async function tryLitterbox(blob: Blob, name: string, outer: AbortSignal): Promise<string> {
+  const { signal, done } = linkedController(outer, 15000);
+  try {
+    const form = new FormData();
+    form.append("reqtype", "fileupload");
+    form.append("time", "72h");
+    form.append("fileToUpload", blob, name);
+    const res = await fetch("https://litterbox.catbox.moe/resources/internals/api.php", {
+      method: "POST",
+      body: form,
+      signal,
+    });
+    const text = await res.text();
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const t = text.trim();
+    if (t.startsWith("http")) return t;
+    throw new Error(t.slice(0, 120) || "bad response");
+  } finally {
+    done();
+  }
+}
+
+/* ===== السباق: أول نجاح يفوز ===== */
 export async function uploadImageToUrl(blob: Blob, name: string): Promise<UploadResult> {
-  const attempts: Array<{ provider: Provider; run: () => Promise<string> }> = [
-    { provider: "image2url", run: () => tryImage2Url(UPLOAD_ENDPOINT, blob, name) },
+  const attempts: Array<{ provider: Provider; run: (s: AbortSignal) => Promise<string> }> = [
+    { provider: "catbox", run: (s) => tryCatbox(blob, name, s) },
+    { provider: "image2url", run: (s) => tryImage2Url(IMAGE2URL_UPLOAD, blob, name, s) },
     {
-      provider: "image2url-proxy",
-      run: () => tryImage2Url(CORS_PROXY + encodeURIComponent(UPLOAD_ENDPOINT), blob, name),
+      provider: "image2url-corsproxy",
+      run: (s) => tryImage2Url(`https://corsproxy.io/?url=${encodeURIComponent(IMAGE2URL_UPLOAD)}`, blob, name, s),
     },
-    { provider: "tmpfiles", run: () => tryTmpfiles(blob, name) },
-    { provider: "uguu", run: () => tryUguu(blob, name) },
+    {
+      provider: "image2url-allorigins",
+      run: (s) => tryImage2Url(`https://api.allorigins.win/raw?url=${encodeURIComponent(IMAGE2URL_UPLOAD)}`, blob, name, s),
+    },
+    { provider: "tmpninja", run: (s) => tryTmpNinja(blob, name, s) },
+    { provider: "tmpfiles", run: (s) => tryTmpfiles(blob, name, s) },
+    { provider: "uguu", run: (s) => tryUguu(blob, name, s) },
+    { provider: "litterbox", run: (s) => tryLitterbox(blob, name, s) },
   ];
 
-  const failures: string[] = [];
-  for (const attempt of attempts) {
-    try {
-      const url = await attempt.run();
-      if (url) return { url, provider: attempt.provider };
-    } catch (err) {
-      failures.push(
-        `${attempt.provider}: ${isNetworkFailure(err) ? "network/CORS" : err instanceof Error ? err.message : String(err)}`
-      );
-    }
-  }
-  throw new Error(
-    `فشلت كل مزوّدات الاستضافة — تحقق من اتصالك بالإنترنت أو أوقف مانع الإعلانات ثم أعد المحاولة. (${failures.join(" | ")})`
-  );
+  const race = new AbortController();
+  const STAGGER = 550; /* فاصل الإطلاق بين محاولتين */
+
+  return new Promise<UploadResult>((resolve, reject) => {
+    const failures: string[] = [];
+    let settled = false;
+    let pending = attempts.length;
+
+    attempts.forEach((attempt, i) => {
+      window.setTimeout(() => {
+        if (settled) return;
+        attempt
+          .run(race.signal)
+          .then((url) => {
+            if (settled) return;
+            settled = true;
+            race.abort(); /* أوقف بقية المحاولات */
+            resolve({ url, provider: attempt.provider });
+          })
+          .catch((err) => {
+            failures.push(`${attempt.provider}: ${classify(err)}`);
+            pending--;
+            if (!settled && pending === 0) {
+              settled = true;
+              reject(
+                new Error(
+                  `فشلت كل مزوّدات الاستضافة — جرّب تعطيل مانع الإعلانات/الإضافات أو بدّل الشبكة ثم أعد المحاولة. (${failures.join(" | ")})`
+                )
+              );
+            }
+          });
+      }, i * STAGGER);
+    });
+  });
 }
 
-/* ===== الواجهة الخارجية v1: تحويل الصورة المرفوعة إلى SVG ===== */
+/* ===== الواجهة الخارجية v1 من Image2URL: تحويل الصورة المرفوعة إلى SVG ===== */
 
 export async function vectorizeToSvg(
   imageUrl: string,
@@ -192,16 +314,13 @@ export async function vectorizeToSvg(
   const taskId = (submitJson as Record<string, unknown>).taskId;
   if (typeof taskId !== "string" || !taskId) throw new Error("لم ترجع الخدمة معرّف مهمة");
 
-  /* متابعة المهمة حتى الانتهاء */
   for (let i = 0; i < 80; i++) {
     await new Promise((r) => setTimeout(r, 1500));
     const statusRes = await fetch(`${EXTERNAL_BASE}/image-to-svg/status/${taskId}`, {
       headers: { Authorization: auth },
     });
     const statusJson = await statusRes.json().catch(() => ({}));
-    if (!statusRes.ok) {
-      throw new Error(`تعذّر جلب حالة المهمة (${statusRes.status})`);
-    }
+    if (!statusRes.ok) throw new Error(`تعذّر جلب حالة المهمة (${statusRes.status})`);
     const s = statusJson as Record<string, unknown>;
     const status = String(s.status ?? "");
     if (typeof s.progress === "number") onProgress(s.progress / 100);
@@ -217,13 +336,12 @@ export async function vectorizeToSvg(
   throw new Error("انتهت مهلة انتظار التحويل");
 }
 
-/* ===== ضغط الصورة لتلائم حد الرفع (2MB) ===== */
+/* ===== ضغط الصورة لتلائم حد رفع Image2URL (2MB) ===== */
 
 export function needsDownscale(file: File): boolean {
   return file.size > MAX_UPLOAD_BYTES;
 }
 
-/* يعيد نسخة من الصورة لا تتجاوز 2MB عبر تقليل الأبعاد والجودة تدريجياً */
 export async function fitUnderLimit(file: File): Promise<Blob> {
   const img = await new Promise<HTMLImageElement>((resolve, reject) => {
     const el = new Image();
@@ -252,7 +370,6 @@ export async function fitUnderLimit(file: File): Promise<Blob> {
     );
     if (blob.size <= MAX_UPLOAD_BYTES) return blob;
 
-    /* خفّض أكثر في المحاولة التالية */
     if (quality > 0.55) quality -= 0.12;
     else scale *= 0.82;
   }

@@ -184,8 +184,8 @@ export default function ImageToUrl() {
           <div className="mt-6">
             <InfoNote>
               {isAr
-                ? "الرفع يتم مباشرة من متصفحك إلى Image2URL — رابط CDN دائم لا ينتهي، بدون تسجيل. إن منع متصفحك الوصول إليها (CORS أو مانع إعلانات) تُجرَّب تلقائياً: وكيل CORS ← tmpfiles.org ← uguu.se، وستعرف أي مزوّد نجح من شارة النتيجة. الصور الأكبر من 2MB تُضغط محلياً قبل الرفع."
-                : "Uploads go straight from your browser to Image2URL — a permanent CDN link that never expires, no sign-up. If your browser blocks it (CORS or an ad-blocker), the tool automatically retries via: CORS proxy ← tmpfiles.org ← uguu.se, and the result badge shows which provider succeeded. Images over 2MB are compressed locally first."}
+                ? "تُطلَق 8 خدمات استضافة معاً في سباق سريع ويُعتمد أول نجاح فوراً: Catbox وImage2URL (مباشرة وعبر بوابتين) بروابط دائمة لا تنتهي، وtmp.ninja وtmpfiles وuguu وLitterbox كاحتياطيات مؤقتة. ستعرف أي مزوّد نجح من شارة النتيجة. الصور الأكبر من 2MB تُضغط محلياً قبل الرفع."
+                : "Eight hosting services race in parallel and the first success wins: Catbox and Image2URL (direct plus two gateways) with permanent links that never expire, and tmp.ninja, tmpfiles, uguu & Litterbox as temporary fallbacks. The result badge tells you which provider succeeded. Images over 2MB are compressed locally first."}
             </InfoNote>
           </div>
         </>

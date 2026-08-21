@@ -10,9 +10,11 @@ import { ToolShell, FieldLabel } from "./shared";
 import { Icon } from "../components/Icons";
 
 const TOOL = getTool("image-translator")!;
-const KEY_STORAGE = "kraftoox-openai-key";
-const OPENAI_CHAT = "https://api.openai.com/v1/chat/completions";
-const OPENAI_EDIT = "https://api.openai.com/v1/images/edits";
+const KEY_STORAGE = "kraftoox-gemini-key";
+/* واجهة Gemini من Google AI Studio — تعمل مباشرة من المتصفح بمفتاح مجاني */
+const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
+
+type GeminiModel = "gemini-2.5-flash-image-preview" | "gemini-2.0-flash-preview-image-generation";
 
 const LANGS = [
   { code: "ar", ar: "العربية", en: "Arabic", instruction: "Arabic" },
@@ -41,7 +43,7 @@ function writeKey(k: string): void {
 }
 
 /* تصغير الصورة لحد أقصى يريح الطلب ويحافظ على وضوح النص */
-async function toPayloadDataUrl(file: File): Promise<string> {
+async function toPayloadParts(file: File): Promise<{ b64: string; mime: string }> {
   const img = await loadImageEl(file);
   const MAX = 2048;
   const scale = Math.min(1, MAX / Math.max(img.naturalWidth, img.naturalHeight));
@@ -54,21 +56,21 @@ async function toPayloadDataUrl(file: File): Promise<string> {
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(img, 0, 0, w, h);
   const isPng = file.type.includes("png");
-  return c.toDataURL(isPng ? "image/png" : "image/jpeg", 0.92);
+  const mime = isPng ? "image/png" : "image/jpeg";
+  const dataUrl = c.toDataURL(mime, 0.92);
+  return { b64: dataUrl.split(",")[1], mime };
 }
 
-/* استخراج صورة من استجابة Chat Completions (gpt-4o بمخرج صور) */
-function imageFromChatResponse(json: any): string | null {
+/* استخراج الصورة المولدة من استجابة Gemini (جزء inlineData داخل candidates) */
+function imageFromGeminiResponse(json: any): string | null {
   try {
-    const content = json?.choices?.[0]?.message?.content;
-    if (Array.isArray(content)) {
-      for (const part of content) {
-        if (part?.type === "image_url" && part?.image_url?.url) return part.image_url.url;
+    const parts: any[] = json?.candidates?.[0]?.content?.parts ?? [];
+    for (const part of parts) {
+      const inline = part?.inlineData ?? part?.inline_data;
+      if (inline?.data) {
+        const mime = inline.mimeType ?? inline.mime_type ?? "image/png";
+        return `data:${mime};base64,${inline.data}`;
       }
-    }
-    if (typeof content === "string") {
-      const m = content.match(/!\[[^\]]*\]\((data:image[^)]+)\)/);
-      if (m) return m[1];
     }
     return null;
   } catch {
@@ -76,13 +78,11 @@ function imageFromChatResponse(json: any): string | null {
   }
 }
 
-/* استخراج صورة من استجابة images/edits (gpt-image-1) */
-function imageFromEditResponse(json: any): string | null {
+/* سبب حظر إن وُجد في استجابة Gemini */
+function geminiBlockReason(json: any): string | null {
   try {
-    const item = json?.data?.[0];
-    if (item?.b64_json) return `data:image/png;base64,${item.b64_json}`;
-    if (item?.url) return item.url;
-    return null;
+    const reason = json?.promptFeedback?.blockReason;
+    return reason ? String(reason) : null;
   } catch {
     return null;
   }
@@ -92,11 +92,11 @@ export default function ImageTranslator() {
   const { t, isAr } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [origUrl, setOrigUrl] = useState("");
-  const [payload, setPayload] = useState("");
+  const [payload, setPayload] = useState<{ b64: string; mime: string } | null>(null);
   const [apiKey, setApiKey] = useState(readKey);
   const [showKey, setShowKey] = useState(false);
   const [lang, setLang] = useState("ar");
-  const [model, setModel] = useState<"gpt-4o" | "gpt-image-1">("gpt-4o");
+  const [model, setModel] = useState<GeminiModel>("gemini-2.5-flash-image-preview");
   const [custom, setCustom] = useState("");
   const [stage, setStage] = useState<Stage>("idle");
   const [error, setError] = useState("");
@@ -130,9 +130,9 @@ export default function ImageTranslator() {
   const onFile = async (files: File[]) => {
     const f = files[0];
     try {
-      const dataUrl = await toPayloadDataUrl(f);
+      const parts = await toPayloadParts(f);
       setFile(f);
-      setPayload(dataUrl);
+      setPayload(parts);
       setOrigUrl(URL.createObjectURL(f));
       setResult(null);
       setStage("idle");
@@ -147,8 +147,8 @@ export default function ImageTranslator() {
     if (!apiKey.trim()) {
       setError(
         isAr
-          ? "أدخل مفتاح OpenAI API أولاً — احصل عليه مجاناً من منصة OpenAI."
-          : "Enter your OpenAI API key first — get it from the OpenAI platform."
+          ? "أدخل مفتاح Gemini API أولاً — احصل عليه مجاناً من Google AI Studio."
+          : "Enter your Gemini API key first — get it free from Google AI Studio."
       );
       setStage("error");
       return;
@@ -161,54 +161,43 @@ export default function ImageTranslator() {
     setResult(null);
 
     try {
-      let dataUrl: string | null = null;
+      setStage("rendering");
 
-      if (model === "gpt-image-1") {
-        /* مسار gpt-image-1 عبر images/edits */
-        setStage("rendering");
-        const fd = new FormData();
-        fd.append("model", "gpt-image-1");
-        fd.append("image", file, file.name);
-        fd.append("prompt", prompt);
-        fd.append("size", "auto");
-        const res = await fetch(OPENAI_EDIT, {
+      /* Gemini: صورة + أمر داخل parts، ومخرج صور مفعّل في generationConfig */
+      const res = await fetch(
+        `${GEMINI_BASE}/${model}:generateContent?key=${encodeURIComponent(apiKey.trim())}`,
+        {
           method: "POST",
-          headers: { Authorization: `Bearer ${apiKey.trim()}` },
-          body: fd,
-          signal: ctrl.signal,
-        });
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(apiErrorMessage(res.status, json, isAr));
-        dataUrl = imageFromEditResponse(json);
-      } else {
-        /* مسار gpt-4o عبر Chat Completions مع مخرج صور */
-        setStage("rendering");
-        const res = await fetch(OPENAI_CHAT, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey.trim()}`,
-          },
+          headers: { "Content-Type": "application/json" },
           signal: ctrl.signal,
           body: JSON.stringify({
-            model: "gpt-4o",
-            modalities: ["text", "image"],
-            messages: [
+            contents: [
               {
-                role: "user",
-                content: [
-                  { type: "text", text: prompt },
-                  { type: "image_url", image_url: { url: payload } },
+                parts: [
+                  { text: prompt },
+                  { inline_data: { mime_type: payload.mime, data: payload.b64 } },
                 ],
               },
             ],
+            generationConfig: {
+              responseModalities: ["TEXT", "IMAGE"],
+            },
           }),
-        });
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(apiErrorMessage(res.status, json, isAr));
-        dataUrl = imageFromChatResponse(json);
+        }
+      );
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(apiErrorMessage(res.status, json, isAr));
+
+      const blocked = geminiBlockReason(json);
+      if (blocked) {
+        throw new Error(
+          isAr
+            ? `رفض النموذج معالجة الصورة لأسباب سلامة المحتوى (${blocked}).`
+            : `The model refused the image for content-safety reasons (${blocked}).`
+        );
       }
 
+      const dataUrl = imageFromGeminiResponse(json);
       if (!dataUrl) {
         throw new Error(
           isAr
@@ -241,7 +230,7 @@ export default function ImageTranslator() {
 
   const reset = () => {
     setFile(null);
-    setPayload("");
+    setPayload(null);
     setResult(null);
     setStage("idle");
     setError("");
@@ -257,7 +246,7 @@ export default function ImageTranslator() {
           <div className="card p-5">
             <h3 className="font-display mb-3 flex items-center gap-2 text-sm font-extrabold">
               <span className="c-teal"><Icon name="globe" size={17} /></span>
-              {t("١. مفتاح OpenAI", "1. OpenAI key")}
+              {t("١. مفتاح Gemini AI Studio", "1. Gemini AI Studio key")}
             </h3>
             <div className="relative">
               <input
@@ -265,10 +254,10 @@ export default function ImageTranslator() {
                 className="input !pe-11 font-mono !text-xs"
                 dir="ltr"
                 style={{ textAlign: "left" }}
-                placeholder="sk-..."
+                placeholder="AIza..."
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                aria-label="OpenAI API key"
+                aria-label="Gemini API key"
               />
               <button
                 type="button"
@@ -281,17 +270,17 @@ export default function ImageTranslator() {
             </div>
             <p className="c-muted mt-2 text-[11px] leading-relaxed">
               {t(
-                "يُحفظ في متصفحك فقط ويُرسل مباشرة إلى OpenAI — لا يمر على خوادمنا إطلاقاً.",
-                "Stored in your browser only and sent straight to OpenAI — never through our servers."
+                "مجاني من Google AI Studio، يُحفظ في متصفحك فقط ويُرسل مباشرة إلى Google — لا يمر على خوادمنا إطلاقاً.",
+                "Free from Google AI Studio, stored in your browser only and sent straight to Google — never through our servers."
               )}{" "}
               <a
-                href="https://platform.openai.com/api-keys"
+                href="https://aistudio.google.com/apikey"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="linkish"
                 dir="ltr"
               >
-                platform.openai.com/api-keys
+                aistudio.google.com/apikey
               </a>
             </p>
           </div>
@@ -322,11 +311,15 @@ export default function ImageTranslator() {
               dir="ltr"
               style={{ textAlign: "left" }}
               value={model}
-              onChange={(e) => setModel(e.target.value as "gpt-4o" | "gpt-image-1")}
+              onChange={(e) => setModel(e.target.value as GeminiModel)}
               aria-label={t("نموذج الذكاء الاصطناعي", "AI model")}
             >
-              <option value="gpt-4o">gpt-4o — {t("الأفضل للحفاظ على التخطيط", "best for keeping layout")}</option>
-              <option value="gpt-image-1">gpt-image-1 — {t("تعديل صور متخصص", "specialized image editing")}</option>
+              <option value="gemini-2.5-flash-image-preview">
+                gemini-2.5-flash-image — {t("الأفضل للحفاظ على الستايل", "best for keeping style")}
+              </option>
+              <option value="gemini-2.0-flash-preview-image-generation">
+                gemini-2.0-flash-image — {t("بديل أسرع", "faster alternative")}
+              </option>
             </select>
 
             <button
@@ -467,8 +460,8 @@ export default function ImageTranslator() {
       <div className="mt-8">
         <InfoNote>
           {isAr
-            ? "الترجمة تتم عبر ChatGPT (GPT-4o) من OpenAI: يفهم النموذج الصورة، يترجم نصوصها، ويعيد رسمها بنفس الستايل. مفتاحك يُحفظ محلياً ويُرسل مباشرة إلى OpenAI. قد تحتاج الصور المعقدة إلى إعادة محاولة أو صياغة أوضح."
-            : "Translation runs through OpenAI's ChatGPT (GPT-4o): the model reads the image, translates its text, and redraws it in the same style. Your key is stored locally and sent only to OpenAI. Complex images may need a retry or a clearer instruction."}
+            ? "الترجمة تتم عبر نماذج Gemini لتوليد الصور من Google: يفهم النموذج الصورة، يترجم نصوصها، ويعيد رسمها بنفس الستايل والتخطيط. مفتاحك مجاني من AI Studio ويُحفظ محلياً ويُرسل مباشرة إلى Google. قد تحتاج الصور المعقدة إلى إعادة محاولة أو صياغة أوضح."
+            : "Translation runs through Google's Gemini image models: the model reads the image, translates its text, and redraws it in the same style and layout. Your key is free from AI Studio, stored locally and sent only to Google. Complex images may need a retry or a clearer instruction."}
         </InfoNote>
       </div>
     </ToolShell>
@@ -477,12 +470,16 @@ export default function ImageTranslator() {
 
 function apiErrorMessage(status: number, json: any, isAr: boolean): string {
   const apiMsg: string | undefined = json?.error?.message;
-  if (status === 401)
-    return isAr ? "مفتاح API غير صالح — تحقق منه (401)" : "Invalid API key — double-check it (401)";
-  if (status === 429)
-    return isAr ? "تجاوزت حد الاستخدام أو نفدت الحصة — انتظر أو اشحن رصيدك (429)" : "Rate limit or quota exceeded — wait or top up (429)";
+  if (status === 400 && /api key/i.test(apiMsg ?? ""))
+    return isAr ? "مفتاح Gemini API غير صالح — تحقق منه" : "Invalid Gemini API key — double-check it";
+  if (status === 400)
+    return apiMsg ?? (isAr ? "طلب غير صالح — جرّب صورة أخرى (400)" : "Bad request — try another image (400)");
+  if (status === 403)
+    return isAr ? "المفتاح لا يملك صلاحية هذا النموذج — فعّله من AI Studio (403)" : "Key lacks access to this model — enable it in AI Studio (403)";
   if (status === 404)
-    return isAr ? "النموذج غير متاح لحسابك — جرّب النموذج الآخر (404)" : "Model not available for your account — try the other model (404)";
+    return isAr ? "النموذج غير متاح — جرّب النموذج الآخر (404)" : "Model not available — try the other model (404)";
+  if (status === 429)
+    return isAr ? "تجاوزت حد الاستخدام المجاني — انتظر قليلاً ثم أعد المحاولة (429)" : "Free quota exceeded — wait a moment and retry (429)";
   if (apiMsg) return apiMsg;
-  return isAr ? `خطأ من OpenAI (${status})` : `OpenAI error (${status})`;
+  return isAr ? `خطأ من Gemini (${status})` : `Gemini error (${status})`;
 }
