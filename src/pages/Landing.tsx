@@ -8,17 +8,19 @@ import { formatBytes, showToast } from "../lib/utils";
 import { Icon } from "../components/Icons";
 import { Reveal } from "../components/Reveal";
 
-type FileKind = "image" | "pdf";
+type FileKind = "image" | "pdf" | "video";
 
 const KIND_TOOLS: Record<FileKind, string[]> = {
   image: ["compress-image", "convert-image", "upscale-image", "photo-editor"],
   pdf: ["compress-pdf", "merge-pdf", "extract-pdf-images", "images-to-pdf"],
+  video: ["video-editor"],
 };
 
 function detectKind(f: File): FileKind | null {
   const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
   if (f.type.startsWith("image/") || ["jpg", "jpeg", "png", "webp", "gif"].includes(ext)) return "image";
   if (f.type === "application/pdf" || ext === "pdf") return "pdf";
+  if (f.type.startsWith("video/") || ["mp4", "webm", "mov", "mkv"].includes(ext)) return "video";
   return null;
 }
 
@@ -35,7 +37,7 @@ function SmartDrop() {
     const k = detectKind(f);
     setFile(f);
     setKind(k);
-    if (!k) showToast(t("صيغة غير مدعومة — جرّب صورة أو ملف PDF", "Unsupported format — try an image or a PDF"), "err");
+    if (!k) showToast(t("صيغة غير مدعومة — جرّب صورة أو PDF أو فيديو", "Unsupported format — try an image, PDF or video"), "err");
   };
 
   const go = (slug: string) => {
@@ -44,10 +46,11 @@ function SmartDrop() {
     navigate(`/tool/${slug}`);
   };
 
-  const kindColor: Record<FileKind, string> = { image: "var(--teal)", pdf: "var(--red)" };
+  const kindColor: Record<FileKind, string> = { image: "var(--teal)", pdf: "var(--red)", video: "var(--blue)" };
   const kindLabel: Record<FileKind, string> = {
     image: t("صورة", "Image"),
     pdf: "PDF",
+    video: t("فيديو", "Video"),
   };
 
   return (
@@ -101,7 +104,7 @@ function SmartDrop() {
                   background: kind ? `color-mix(in srgb, ${kindColor[kind]} 12%, var(--surface))` : "var(--amber-soft)",
                   color: kind ? kindColor[kind] : "var(--amber)",
                 }}>
-                <Icon name={kind === "pdf" ? "pdf" : "image"} size={22} />
+                <Icon name={kind === "pdf" ? "pdf" : kind === "video" ? "timeline" : "image"} size={22} />
               </span>
               <div className="min-w-0 flex-1 text-start">
                 <p className="truncate text-sm font-bold" dir="ltr" style={{ textAlign: "end" }}><bdi>{file.name}</bdi></p>
@@ -138,12 +141,12 @@ function SmartDrop() {
                 </p>
               </div>
             ) : (
-              <p className="mt-3 text-center text-xs c-red">{t("جرّب صورة أو ملف PDF", "Try an image or a PDF")}</p>
+              <p className="mt-3 text-center text-xs c-red">{t("جرّب صورة أو PDF أو فيديو", "Try an image, PDF or video")}</p>
             )}
           </div>
         )}
         <input ref={inputRef} type="file" className="hidden"
-          accept="image/*,application/pdf,.jpg,.png,.webp,.pdf"
+          accept="image/*,application/pdf,video/mp4,video/webm,video/quicktime,.jpg,.png,.webp,.pdf,.mp4,.webm,.mov"
           onChange={(e) => { take(e.target.files?.[0]); e.target.value = ""; }} />
       </div>
     </div>
@@ -257,7 +260,7 @@ export default function Landing() {
           <Reveal delay={300}>
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <span className="c-muted text-xs font-semibold">{t("الأكثر استخداماً:", "Most used:")}</span>
-              {["compress-image", "photo-editor", "merge-pdf", "upscale-image"].map((s) => {
+              {["compress-image", "photo-editor", "video-editor", "merge-pdf"].map((s) => {
                 const tool = getTool(s)!;
                 return (
                   <Link key={s} to={`/tool/${s}`} className="chip !text-xs">

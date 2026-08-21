@@ -36,6 +36,7 @@ const ExtractPdfImages = lazyRetry(() => import("./tools/ExtractPdfImages"));
 const UpscaleImage = lazyRetry(() => import("./tools/UpscaleImage"));
 const RemoveWatermark = lazyRetry(() => import("./tools/RemoveWatermark"));
 const PhotoEditor = lazyRetry(() => import("./tools/PhotoEditor"));
+const VideoEditor = lazyRetry(() => import("./tools/VideoEditor"));
 
 const TOOL_PAGES: Record<string, ComponentType> = {
   "compress-image": CompressImage,
@@ -49,9 +50,10 @@ const TOOL_PAGES: Record<string, ComponentType> = {
   "upscale-image": UpscaleImage,
   "remove-watermark": RemoveWatermark,
   "photo-editor": PhotoEditor,
+  "video-editor": VideoEditor,
 };
 
-const CATEGORY_SLUGS = ["images", "pdf"];
+const CATEGORY_SLUGS = ["images", "pdf", "video"];
 
 /* حاجز أخطاء: يعرض رسالة واضحة بدل الشاشة البيضاء عند أي عطل */
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {

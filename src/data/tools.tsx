@@ -1,6 +1,6 @@
 import type { IconName } from "../components/Icons";
 
-export type ToolCategory = "image" | "pdf";
+export type ToolCategory = "image" | "pdf" | "video";
 
 export interface ToolDef {
   slug: string;
@@ -336,10 +336,49 @@ export const TOOLS: ToolDef[] = [
       "Embedded JPEGs are extracted without any re-encoding (zero loss). Images repeated across pages are extracted just once.",
     ],
   },
+  {
+    slug: "video-editor",
+    name: "محرر الفيديو الاحترافي",
+    nameEn: "Professional Video Editor",
+    short: "محرر فيديو بمستوى الاستوديوهات يعمل داخل متصفحك: خط زمني، قصّ ودمج، نصوص وحركات، وتصدير MP4.",
+    shortEn: "A studio-grade video editor that runs inside your browser: timeline, trim & merge, text & motion, and MP4 export.",
+    long: "نُشغّل داخل المنصة محرك CreativeEditor الشهير (من img.ly) — نفس فكرة فوتوشوب الويب لكن للفيديو: خط زمني متعدد المقاطع، قصّ وتقطيع ودمج، نصوص عربية وعناوين متحركة، موسيقى، فلاتر وانتقالات، وكل المعالجة تتم داخل متصفحك مع تصدير MP4 جاهز للنشر.",
+    longEn: "We run the renowned CreativeEditor engine (by img.ly) inside the platform — the same idea as web Photoshop, but for video: a multi-clip timeline, trimming, cutting & merging, Arabic text and animated titles, music, filters and transitions — all processed in your browser with MP4 export ready to publish.",
+    category: "video",
+    icon: "timeline",
+    color: "var(--blue)",
+    accept: "video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov",
+    multiple: false,
+    badge: "Timeline · MP4 · In-browser",
+    badgeEn: "Timeline · MP4 · In-browser",
+    keywords: "محرر فيديو اونلاين مونتاج اونلاين تحرير الفيديو في المتصفح online video editor free timeline editor قص الفيديو",
+    keywordsEn: "online video editor free browser video editing timeline editor trim merge video mp4 export",
+    features: [
+      "خط زمني احترافي بمقاطع متعددة",
+      "قصّ وتقطيع ودمج بدقة الإطار",
+      "نصوص وعناوين وموسيقى وانتقالات",
+      "يعمل داخل المتصفح ويصدّر MP4",
+    ],
+    featuresEn: [
+      "Professional multi-clip timeline",
+      "Frame-accurate trim, cut & merge",
+      "Text, titles, music & transitions",
+      "Runs in the browser, exports MP4",
+    ],
+    drop: ["اسحب فيديو لفتحه في المحرر", "Drop a video to open it in the editor"],
+    dropSub: ["MP4 · WebM · MOV — أو افتح المحرر فارغاً وابدأ مشروعاً جديداً", "MP4 · WebM · MOV — or open the editor empty and start a new project"],
+    action: ["افتح الفيديو في المحرر", "Open video in editor"],
+    note: [
+      "المحرر يعمل بالكامل داخل متصفحك ولا يُرفع ملفك لأي خادم تابع لنا. التصدير من زر Export داخل المحرر بصيغة MP4. يُنصح بمتصفح كروم أو إيدج حديث لأفضل أداء.",
+      "The editor runs entirely in your browser and your file is never uploaded to our servers. Export via the Export button inside the editor as MP4. A recent Chrome or Edge is recommended for best performance.",
+    ],
+    isNew: true,
+  },
 ];
 
 export const IMAGE_TOOLS = TOOLS.filter((t) => t.category === "image");
 export const PDF_TOOLS = TOOLS.filter((t) => t.category === "pdf");
+export const VIDEO_TOOLS = TOOLS.filter((t) => t.category === "video");
 
 export function getTool(slug: string): ToolDef | undefined {
   return TOOLS.find((t) => t.slug === slug);
@@ -408,6 +447,30 @@ export const CATEGORIES: CategoryDef[] = [
       "Collecting the month's invoices into one tidy file",
       "Turning scanned papers into a PDF document",
       "Pulling images out of references and papers in one go",
+    ],
+  },
+  {
+    id: "video",
+    slug: "video",
+    name: "أدوات الفيديو",
+    nameEn: "Video Tools",
+    icon: "timeline",
+    color: "var(--blue)",
+    tagline: "مونتاج بمستوى الاستوديوهات — داخل متصفحك",
+    taglineEn: "Studio-grade editing — right in your browser",
+    desc: "محرر فيديو احترافي مبني على محرك CreativeEditor يعمل داخل المتصفح: خط زمني، قصّ ودمج، نصوص وعناوين متحركة، موسيقى وانتقالات، وتصدير MP4 جاهز ليوتيوب والتيك توك.",
+    descEn: "A professional video editor built on the CreativeEditor engine, running in the browser: timeline, trim & merge, animated text and titles, music and transitions, and MP4 export ready for YouTube and TikTok.",
+    useCases: [
+      "مونتاج سريع لمقاطع السوشيال ميديا",
+      "قصّ الإعلانات من الفيديوهات قبل النشر",
+      "إضافة عناوين ونصوص عربية للمقاطع",
+      "دمج لقطات متفرقة في فيديو واحد",
+    ],
+    useCasesEn: [
+      "Quick edits for social-media clips",
+      "Trimming footage before publishing",
+      "Adding Arabic titles and captions to clips",
+      "Merging separate shots into one video",
     ],
   },
 ];

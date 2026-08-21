@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { TOOLS, IMAGE_TOOLS, PDF_TOOLS, getTool, type ToolDef } from "../data/tools";
+import { TOOLS, IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS, getTool, type ToolDef } from "../data/tools";
 import { Link } from "../lib/router";
 import { useI18n } from "../i18n";
 import { getProcessedCount, matchesQuery, copyText, showToast } from "../lib/utils";
@@ -227,8 +227,8 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
             <p className="inline-flex items-center gap-2 rounded-full border bd-line bg-surface px-3.5 py-1.5 text-xs font-semibold">
               <span className="anim-pulse-soft inline-block h-2 w-2 rounded-full" style={{ background: "var(--teal)" }} />
               {isAr
-                ? "١٧ أداة مجانية · محرر فيديو · تسجيل شاشة · ذكاء اصطناعي · بدون تسجيل"
-                : "17 free tools · video editor · screen recorder · AI · no sign-up"}
+                ? `${TOOLS.length} أداة مجانية · فوتوشوب أونلاين · محرر فيديو احترافي · بدون تسجيل`
+                : `${TOOLS.length} free tools · online Photoshop · pro video editor · no sign-up`}
             </p>
           </Reveal>
 
@@ -410,6 +410,20 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
               </div>
             </div>
 
+            <div id="video-tools" className="mt-14">
+              <SectionHead
+                kicker={isAr ? "قسم الفيديو — جديد" : "Video section — new"}
+                title={isAr ? "أدوات الفيديو" : "Video Tools"}
+                desc={isAr ? "محرر فيديو احترافي يعمل داخل متصفحك: خط زمني، قصّ ودمج، نصوص وعناوين، وتصدير MP4." : "A professional video editor that runs in your browser: timeline, trim & merge, text & titles, and MP4 export."}
+                icon="timeline"
+                color="var(--blue)"
+              />
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {VIDEO_TOOLS.map((t, i) => (
+                  <ToolCard key={t.slug} tool={t} delay={i * 70} />
+                ))}
+              </div>
+            </div>
           </>
         )}
       </section>
