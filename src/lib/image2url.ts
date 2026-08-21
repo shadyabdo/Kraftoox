@@ -1,15 +1,30 @@
-/* تكامل Image2URL — رفع مباشر + تحويل SVG عبر الواجهة الخارجية v1 */
+/* تكامل Image2URL — رفع مباشر + تحويل SVG عبر الواجهة الخارجية v1
+   سلسلة مزوّدين: Image2URL مباشرة ← عبر وكيل CORS ← tmpfiles.org ← uguu.se
+   أي مزوّد ينجح تُعاد نتيجته مع اسمه ليُعرض للمستخدم بشفافية */
 
 const UPLOAD_ENDPOINT = "https://www.image2url.com/api/upload";
+const CORS_PROXY = "https://corsproxy.io/?url=";
 const EXTERNAL_BASE = "https://www.image2url.com/api/external/v1";
 const MAX_UPLOAD_BYTES = 2 * 1024 * 1024; /* حد نقطة الرفع العامة */
 
+export type Provider = "image2url" | "image2url-proxy" | "tmpfiles" | "uguu";
+
 export interface UploadResult {
   url: string;
-  provider: string;
+  provider: Provider;
 }
 
-/* استخراج الرابط من أشكال استجابة محتملة */
+export const PROVIDER_INFO: Record<Provider, { ar: string; en: string; permanent: boolean }> = {
+  image2url: { ar: "Image2URL — رابط دائم لا ينتهي", en: "Image2URL — permanent link, never expires", permanent: true },
+  "image2url-proxy": { ar: "Image2URL (عبر وكيل) — رابط دائم", en: "Image2URL (via proxy) — permanent link", permanent: true },
+  tmpfiles: { ar: "tmpfiles.org — رابط مؤقت (احتياطي)", en: "tmpfiles.org — temporary link (fallback)", permanent: false },
+  uguu: { ar: "uguu.se — رابط 48 ساعة (احتياطي)", en: "uguu.se — 48h link (fallback)", permanent: false },
+};
+
+function isNetworkFailure(err: unknown): boolean {
+  return err instanceof TypeError || (err instanceof Error && /fetch|network/i.test(err.message));
+}
+
 function extractUrl(json: unknown): string | null {
   if (!json || typeof json !== "object") return null;
   const j = json as Record<string, unknown>;
@@ -27,17 +42,31 @@ function extractUrl(json: unknown): string | null {
   return null;
 }
 
-/* رفع صورة إلى Image2URL والحصول على رابط دائم */
-export async function uploadImageToUrl(blob: Blob, name: string): Promise<UploadResult> {
+async function postForm(
+  endpoint: string,
+  blob: Blob,
+  name: string,
+  field: string,
+  timeoutMs: number
+): Promise<Response> {
   const form = new FormData();
-  form.append("file", blob, name);
-  form.append("image", blob, name); /* بعض النسخ تقرأ هذا الحقل */
+  form.append(field, blob, name);
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch(endpoint, { method: "POST", body: form, signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
-  const res = await fetch(UPLOAD_ENDPOINT, { method: "POST", body: form });
+/* ===== المزوّد ١: Image2URL مباشرة ===== */
+async function tryImage2Url(endpoint: string, blob: Blob, name: string): Promise<string> {
+  const res = await postForm(endpoint, blob, name, "file", 25000);
   const text = await res.text();
 
   if (!res.ok) {
-    let msg = `فشل الرفع (${res.status})`;
+    let msg = `HTTP ${res.status}`;
     try {
       const j = JSON.parse(text);
       const e = (j as Record<string, unknown>).error;
@@ -47,24 +76,84 @@ export async function uploadImageToUrl(blob: Blob, name: string): Promise<Upload
         if (typeof m === "string") msg = m;
       }
     } catch {
-      if (text) msg = text.slice(0, 140);
+      if (text && text.length < 200) msg = text;
     }
     throw new Error(msg);
   }
 
-  let json: unknown;
   try {
-    json = JSON.parse(text);
+    const url = extractUrl(JSON.parse(text));
+    if (url) return url;
   } catch {
-    /* قد يرجع الرابط نصاً صريحاً */
     const trimmed = text.trim();
-    if (trimmed.startsWith("http")) return { url: trimmed, provider: "image2url" };
-    throw new Error("استجابة غير متوقعة من الخدمة");
+    if (trimmed.startsWith("http")) return trimmed;
   }
+  throw new Error("استجابة غير متوقعة من الخدمة");
+}
 
-  const url = extractUrl(json);
-  if (!url) throw new Error("لم ترجع الخدمة رابطاً — جرّب صورة أخرى");
-  return { url, provider: "image2url" };
+/* ===== المزوّد ٢: tmpfiles.org (رابط مؤقت) ===== */
+async function tryTmpfiles(blob: Blob, name: string): Promise<string> {
+  const res = await postForm("https://tmpfiles.org/api/v1/upload", blob, name, "file", 20000);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = (await res.json()) as { status?: string; data?: { url?: string } };
+  if (json.status === "success" && json.data?.url) {
+    return json.data.url.replace("tmpfiles.org/", "tmpfiles.org/dl/");
+  }
+  throw new Error("bad response");
+}
+
+/* ===== المزوّد ٣: uguu.se (رابط 48 ساعة) ===== */
+async function tryUguu(blob: Blob, name: string): Promise<string> {
+  const form = new FormData();
+  form.append("files[]", blob, name);
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 20000);
+  try {
+    const res = await fetch("https://uguu.se/upload?output=json", {
+      method: "POST",
+      body: form,
+      signal: ctrl.signal,
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = (await res.json()) as {
+      success?: boolean;
+      files?: Array<{ url?: string }>;
+      description?: string;
+    };
+    const url = json.files?.[0]?.url;
+    if (json.success && url) return url;
+    throw new Error(json.description ?? "bad response");
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/* رفع صورة والحصول على رابط — يجرّب المزوّدين بالترتيب */
+export async function uploadImageToUrl(blob: Blob, name: string): Promise<UploadResult> {
+  const attempts: Array<{ provider: Provider; run: () => Promise<string> }> = [
+    { provider: "image2url", run: () => tryImage2Url(UPLOAD_ENDPOINT, blob, name) },
+    {
+      provider: "image2url-proxy",
+      run: () => tryImage2Url(CORS_PROXY + encodeURIComponent(UPLOAD_ENDPOINT), blob, name),
+    },
+    { provider: "tmpfiles", run: () => tryTmpfiles(blob, name) },
+    { provider: "uguu", run: () => tryUguu(blob, name) },
+  ];
+
+  const failures: string[] = [];
+  for (const attempt of attempts) {
+    try {
+      const url = await attempt.run();
+      if (url) return { url, provider: attempt.provider };
+    } catch (err) {
+      failures.push(
+        `${attempt.provider}: ${isNetworkFailure(err) ? "network/CORS" : err instanceof Error ? err.message : String(err)}`
+      );
+    }
+  }
+  throw new Error(
+    `فشلت كل مزوّدات الاستضافة — تحقق من اتصالك بالإنترنت أو أوقف مانع الإعلانات ثم أعد المحاولة. (${failures.join(" | ")})`
+  );
 }
 
 /* ===== الواجهة الخارجية v1: تحويل الصورة المرفوعة إلى SVG ===== */
@@ -76,11 +165,18 @@ export async function vectorizeToSvg(
 ): Promise<string> {
   const auth = `Bearer ${apiKey.trim()}`;
 
-  const submit = await fetch(`${EXTERNAL_BASE}/image-to-svg/vectorize`, {
-    method: "POST",
-    headers: { Authorization: auth, "Content-Type": "application/json" },
-    body: JSON.stringify({ url: imageUrl, output_format: "svg", preset: "logo" }),
-  });
+  let submit: Response;
+  try {
+    submit = await fetch(`${EXTERNAL_BASE}/image-to-svg/vectorize`, {
+      method: "POST",
+      headers: { Authorization: auth, "Content-Type": "application/json" },
+      body: JSON.stringify({ url: imageUrl, output_format: "svg", preset: "logo" }),
+    });
+  } catch {
+    throw new Error(
+      "تعذّر الاتصال بواجهة Image2URL الخارجية (قد تمنع CORS استدعاءها من المتصفح) — جرّب من خادمك أو عبر وكيل."
+    );
+  }
   const submitJson = await submit.json().catch(() => ({}));
   if (!submit.ok) {
     const e = (submitJson as Record<string, unknown>).error;
@@ -88,7 +184,7 @@ export async function vectorizeToSvg(
       typeof e === "string"
         ? e
         : e && typeof e === "object"
-        ? String((e as Record<string, unknown>).message ?? "فشل الإرسال")
+        ? String((e as Record<string, unknown>).message ?? `فشل الإرسال (${submit.status})`)
         : `فشل الإرسال (${submit.status})`;
     throw new Error(msg);
   }

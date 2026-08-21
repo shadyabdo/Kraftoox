@@ -9,7 +9,9 @@ import {
   vectorizeToSvg,
   needsDownscale,
   fitUnderLimit,
+  PROVIDER_INFO,
   UPLOAD_LIMIT_LABEL,
+  type Provider,
 } from "../lib/image2url";
 import { ToolShell } from "./shared";
 import { Icon } from "../components/Icons";
@@ -29,6 +31,7 @@ export default function ImageToUrl() {
   const [phase, setPhase] = useState<Phase>("ready");
   const [autoCompress, setAutoCompress] = useState(true);
   const [resultUrl, setResultUrl] = useState("");
+  const [provider, setProvider] = useState<Provider>("image2url");
   const [tab, setTab] = useState<Tab>("direct");
   const [error, setError] = useState("");
 
@@ -56,6 +59,7 @@ export default function ImageToUrl() {
     setPreviewUrl(URL.createObjectURL(f));
     setPhase("ready");
     setResultUrl("");
+    setProvider("image2url");
     setError("");
     setSvgPhase("idle");
     setSvgUrl("");
@@ -94,9 +98,16 @@ export default function ImageToUrl() {
       setPhase("uploading");
       const res = await uploadImageToUrl(payload, file.name);
       setResultUrl(res.url);
+      setProvider(res.provider);
       setPhase("done");
       bumpProcessedCount(1);
-      showToast(t("تم الرفع — رابطك الدائم جاهز", "Uploaded — your permanent link is ready"));
+      const info = PROVIDER_INFO[res.provider];
+      showToast(
+        t(
+          info.permanent ? "تم الرفع — رابطك الدائم جاهز" : "تم الرفع — رابط احتياطي جاهز",
+          info.permanent ? "Uploaded — your permanent link is ready" : "Uploaded — fallback link ready"
+        )
+      );
     } catch (e) {
       setPhase("error");
       setError(e instanceof Error ? e.message : String(e));
@@ -173,8 +184,8 @@ export default function ImageToUrl() {
           <div className="mt-6">
             <InfoNote>
               {isAr
-                ? "الرفع يتم مباشرة من متصفحك إلى خدمة Image2URL المجانية التي تمنحك رابط CDN دائم لا ينتهي — بدون تسجيل. الصور الأكبر من 2MB تُضغط تلقائياً محلياً قبل الرفع."
-                : "Uploads go straight from your browser to the free Image2URL service, which gives you a permanent CDN link that never expires — no sign-up. Images larger than 2MB are auto-compressed locally before upload."}
+                ? "الرفع يتم مباشرة من متصفحك إلى Image2URL — رابط CDN دائم لا ينتهي، بدون تسجيل. إن منع متصفحك الوصول إليها (CORS أو مانع إعلانات) تُجرَّب تلقائياً: وكيل CORS ← tmpfiles.org ← uguu.se، وستعرف أي مزوّد نجح من شارة النتيجة. الصور الأكبر من 2MB تُضغط محلياً قبل الرفع."
+                : "Uploads go straight from your browser to Image2URL — a permanent CDN link that never expires, no sign-up. If your browser blocks it (CORS or an ad-blocker), the tool automatically retries via: CORS proxy ← tmpfiles.org ← uguu.se, and the result badge shows which provider succeeded. Images over 2MB are compressed locally first."}
             </InfoNote>
           </div>
         </>
@@ -291,9 +302,15 @@ export default function ImageToUrl() {
                     <img src={resultUrl} alt={t("النسخة المستضافة", "Hosted copy")} className="max-h-56 rounded-lg object-contain shadow-md" />
                   </div>
                   <div className="flex items-center justify-between border-t bd-line px-4 py-2.5">
-                    <span className="flex items-center gap-1.5 text-xs font-bold c-teal">
-                      <Icon name="check" size={15} />
-                      {t("مستضافة على CDN — رابط دائم", "Hosted on CDN — permanent link")}
+                    <span
+                      className={cx(
+                        "flex items-center gap-1.5 text-xs font-bold",
+                        PROVIDER_INFO[provider].permanent ? "c-teal" : "c-amber"
+                      )}
+                      title={provider}
+                    >
+                      <Icon name={PROVIDER_INFO[provider].permanent ? "check" : "info"} size={15} />
+                      {isAr ? PROVIDER_INFO[provider].ar : PROVIDER_INFO[provider].en}
                     </span>
                     <a href={resultUrl} target="_blank" rel="noopener noreferrer" className="linkish text-xs font-semibold">
                       {t("فتح الرابط", "Open link")}
