@@ -11,7 +11,7 @@ import { Reveal } from "../components/Reveal";
 type FileKind = "image" | "pdf" | "video";
 
 const KIND_TOOLS: Record<FileKind, string[]> = {
-  image: ["compress-image", "convert-image", "upscale-image", "photo-editor"],
+  image: ["image-translator", "photo-editor", "compress-image", "upscale-image", "remove-watermark"],
   pdf: ["compress-pdf", "merge-pdf", "extract-pdf-images", "images-to-pdf"],
   video: ["video-editor"],
 };
