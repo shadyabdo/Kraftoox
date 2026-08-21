@@ -9,6 +9,7 @@ import {
   vectorizeToSvg,
   needsDownscale,
   fitUnderLimit,
+  generateOptimizedDataUri,
   PROVIDER_INFO,
   UPLOAD_LIMIT_LABEL,
   type Provider,
@@ -21,7 +22,7 @@ const KEY_STORAGE = "kx-image2url-key";
 
 type Phase = "ready" | "compressing" | "uploading" | "done" | "error";
 type SvgPhase = "idle" | "busy" | "done" | "error";
-type Tab = "direct" | "html" | "md" | "bb";
+type Tab = "direct" | "html" | "md" | "bb" | "data";
 
 export default function ImageToUrl() {
   const { t, isAr } = useI18n();
@@ -30,10 +31,15 @@ export default function ImageToUrl() {
   const [previewUrl, setPreviewUrl] = useState("");
   const [phase, setPhase] = useState<Phase>("ready");
   const [autoCompress, setAutoCompress] = useState(true);
-  const [resultUrl, setResultUrl] = useState("");
-  const [provider, setProvider] = useState<Provider>("image2url");
+  const [localUrl, setLocalUrl] = useState("");
+  const [webUrl, setWebUrl] = useState("");
+  const [webState, setWebState] = useState<"idle" | "trying" | "done" | "failed">("idle");
+  const [provider, setProvider] = useState<Provider>("local");
   const [tab, setTab] = useState<Tab>("direct");
   const [error, setError] = useState("");
+
+  /* الرابط النشط: رابط الويب القصير إن توفر، وإلا الرابط المحلي المضمون */
+  const resultUrl = webUrl || localUrl;
 
   const [svgKey, setSvgKey] = useState(() => {
     try {
@@ -58,8 +64,10 @@ export default function ImageToUrl() {
     setFile(f);
     setPreviewUrl(URL.createObjectURL(f));
     setPhase("ready");
-    setResultUrl("");
-    setProvider("image2url");
+    setLocalUrl("");
+    setWebUrl("");
+    setWebState("idle");
+    setProvider("local");
     setError("");
     setSvgPhase("idle");
     setSvgUrl("");
@@ -79,39 +87,47 @@ export default function ImageToUrl() {
   const upload = async () => {
     if (!file) return;
     setError("");
+
+    /* ١) الرابط المضمون: Data URL محلي — يُنتَج فوراً ولا يفشل أبداً */
+    setPhase("uploading");
     try {
-      let payload: Blob = file;
-      if (needsDownscale(file)) {
-        if (!autoCompress) {
-          setError(
-            t(
-              `حجم الصورة يتجاوز حد الخدمة (${UPLOAD_LIMIT_LABEL}). فعّل الضغط التلقائي أو اختر صورة أصغر.`,
-              `Image exceeds the service limit (${UPLOAD_LIMIT_LABEL}). Enable auto-compress or pick a smaller image.`
-            )
-          );
-          setPhase("error");
-          return;
-        }
-        setPhase("compressing");
-        payload = await fitUnderLimit(file);
-      }
-      setPhase("uploading");
-      const res = await uploadImageToUrl(payload, file.name);
-      setResultUrl(res.url);
-      setProvider(res.provider);
+      const dataUri = await generateOptimizedDataUri(file);
+      setLocalUrl(dataUri);
+      setProvider("local");
       setPhase("done");
       bumpProcessedCount(1);
-      const info = PROVIDER_INFO[res.provider];
-      showToast(
-        t(
-          info.permanent ? "تم الرفع — رابطك الدائم جاهز" : "تم الرفع — رابط احتياطي جاهز",
-          info.permanent ? "Uploaded — your permanent link is ready" : "Uploaded — fallback link ready"
-        )
-      );
-    } catch (e) {
+    } catch {
       setPhase("error");
-      setError(e instanceof Error ? e.message : String(e));
+      setError(t("تعذّر قراءة الصورة", "Could not read the image"));
+      return;
     }
+
+    /* ٢) رابط الويب القصير: سباق مزوّدين في الخلفية — نجاحه مكافأة، وفشله لا يعطّل النتيجة */
+    setWebState("trying");
+    let payload: Blob = file;
+    try {
+      if (needsDownscale(file)) {
+        if (autoCompress) {
+          setPhase("compressing");
+          payload = await fitUnderLimit(file);
+          setPhase("done");
+        }
+      }
+    } catch {
+      payload = file;
+    }
+
+    uploadImageToUrl(payload, file.name)
+      .then((res) => {
+        setWebUrl(res.url);
+        setProvider(res.provider);
+        setWebState("done");
+        showToast(t("وصل رابط الويب القصير للمشاركة", "Short web link is ready to share"));
+      })
+      .catch(() => {
+        /* الاستضافة الخارجية غير متاحة في شبكتك — الرابط المضمون ما يزال يعمل */
+        setWebState("failed");
+      });
   };
 
   const snippets: Record<Tab, string> = {
@@ -119,6 +135,7 @@ export default function ImageToUrl() {
     html: `<img src="${resultUrl}" alt="${file?.name ?? "image"}" />`,
     md: `![${file?.name ?? "image"}](${resultUrl})`,
     bb: `[img]${resultUrl}[/img]`,
+    data: localUrl,
   };
 
   const runSvg = async () => {
@@ -161,7 +178,8 @@ export default function ImageToUrl() {
   };
 
   const TABS: Array<{ id: Tab; label: string }> = [
-    { id: "direct", label: t("رابط مباشر", "Direct") },
+    { id: "direct", label: webUrl ? t("رابط الويب", "Web link") : t("الرابط المباشر", "Direct link") },
+    { id: "data", label: t("Data URL · مضمون", "Data URL · guaranteed") },
     { id: "html", label: "HTML" },
     { id: "md", label: "Markdown" },
     { id: "bb", label: "BBCode" },
@@ -258,7 +276,10 @@ export default function ImageToUrl() {
                   type="button"
                   onClick={() => {
                     setFile(null);
-                    setResultUrl("");
+                    setLocalUrl("");
+                    setWebUrl("");
+                    setWebState("idle");
+                    setProvider("local");
                     setPhase("ready");
                     setSvgPhase("idle");
                   }}
@@ -316,6 +337,25 @@ export default function ImageToUrl() {
                       {t("فتح الرابط", "Open link")}
                     </a>
                   </div>
+
+                  {/* حالة رابط الويب القصير */}
+                  {webState === "trying" && (
+                    <div className="flex items-center gap-2 border-t bd-line px-4 py-2.5 text-xs c-muted">
+                      <Spinner size={14} />
+                      {t("جاري الحصول على رابط ويب قصير للمشاركة…", "Fetching a short web link to share…")}
+                    </div>
+                  )}
+                  {webState === "failed" && (
+                    <div className="flex items-start gap-2 border-t bd-line bg-[var(--amber-soft)] px-4 py-2.5 text-xs leading-relaxed c-amber">
+                      <Icon name="info" size={15} className="mt-0.5 shrink-0" />
+                      <span>
+                        {t(
+                          "الاستضافة الخارجية غير متاحة في شبكتك حالياً — الرابط المضمون (Data URL) ما يزال يعمل ويُنسخ من تبويبه.",
+                          "External hosting is unavailable on your network right now — the guaranteed link (Data URL) still works and can be copied from its tab."
+                        )}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* الروابط والأكواد */}

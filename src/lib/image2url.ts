@@ -7,6 +7,7 @@ const EXTERNAL_BASE = "https://www.image2url.com/api/external/v1";
 const MAX_UPLOAD_BYTES = 2 * 1024 * 1024; /* حد نقطة رفع Image2URL العامة */
 
 export type Provider =
+  | "local"
   | "catbox"
   | "image2url"
   | "image2url-corsproxy"
@@ -22,6 +23,7 @@ export interface UploadResult {
 }
 
 export const PROVIDER_INFO: Record<Provider, { ar: string; en: string; permanent: boolean }> = {
+  local: { ar: "رابط Data URL مضمون — يعمل دائماً بلا اتصال", en: "Guaranteed Data URL — always works, no network needed", permanent: true },
   catbox: { ar: "Catbox — رابط دائم لا ينتهي", en: "Catbox — permanent link, never expires", permanent: true },
   image2url: { ar: "Image2URL — رابط دائم لا ينتهي", en: "Image2URL — permanent link, never expires", permanent: true },
   "image2url-corsproxy": { ar: "Image2URL (بوابة ١) — رابط دائم", en: "Image2URL (gateway 1) — permanent link", permanent: true },
@@ -334,6 +336,46 @@ export async function vectorizeToSvg(
     }
   }
   throw new Error("انتهت مهلة انتظار التحويل");
+}
+
+/* ===== الرابط المضمون: Data URL يعمل دائماً حتى بلا اتصال ===== */
+
+/* تحويل مباشر لأي Blob إلى Data URL (لا يفشل أبداً) */
+export function generateDataUri(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("read error"));
+    reader.readAsDataURL(blob);
+  });
+}
+
+/* نسخة محسّنة من Data URL: تُصغَّر الأبعاد إلى حد أقصى حتى يبقى الرابط مريح النسخ،
+   وتُحفظ الشفافية إن كانت PNG. تعمل محلياً بالكامل ولا تحتاج شبكة. */
+export async function generateOptimizedDataUri(file: File): Promise<string> {
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const el = new Image();
+    el.onload = () => resolve(el);
+    el.onerror = () => reject(new Error("تعذّر قراءة الصورة"));
+    el.src = URL.createObjectURL(file);
+  });
+
+  const MAX = 1600;
+  const scale = Math.min(1, MAX / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.max(1, Math.round(img.naturalWidth * scale));
+  const h = Math.max(1, Math.round(img.naturalHeight * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d")!;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(img, 0, 0, w, h);
+
+  const isPng = file.type.includes("png");
+  const dataUri = canvas.toDataURL(isPng ? "image/png" : "image/jpeg", isPng ? undefined : 0.85);
+  URL.revokeObjectURL(img.src);
+  return dataUri;
 }
 
 /* ===== ضغط الصورة لتلائم حد رفع Image2URL (2MB) ===== */
