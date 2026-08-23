@@ -2,65 +2,69 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ============ Kraftoox — Design System ============ */
+/* ============ Kraftoox — هوية الورشة الذهبية ============
+   الأساسي: ذهبي شامبانيا #c8a460
+   ثانويات: أخضر غابات · نبيذي · أردوازي — على ورق دافئ/فحم دافئ */
 :root {
-  --bg: #f1f4f3;
-  --surface: #ffffff;
-  --surface2: #e8eeec;
-  --ink: #131f1b;
-  --muted: #5c6f68;
-  --line: #dbe4e0;
-  --teal: #0c7a63;
-  --teal-deep: #0a6353;
-  --teal-soft: #d9efe7;
-  --amber: #dd8a0a;
-  --amber-deep: #b87205;
-  --amber-soft: #f9ecd2;
-  --red: #d3494e;
-  --red-deep: #b53a3f;
-  --red-soft: #fae2e1;
-  --blue: #2b6ca8;
-  --blue-deep: #21578a;
-  --blue-soft: #ddeaf6;
-  --glow-teal: rgba(12, 122, 99, 0.13);
-  --glow-red: rgba(211, 73, 78, 0.1);
-  --glow-amber: rgba(221, 138, 10, 0.13);
-  --glow-blue: rgba(43, 108, 168, 0.13);
-  --dot: rgba(19, 31, 27, 0.075);
-  --card-shadow: 0 1px 2px rgba(19, 31, 27, 0.04), 0 10px 28px -18px rgba(19, 31, 27, 0.22);
-  --font-display: "Rubik", "Segoe UI", Tahoma, sans-serif;
-  --font-body: "Rubik", "Segoe UI", Tahoma, sans-serif;
-  --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
+  --bg: #f4f1ea;
+  --surface: #fffdf8;
+  --surface2: #ebe6da;
+  --ink: #211d14;
+  --muted: #756c58;
+  --line: #ddd5c2;
+  --teal: #c8a460;           /* الأساسي — ذهبي */
+  --teal-ink: #94742f;        /* ذهبي داكن للنصوص فوق الفاتح (تباين مقروء) */
+  --teal-deep: #b3903f;
+  --teal-soft: #f2e7cd;
+  --amber: #3f6f57;           /* أخضر غابات — ثانوي */
+  --amber-deep: #335c47;
+  --amber-soft: #e0e9df;
+  --red: #96403f;             /* نبيذي — PDF وأخطاء */
+  --red-deep: #7e3434;
+  --red-soft: #efe0da;
+  --blue: #4f6d8c;            /* أردوازي — فيديو */
+  --blue-deep: #425d79;
+  --blue-soft: #e0e7ee;
+  --glow-teal: rgba(200, 164, 96, 0.2);
+  --glow-red: rgba(150, 64, 63, 0.12);
+  --glow-amber: rgba(63, 111, 87, 0.14);
+  --glow-blue: rgba(79, 109, 140, 0.14);
+  --dot: rgba(33, 29, 20, 0.08);
+  --card-shadow: 0 1px 2px rgba(33, 29, 20, 0.05), 0 12px 30px -20px rgba(33, 29, 20, 0.28);
+  --font-display: "Alexandria", "Readex Pro", "Segoe UI", Tahoma, sans-serif;
+  --font-body: "Readex Pro", "Segoe UI", Tahoma, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
   --r-sm: 8px;
   --r-md: 12px;
   --r-lg: 16px;
 }
 
 .dark {
-  --bg: #0b1210;
-  --surface: #111b17;
-  --surface2: #17251f;
-  --ink: #e7efec;
-  --muted: #8ea39b;
-  --line: #233730;
-  --teal: #38c49d;
-  --teal-deep: #5cd2b0;
-  --teal-soft: #10302a;
-  --amber: #f0a63b;
-  --amber-deep: #f5b95f;
-  --amber-soft: #332710;
-  --red: #ef767b;
-  --red-deep: #f49598;
-  --red-soft: #39181b;
-  --blue: #5aa7e0;
-  --blue-deep: #7dbbe9;
-  --blue-soft: #12283a;
-  --glow-teal: rgba(56, 196, 157, 0.13);
-  --glow-red: rgba(239, 118, 123, 0.1);
-  --glow-amber: rgba(240, 166, 59, 0.12);
-  --glow-blue: rgba(90, 167, 224, 0.13);
-  --dot: rgba(231, 239, 236, 0.06);
-  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 14px 36px -20px rgba(0, 0, 0, 0.65);
+  --bg: #12100b;
+  --surface: #1a1710;
+  --surface2: #232015;
+  --ink: #ede7d8;
+  --muted: #a2987f;
+  --line: #332e1f;
+  --teal: #d9bc7f;
+  --teal-ink: #d9bc7f;
+  --teal-deep: #e6cf9a;
+  --teal-soft: #322a17;
+  --amber: #7fbf9a;
+  --amber-deep: #97cdb2;
+  --amber-soft: #1b2a21;
+  --red: #d98a80;
+  --red-deep: #e4a49b;
+  --red-soft: #331d19;
+  --blue: #93b4d4;
+  --blue-deep: #abc9e2;
+  --blue-soft: #1c2733;
+  --glow-teal: rgba(217, 188, 127, 0.16);
+  --glow-red: rgba(217, 138, 128, 0.12);
+  --glow-amber: rgba(127, 191, 154, 0.13);
+  --glow-blue: rgba(147, 180, 212, 0.13);
+  --dot: rgba(237, 231, 216, 0.06);
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 16px 40px -22px rgba(0, 0, 0, 0.7);
 }
 
 html { scroll-behavior: smooth; }
@@ -79,7 +83,7 @@ body {
 .font-display { font-family: var(--font-display); }
 .font-mono { font-family: var(--font-mono); }
 .c-muted { color: var(--muted); }
-.c-teal { color: var(--teal); }
+.c-teal { color: var(--teal-ink); }
 .c-amber { color: var(--amber); }
 .c-red { color: var(--red); }
 .c-blue { color: var(--blue); }
@@ -138,18 +142,17 @@ body {
 .btn:active { transform: translateY(1px); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-.btn-teal { background: var(--teal); color: #fff; }
-.dark .btn-teal { color: #06231b; }
-.btn-teal:hover:not(:disabled) { background: var(--teal-deep); transform: translateY(-1px); box-shadow: 0 8px 22px -10px var(--glow-teal); }
+.btn-teal { background: var(--teal); color: #241d0c; }
+.btn-teal:hover:not(:disabled) { background: var(--teal-deep); transform: translateY(-1px); box-shadow: 0 10px 26px -12px var(--glow-teal); }
 
-.btn-red { background: var(--red); color: #fff; }
+.btn-red { background: var(--red); color: #fdf6ef; }
 .btn-red:hover:not(:disabled) { background: var(--red-deep); transform: translateY(-1px); }
 
-.btn-amber { background: var(--amber); color: #2b1c02; }
+.btn-amber { background: var(--amber); color: #f2f7f0; }
 .btn-amber:hover:not(:disabled) { background: var(--amber-deep); transform: translateY(-1px); }
 
 .btn-ghost { background: var(--surface); color: var(--ink); border-color: var(--line); }
-.btn-ghost:hover:not(:disabled) { border-color: var(--teal); color: var(--teal); transform: translateY(-1px); }
+.btn-ghost:hover:not(:disabled) { border-color: var(--teal); color: var(--teal-ink); transform: translateY(-1px); }
 
 .input {
   width: 100%;
@@ -179,7 +182,7 @@ body {
   transition: all 0.16s ease;
   cursor: pointer;
 }
-.chip:hover { border-color: var(--teal); color: var(--teal); transform: translateY(-1px); }
+.chip:hover { border-color: var(--teal); color: var(--teal-ink); transform: translateY(-1px); }
 
 /* ============ ambient background — رصين: توهج علوي + شبكة نقاط ============ */
 .ambient {
@@ -308,9 +311,9 @@ body {
 
 /* ============ misc ============ */
 .linkish {
-  color: var(--teal);
+  color: var(--teal-ink);
   text-decoration: none;
-  border-bottom: 1px dashed color-mix(in srgb, var(--teal) 45%, transparent);
+  border-bottom: 1px dashed color-mix(in srgb, var(--teal) 55%, transparent);
   transition: border-color 0.16s ease, color 0.16s ease;
 }
 .linkish:hover { color: var(--teal-deep); border-bottom-style: solid; }
@@ -320,8 +323,7 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; border: 2px solid var(--bg); }
 ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
-::selection { background: var(--teal); color: #fff; }
-.dark ::selection { color: #06231b; }
+::selection { background: var(--teal); color: #241d0c; }
 
 details.ft-acc summary { cursor: pointer; list-style: none; }
 details.ft-acc summary::-webkit-details-marker { display: none; }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { cx, copyText } from "../lib/utils";
+import { cx, copyText, fgOn } from "../lib/utils";
 import { Icon, type IconName } from "./Icons";
 
 /* ===== Spinner ===== */
@@ -245,12 +245,12 @@ export function CompareSlider({ before, after }: { before: string; after: string
       {/* المقبض */}
       <div className="absolute inset-y-0" style={{ insetInlineStart: `${pos}%` }}>
         <div className="absolute inset-y-0 -ms-px w-0.5 bg-white/90 shadow-[0_0_12px_rgba(0,0,0,0.5)]" />
-        <div className="absolute top-1/2 grid h-9 w-9 -translate-y-1/2 -ms-[18px] place-items-center rounded-full border-2 border-white bg-[var(--teal)] text-white shadow-lg">
+        <div className="absolute top-1/2 grid h-9 w-9 -translate-y-1/2 -ms-[18px] place-items-center rounded-full border-2 border-[var(--surface)] bg-[var(--teal)] shadow-lg" style={{ color: fgOn("var(--teal)") }}>
           <Icon name="flipH" size={16} />
         </div>
       </div>
-      <span className="absolute top-2 start-2 rounded-md bg-[color-mix(in_srgb,var(--ink)_75%,transparent)] px-2 py-0.5 text-[10px] font-bold text-white">قبل</span>
-      <span className="absolute top-2 end-2 rounded-md bg-[var(--teal)] px-2 py-0.5 text-[10px] font-bold text-white">بعد</span>
+      <span className="absolute top-2 start-2 rounded-md bg-[color-mix(in_srgb,var(--ink)_75%,transparent)] px-2 py-0.5 text-[10px] font-bold text-[var(--bg)]">قبل</span>
+      <span className="absolute top-2 end-2 rounded-md bg-[var(--teal)] px-2 py-0.5 text-[10px] font-bold" style={{ color: fgOn("var(--teal)") }}>بعد</span>
     </div>
   );
 }

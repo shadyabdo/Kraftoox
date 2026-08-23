@@ -142,9 +142,28 @@ function NotFound() {
 
 function AppInner() {
   const route = useRoute();
+  const [showTop, setShowTop] = useState(false);
 
   const isTool = route.parts[0] === "tool";
   usePageMeta(isTool ? `/tool/${route.parts[1] ?? ""}` : route.path);
+
+  /* اختصار "/" يفتح البحث الفوري عن الأدوات من أي صفحة */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "/") return;
+      const el = e.target as HTMLElement;
+      if (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable) return;
+      e.preventDefault();
+      navigate("/tools?focus=search");
+    };
+    const onScroll = () => setShowTop(window.scrollY > 600);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
 
   let page: ReactNode;
   if (route.path === "/") {

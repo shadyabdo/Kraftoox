@@ -4,6 +4,11 @@ export function cx(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(" ");
 }
 
+/* لون النص المناسب فوق لون قسم معيّن — الذهبي يحتاج نصاً داكناً */
+export function fgOn(color: string): string {
+  return color.includes("teal") ? "#241d0c" : "#fdf9f0";
+}
+
 export function formatBytes(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes < 0) return "—";
   if (bytes < 1024) return `${bytes} بايت`;

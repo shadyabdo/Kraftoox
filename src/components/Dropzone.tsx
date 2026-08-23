@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type DragEvent } from "react";
-import { cx, showToast } from "../lib/utils";
+import { cx, fgOn, showToast } from "../lib/utils";
 import { t as tr } from "../i18n";
 import { takePendingFiles } from "../lib/pending";
 import { Icon } from "./Icons";
@@ -132,8 +132,8 @@ export function Dropzone({
       </div>
 
       <span
-        className="font-display mt-1 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition-transform duration-200 group-hover:-translate-y-0.5"
-        style={{ background: color, color: color.includes("amber") ? "#2b1c02" : undefined }}
+        className="font-display mt-1 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-transform duration-200 group-hover:-translate-y-0.5"
+        style={{ background: color, color: fgOn(color) }}
       >
         <Icon name="file" size={16} />
         {tr(multiple ? "اختر الملفات" : "اختر ملفاً", multiple ? "Choose files" : "Choose a file")}
