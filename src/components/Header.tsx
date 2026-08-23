@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { CATEGORIES, toolsOf } from "../data/tools";
 import { useI18n, type Lang } from "../i18n";
 import { cx } from "../lib/utils";
-import { Link, navigate, type Route } from "../lib/router";
+import { Link, type Route } from "../lib/router";
 import { Icon, LogoMark, type IconName } from "./Icons";
 
 function useTheme() {
@@ -293,17 +293,6 @@ export function Header({ route }: { route: Route }) {
         </nav>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => navigate("/tools?focus=search")}
-            className="c-muted hidden h-10 items-center gap-2 rounded-xl border bd-line bg-surface px-3 text-sm transition-all duration-200 hover:border-[var(--teal)] hover:text-[var(--teal)] xl:flex"
-            aria-label={t("بحث سريع عن أداة", "Quick tool search")}
-          >
-            <Icon name="search" size={15} />
-            <span className="text-[13px]">{t("ابحث…", "Search…")}</span>
-            <kbd className="font-mono rounded-md border bd-line bg-surface2 px-1.5 py-0.5 text-[10px]">/</kbd>
-          </button>
-
           <LangDropdown />
 
           <button
