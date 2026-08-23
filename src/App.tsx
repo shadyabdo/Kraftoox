@@ -1,5 +1,5 @@
-import { Component, lazy, Suspense, type ComponentType, type ErrorInfo, type ReactNode } from "react";
-import { Link, useRoute } from "./lib/router";
+import { Component, lazy, Suspense, useEffect, useState, type ComponentType, type ErrorInfo, type ReactNode } from "react";
+import { Link, navigate, useRoute } from "./lib/router";
 import { usePageMeta } from "./lib/seo";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
@@ -142,9 +142,28 @@ function NotFound() {
 
 function AppInner() {
   const route = useRoute();
+  const [showTop, setShowTop] = useState(false);
 
   const isTool = route.parts[0] === "tool";
   usePageMeta(isTool ? `/tool/${route.parts[1] ?? ""}` : route.path);
+
+  /* اختصار "/" يفتح البحث الفوري عن الأدوات من أي صفحة */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "/") return;
+      const el = e.target as HTMLElement;
+      if (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable) return;
+      e.preventDefault();
+      navigate("/tools?focus=search");
+    };
+    const onScroll = () => setShowTop(window.scrollY > 600);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
 
   let page: ReactNode;
   if (route.path === "/") {
@@ -187,6 +206,19 @@ function AppInner() {
       </ErrorBoundary>
       <Footer />
       <Toaster />
+
+      {/* زر العودة للأعلى — يظهر بعد التمرير */}
+      <button
+        type="button"
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        aria-label="العودة للأعلى"
+        className={
+          "fixed bottom-5 end-5 z-[90] grid h-11 w-11 place-items-center rounded-xl border bd-line bg-surface shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-[var(--teal)] hover:text-[var(--teal-ink)] c-muted " +
+          (showTop ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0")
+        }
+      >
+        <Icon name="up" size={19} />
+      </button>
     </div>
   );
 }

@@ -1,8 +1,10 @@
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, type CSSProperties, type ReactNode } from "react";
 import type { ToolDef } from "../data/tools";
 import { TOOLS } from "../data/tools";
 import { Link } from "../lib/router";
 import { usePageMeta, useToolJsonLd } from "../lib/seo";
+import { fgOn } from "../lib/utils";
+import { recordToolVisit } from "../lib/recent";
 import { useI18n } from "../i18n";
 import { Icon, type IconName } from "../components/Icons";
 import { Reveal } from "../components/Reveal";
@@ -17,6 +19,11 @@ export function ToolShell({ tool, children }: { tool: ToolDef; children: ReactNo
     name: isAr ? tool.name : tool.nameEn,
     desc: isAr ? tool.long : tool.longEn,
   });
+
+  /* سجّل الأداة ضمن "استُخدمت حديثاً" */
+  useEffect(() => {
+    recordToolVisit(tool.slug);
+  }, [tool.slug]);
 
   const related = TOOLS.filter((t) => t.category === tool.category && t.slug !== tool.slug).slice(0, 3);
   const CAT_LABELS: Record<string, [string, string]> = {
@@ -193,8 +200,8 @@ export function ProcessBtn({
       type="button"
       onClick={onClick}
       disabled={disabled || busy}
-      className="btn w-full !py-3.5 !text-base text-white sm:w-auto sm:min-w-52"
-      style={{ background: color }}
+      className="btn w-full !py-3.5 !text-base sm:w-auto sm:min-w-52"
+      style={{ background: color, color: fgOn(color) }}
     >
       {busy ? <Spinner size={19} /> : <Icon name={icon} size={19} />}
       {busy ? "جارٍ المعالجة…" : label}

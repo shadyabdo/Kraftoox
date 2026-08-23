@@ -3,6 +3,7 @@ import { TOOLS, IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS, getTool, type ToolDef } fro
 import { Link } from "../lib/router";
 import { useI18n } from "../i18n";
 import { getProcessedCount, matchesQuery, copyText, showToast } from "../lib/utils";
+import { getRecentTools } from "../lib/recent";
 import { Icon, type IconName } from "../components/Icons";
 import { ToolCard } from "../components/ToolCard";
 import { Reveal } from "../components/Reveal";
@@ -218,6 +219,16 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
     .map((s) => getTool(s))
     .filter((t): t is ToolDef => !!t);
 
+  /* الأدوات التي استخدمها الزائر سابقاً على هذا الجهاز */
+  const recentTools = useMemo(
+    () =>
+      getRecentTools()
+        .map((s) => getTool(s))
+        .filter((t): t is ToolDef => !!t)
+        .slice(0, 3),
+    [q]
+  );
+
   return (
     <main>
       {/* ===== الافتتاحية ===== */}
@@ -380,6 +391,38 @@ export default function Home({ query, focusSearch, scrollToTools }: { query: str
           </div>
         ) : (
           <>
+            {recentTools.length > 0 && (
+              <div className="mb-10">
+                <SectionHead
+                  kicker={isAr ? "واصل من حيث توقفت" : "Pick up where you left off"}
+                  title={isAr ? "استخدمتها حديثاً" : "Recently used"}
+                  icon="timer"
+                  color="var(--teal-ink)"
+                />
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {recentTools.map((t) => (
+                    <Link
+                      key={t.slug}
+                      to={`/tool/${t.slug}`}
+                      className="tool-card card group flex items-center gap-3 p-4"
+                      style={{ "--tc": t.color } as CSSProperties}
+                    >
+                      <span
+                        className="grid h-10 w-10 shrink-0 place-items-center rounded-lg"
+                        style={{ background: `color-mix(in srgb, ${t.color} 12%, var(--surface))`, color: t.color }}
+                      >
+                        <Icon name={t.icon} size={20} />
+                      </span>
+                      <span className="font-display min-w-0 flex-1 truncate text-sm font-bold">
+                        {isAr ? t.name : t.nameEn}
+                      </span>
+                      <Icon name="arrow" size={15} className="shrink-0 c-muted transition-transform duration-200 group-hover:-translate-x-0.5" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div id="image-tools">
               <SectionHead
                 kicker={isAr ? "قسم الصور" : "Image section"}

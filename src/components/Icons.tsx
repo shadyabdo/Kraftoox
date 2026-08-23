@@ -366,22 +366,30 @@ export function Icon({ name, size = 20, ...rest }: IconProps) {
   );
 }
 
-/* شعار Kraftoox — حرف K مرسوم بخطوط سميكة مع شرارتين */
+/* شعار Kraftoox — حرف K ذهبي داخل مستطيل ملف بحبر دافئ */
 export function LogoMark({ size = 34 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
-      <rect x="4" y="4" width="56" height="56" rx="15" fill="var(--teal)" />
-      <path d="M24 16v32" stroke="var(--bg)" strokeWidth="7.5" strokeLinecap="round" />
+      <rect x="4" y="4" width="56" height="56" rx="15" fill="#211d14" />
+      <rect x="4" y="4" width="56" height="56" rx="15" fill="none" stroke="var(--teal)" strokeOpacity="0.35" strokeWidth="1.5" />
       <path
-        d="M42 16 26.5 32 42 48"
-        stroke="var(--bg)"
-        strokeWidth="7.5"
+        d="M20 14h17l9 9v27a4 4 0 0 1-4 4H20a4 4 0 0 1-4-4V18a4 4 0 0 1 4-4z"
+        fill="none"
+        stroke="var(--teal)"
+        strokeOpacity="0.5"
+        strokeWidth="2"
+      />
+      <path d="M26 22v20" stroke="var(--teal)" strokeWidth="5" strokeLinecap="round" />
+      <path
+        d="M38 22 27.5 32 38 42"
+        stroke="var(--teal)"
+        strokeWidth="5"
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
       />
-      <circle cx="47" cy="13" r="3.6" fill="var(--amber)" />
-      <circle cx="47" cy="51" r="2.6" fill="#e8757b" />
+      <circle cx="44" cy="15" r="3" fill="var(--amber)" />
+      <circle cx="45" cy="49" r="2.2" fill="var(--red)" />
     </svg>
   );
 }
