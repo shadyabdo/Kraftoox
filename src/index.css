@@ -2,6 +2,11 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* أساس المسافات — أوسع قليلاً من الافتراضي لتنفس مريح بين العناصر */
+@theme {
+  --spacing: 0.275rem;
+}
+
 /* ============ Kraftoox — هوية الورشة الذهبية ============
    الأساسي: ذهبي شامبانيا #c8a460
    ثانويات: أخضر غابات · نبيذي · أردوازي — على ورق دافئ/فحم دافئ */
@@ -40,31 +45,31 @@
 }
 
 .dark {
-  --bg: #12100b;
-  --surface: #1a1710;
-  --surface2: #232015;
-  --ink: #ede7d8;
-  --muted: #a2987f;
-  --line: #332e1f;
-  --teal: #d9bc7f;
-  --teal-ink: #d9bc7f;
-  --teal-deep: #e6cf9a;
-  --teal-soft: #322a17;
-  --amber: #7fbf9a;
-  --amber-deep: #97cdb2;
-  --amber-soft: #1b2a21;
-  --red: #d98a80;
-  --red-deep: #e4a49b;
-  --red-soft: #331d19;
-  --blue: #93b4d4;
-  --blue-deep: #abc9e2;
-  --blue-soft: #1c2733;
-  --glow-teal: rgba(217, 188, 127, 0.16);
-  --glow-red: rgba(217, 138, 128, 0.12);
-  --glow-amber: rgba(127, 191, 154, 0.13);
-  --glow-blue: rgba(147, 180, 212, 0.13);
-  --dot: rgba(237, 231, 216, 0.06);
-  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 16px 40px -22px rgba(0, 0, 0, 0.7);
+  --bg: #212121;
+  --surface: #292927;
+  --surface2: #31312e;
+  --ink: #ece8dd;
+  --muted: #a7a193;
+  --line: #3e3d38;
+  --teal: #ddc389;
+  --teal-ink: #ddc389;
+  --teal-deep: #e8d3a0;
+  --teal-soft: #38301d;
+  --amber: #82c09c;
+  --amber-deep: #9acdb2;
+  --amber-soft: #24332a;
+  --red: #dd9187;
+  --red-deep: #e7a99f;
+  --red-soft: #3a2420;
+  --blue: #97b7d6;
+  --blue-deep: #b0cbe4;
+  --blue-soft: #242e39;
+  --glow-teal: rgba(221, 195, 137, 0.18);
+  --glow-red: rgba(221, 145, 135, 0.13);
+  --glow-amber: rgba(130, 192, 156, 0.14);
+  --glow-blue: rgba(151, 183, 214, 0.14);
+  --dot: rgba(236, 232, 221, 0.07);
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 44px -22px rgba(0, 0, 0, 0.55);
 }
 
 html { scroll-behavior: smooth; }
