@@ -7,69 +7,67 @@
   --spacing: 0.275rem;
 }
 
-/* ============ Kraftoox — هوية الورشة الذهبية ============
-   الأساسي: ذهبي شامبانيا #c8a460
-   ثانويات: أخضر غابات · نبيذي · أردوازي — على ورق دافئ/فحم دافئ */
+/* ============ Kraftoox — تصميم احترافي داكن ============ */
 :root {
-  --bg: #f4f1ea;
-  --surface: #fffdf8;
-  --surface2: #ebe6da;
-  --ink: #211d14;
-  --muted: #756c58;
-  --line: #ddd5c2;
-  --teal: #c8a460;           /* الأساسي — ذهبي */
-  --teal-ink: #94742f;        /* ذهبي داكن للنصوص فوق الفاتح (تباين مقروء) */
-  --teal-deep: #b3903f;
-  --teal-soft: #f2e7cd;
-  --amber: #3f6f57;           /* أخضر غابات — ثانوي */
-  --amber-deep: #335c47;
-  --amber-soft: #e0e9df;
-  --red: #96403f;             /* نبيذي — PDF وأخطاء */
-  --red-deep: #7e3434;
-  --red-soft: #efe0da;
-  --blue: #4f6d8c;            /* أردوازي — فيديو */
-  --blue-deep: #425d79;
-  --blue-soft: #e0e7ee;
-  --glow-teal: rgba(200, 164, 96, 0.2);
-  --glow-red: rgba(150, 64, 63, 0.12);
-  --glow-amber: rgba(63, 111, 87, 0.14);
-  --glow-blue: rgba(79, 109, 140, 0.14);
-  --dot: rgba(33, 29, 20, 0.08);
-  --card-shadow: 0 1px 2px rgba(33, 29, 20, 0.05), 0 12px 30px -20px rgba(33, 29, 20, 0.28);
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface2: #1a1a1a;
+  --ink: #f5f5f5;
+  --muted: #8a8a8a;
+  --line: #2a2a2a;
+  --teal: #c8a460;
+  --teal-ink: #c8a460;
+  --teal-deep: #d4b370;
+  --teal-soft: #1f1a10;
+  --amber: #3f6f57;
+  --amber-deep: #4a8066;
+  --amber-soft: #0f1a14;
+  --red: #c04040;
+  --red-deep: #d05050;
+  --red-soft: #1a0f0f;
+  --blue: #4f6d8c;
+  --blue-deep: #5f7d9c;
+  --blue-soft: #0f141a;
+  --glow-teal: rgba(200, 164, 96, 0.15);
+  --glow-red: rgba(192, 64, 64, 0.12);
+  --glow-amber: rgba(63, 111, 87, 0.12);
+  --glow-blue: rgba(79, 109, 140, 0.12);
+  --dot: rgba(255, 255, 255, 0.04);
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
   --font-display: "Alexandria", "Readex Pro", "Segoe UI", Tahoma, sans-serif;
   --font-body: "Readex Pro", "Segoe UI", Tahoma, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
-  --r-sm: 8px;
-  --r-md: 12px;
-  --r-lg: 16px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
 }
 
 .dark {
-  --bg: #212121;
-  --surface: #292927;
-  --surface2: #31312e;
-  --ink: #ece8dd;
-  --muted: #a7a193;
-  --line: #3e3d38;
-  --teal: #ddc389;
-  --teal-ink: #ddc389;
-  --teal-deep: #e8d3a0;
-  --teal-soft: #38301d;
-  --amber: #82c09c;
-  --amber-deep: #9acdb2;
-  --amber-soft: #24332a;
-  --red: #dd9187;
-  --red-deep: #e7a99f;
-  --red-soft: #3a2420;
-  --blue: #97b7d6;
-  --blue-deep: #b0cbe4;
-  --blue-soft: #242e39;
-  --glow-teal: rgba(221, 195, 137, 0.18);
-  --glow-red: rgba(221, 145, 135, 0.13);
-  --glow-amber: rgba(130, 192, 156, 0.14);
-  --glow-blue: rgba(151, 183, 214, 0.14);
-  --dot: rgba(236, 232, 221, 0.07);
-  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 44px -22px rgba(0, 0, 0, 0.55);
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface2: #1a1a1a;
+  --ink: #f5f5f5;
+  --muted: #8a8a8a;
+  --line: #2a2a2a;
+  --teal: #c8a460;
+  --teal-ink: #c8a460;
+  --teal-deep: #d4b370;
+  --teal-soft: #1f1a10;
+  --amber: #3f6f57;
+  --amber-deep: #4a8066;
+  --amber-soft: #0f1a14;
+  --red: #c04040;
+  --red-deep: #d05050;
+  --red-soft: #1a0f0f;
+  --blue: #4f6d8c;
+  --blue-deep: #5f7d9c;
+  --blue-soft: #0f141a;
+  --glow-teal: rgba(200, 164, 96, 0.15);
+  --glow-red: rgba(192, 64, 64, 0.12);
+  --glow-amber: rgba(63, 111, 87, 0.12);
+  --glow-blue: rgba(79, 109, 140, 0.12);
+  --dot: rgba(255, 255, 255, 0.04);
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 html { scroll-behavior: smooth; }
@@ -102,8 +100,12 @@ body {
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   box-shadow: var(--card-shadow);
-  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease,
-    border-color 0.25s ease, background-color 0.35s ease;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease,
+    border-color 0.3s ease, background-color 0.35s ease;
+}
+.card:hover {
+  border-color: color-mix(in srgb, var(--teal) 30%, var(--line));
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 12px 32px rgba(0, 0, 0, 0.4);
 }
 
 /* kicker — ترويسة قسم صغيرة بطابع تقني */
@@ -147,17 +149,51 @@ body {
 .btn:active { transform: translateY(1px); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-.btn-teal { background: var(--teal); color: #241d0c; }
-.btn-teal:hover:not(:disabled) { background: var(--teal-deep); transform: translateY(-1px); box-shadow: 0 10px 26px -12px var(--glow-teal); }
+.btn-teal { 
+  background: linear-gradient(135deg, var(--teal), var(--teal-deep)); 
+  color: #0a0a0a; 
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(200, 164, 96, 0.2);
+}
+.btn-teal:hover:not(:disabled) { 
+  transform: translateY(-2px); 
+  box-shadow: 0 8px 24px rgba(200, 164, 96, 0.3);
+}
 
-.btn-red { background: var(--red); color: #fdf6ef; }
-.btn-red:hover:not(:disabled) { background: var(--red-deep); transform: translateY(-1px); }
+.btn-red { 
+  background: linear-gradient(135deg, var(--red), var(--red-deep)); 
+  color: #fff; 
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(192, 64, 64, 0.2);
+}
+.btn-red:hover:not(:disabled) { 
+  transform: translateY(-2px); 
+  box-shadow: 0 8px 24px rgba(192, 64, 64, 0.3);
+}
 
-.btn-amber { background: var(--amber); color: #f2f7f0; }
-.btn-amber:hover:not(:disabled) { background: var(--amber-deep); transform: translateY(-1px); }
+.btn-amber { 
+  background: linear-gradient(135deg, var(--amber), var(--amber-deep)); 
+  color: #fff; 
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(63, 111, 87, 0.2);
+}
+.btn-amber:hover:not(:disabled) { 
+  transform: translateY(-2px); 
+  box-shadow: 0 8px 24px rgba(63, 111, 87, 0.3);
+}
 
-.btn-ghost { background: var(--surface); color: var(--ink); border-color: var(--line); }
-.btn-ghost:hover:not(:disabled) { border-color: var(--teal); color: var(--teal-ink); transform: translateY(-1px); }
+.btn-ghost { 
+  background: var(--surface); 
+  color: var(--ink); 
+  border-color: var(--line);
+  font-weight: 600;
+}
+.btn-ghost:hover:not(:disabled) { 
+  border-color: var(--teal); 
+  color: var(--teal); 
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(200, 164, 96, 0.1);
+}
 
 .input {
   width: 100%;
@@ -189,16 +225,16 @@ body {
 }
 .chip:hover { border-color: var(--teal); color: var(--teal-ink); transform: translateY(-1px); }
 
-/* ============ ambient background — رصين: توهج علوي + شبكة نقاط ============ */
+/* ============ ambient background — عمق واحترافية ============ */
 .ambient {
   position: fixed;
   inset: 0;
   z-index: -2;
   pointer-events: none;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--teal) 5%, transparent), transparent 340px),
-    radial-gradient(820px 400px at 88% -8%, var(--glow-teal), transparent 62%),
-    radial-gradient(640px 380px at 6% 108%, var(--glow-red), transparent 60%);
+    radial-gradient(ellipse 1200px 600px at 20% -10%, rgba(200, 164, 96, 0.08), transparent 70%),
+    radial-gradient(ellipse 1000px 500px at 80% 110%, rgba(192, 64, 64, 0.06), transparent 70%),
+    linear-gradient(180deg, #0a0a0a 0%, #0f0f0f 100%);
 }
 .dotgrid {
   position: fixed;
