@@ -5,26 +5,6 @@ import { cx } from "../lib/utils";
 import { Link, type Route } from "../lib/router";
 import { Icon, LogoMark, type IconName } from "./Icons";
 
-function useTheme() {
-  const [theme, setTheme] = useState<"light" | "dark">(() =>
-    document.documentElement.classList.contains("dark") ? "dark" : "light"
-  );
-  const toggle = () => {
-    setTheme((t) => {
-      const next = t === "dark" ? "light" : "dark";
-      document.documentElement.classList.toggle("dark", next === "dark");
-      document.documentElement.style.colorScheme = next;
-      try {
-        localStorage.setItem("ft-theme", next);
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
-  };
-  return { theme, toggle };
-}
-
 /* غلاف قائمة منسدلة موحّد */
 function useDropdown() {
   const [open, setOpen] = useState(false);
@@ -73,71 +53,65 @@ function SectionDropdown({
         aria-expanded={open}
         aria-haspopup="true"
         className={cx(
-          "font-display relative flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200",
-          active || open ? "c-teal" : "c-muted hover:text-[var(--ink)]"
+          "flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
+          active || open ? "c-primary" : "c-muted hover:text-[var(--ink)]"
         )}
       >
         {name}
-        <span className={cx("transition-transform duration-300", open && "rotate-180")}>
+        <span className={cx("transition-transform duration-200", open && "rotate-180")}>
           <Icon name="chevron" size={14} />
         </span>
-        {active && (
-          <span className="absolute inset-x-2.5 -bottom-[13px] h-[3px] rounded-full" style={{ background: color }} />
-        )}
       </button>
 
       {open && (
         <div
-          className="menu-panel-in absolute start-0 top-full z-50 mt-3 w-64"
+          className="absolute start-0 top-full z-50 mt-2 w-64 bg-[var(--surface)] border border-[var(--line)] rounded-xl shadow-xl overflow-hidden"
           style={lang === "en" ? { left: 0, right: "auto" } : undefined}
           role="menu"
         >
-          <div className="glass !rounded-xl overflow-hidden p-1.5 shadow-2xl">
-            <div className="h-1 w-full rounded-t-lg" style={{ background: color }} />
-            <Link
-              to={`/${slug}`}
-              onClick={() => setOpen(false)}
-              className="mt-1 flex items-center gap-2.5 rounded-lg px-3 py-2.5 transition-colors duration-150 hover:bg-surface2"
+          <div className="h-1 w-full" style={{ background: color }} />
+          <Link
+            to={`/${slug}`}
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--surface2)] transition-colors"
+          >
+            <span
+              className="grid h-10 w-10 place-items-center rounded-lg"
+              style={{ background: `color-mix(in srgb, ${color} 15%, var(--surface2))`, color }}
             >
-              <span
-                className="grid h-8 w-8 place-items-center rounded-lg"
-                style={{ background: `color-mix(in srgb, ${color} 13%, var(--surface))`, color }}
-              >
-                <Icon name={icon} size={16} />
+              <Icon name={icon} size={20} />
+            </span>
+            <span className="flex-1">
+              <b className="block text-sm font-bold">{name}</b>
+              <span className="c-muted text-xs">
+                {t(`صفحة القسم — ${tools.length} أدوات`, `Section page — ${tools.length} tools`)}
               </span>
-              <span className="flex-1">
-                <b className="font-display block text-[13px] leading-tight">{name}</b>
-                <span className="c-muted text-[10.5px]">
-                  {t(`صفحة القسم — ${tools.length} أدوات`, `Section page — ${tools.length} tools`)}
-                </span>
-              </span>
-              <span className="c-muted"><Icon name="arrow" size={14} /></span>
-            </Link>
-            <div className="my-1 border-t bd-line" />
-            <ul>
-              {tools.map((tool, i) => (
-                <li key={tool.slug} className="menu-item-in" style={{ animationDelay: `${i * 25}ms` }}>
-                  <Link
-                    to={`/tool/${tool.slug}`}
-                    onClick={() => setOpen(false)}
-                    className={cx(
-                      "flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] transition-all duration-150 hover:bg-surface2 hover:ps-4",
-                      route.path === `/tool/${tool.slug}` ? "font-bold" : "c-muted"
-                    )}
-                    style={route.path === `/tool/${tool.slug}` ? { color } : undefined}
-                  >
-                    <span style={{ color }}><Icon name={tool.icon} size={15} /></span>
-                    <span className="flex-1">{lang === "en" ? tool.nameEn : tool.name}</span>
-                    {tool.isNew && (
-                      <span className="rounded bg-[var(--red)] px-1.5 py-px text-[8.5px] font-bold text-white">
-                        {t("جديد", "NEW")}
-                      </span>
-                    )}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+            </span>
+          </Link>
+          <div className="border-t border-[var(--line)]" />
+          <ul className="max-h-80 overflow-y-auto">
+            {tools.map((tool) => (
+              <li key={tool.slug}>
+                <Link
+                  to={`/tool/${tool.slug}`}
+                  onClick={() => setOpen(false)}
+                  className={cx(
+                    "flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-[var(--surface2)]",
+                    route.path === `/tool/${tool.slug}` ? "font-bold" : "c-muted"
+                  )}
+                  style={route.path === `/tool/${tool.slug}` ? { color } : undefined}
+                >
+                  <span style={{ color }}><Icon name={tool.icon} size={16} /></span>
+                  <span className="flex-1">{lang === "en" ? tool.nameEn : tool.name}</span>
+                  {tool.isNew && (
+                    <span className="text-xs font-bold text-[var(--error)] bg-[var(--red-soft)] px-2 py-0.5 rounded">
+                      {t("جديد", "NEW")}
+                    </span>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
@@ -150,8 +124,8 @@ function LangDropdown() {
   const { lang, set, t } = useI18n();
 
   const OPTIONS: Array<{ id: Lang; label: string; hint: string }> = [
-    { id: "ar", label: "العربية", hint: "AR · RTL" },
-    { id: "en", label: "English", hint: "EN · LTR" },
+    { id: "ar", label: "العربية", hint: "AR" },
+    { id: "en", label: "English", hint: "EN" },
   ];
 
   return (
@@ -163,42 +137,37 @@ function LangDropdown() {
         aria-haspopup="true"
         aria-label={t("تغيير اللغة", "Change language")}
         className={cx(
-          "flex h-10 items-center gap-1.5 rounded-xl glass px-2.5 text-sm font-semibold transition-all duration-200",
-          open ? "c-teal" : "c-muted hover:c-teal"
+          "flex h-10 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition-colors",
+          open ? "c-primary" : "c-muted hover:text-[var(--ink)]"
         )}
       >
         <Icon name="globe" size={16} />
         <span className="font-mono text-xs">{lang === "ar" ? "AR" : "EN"}</span>
-        <span className={cx("transition-transform duration-300", open && "rotate-180")}>
+        <span className={cx("transition-transform duration-200", open && "rotate-180")}>
           <Icon name="chevron" size={13} />
         </span>
       </button>
 
       {open && (
-        <div className="menu-panel-in absolute end-0 top-full z-50 mt-2 w-44" role="menu">
-          <div className="glass !rounded-xl p-1.5 shadow-xl">
-            {OPTIONS.map((o) => (
-              <button
-                key={o.id}
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  set(o.id);
-                  setOpen(false);
-                }}
-                className={cx(
-                  "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm transition-colors duration-150 hover:bg-surface2",
-                  lang === o.id ? "font-bold c-teal" : "c-muted"
-                )}
-              >
-                <span>{o.label}</span>
-                <span className="flex items-center gap-2">
-                  <span className="font-mono text-[9.5px] opacity-70">{o.hint}</span>
-                  {lang === o.id && <Icon name="check" size={15} />}
-                </span>
-              </button>
-            ))}
-          </div>
+        <div className="absolute end-0 top-full z-50 mt-2 w-40 bg-[var(--surface)] border border-[var(--line)] rounded-xl shadow-xl overflow-hidden" role="menu">
+          {OPTIONS.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                set(o.id);
+                setOpen(false);
+              }}
+              className={cx(
+                "flex w-full items-center justify-between px-4 py-3 text-sm transition-colors hover:bg-[var(--surface2)]",
+                lang === o.id ? "font-bold c-primary" : "c-muted"
+              )}
+            >
+              <span>{o.label}</span>
+              {lang === o.id && <Icon name="check" size={15} />}
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -206,7 +175,6 @@ function LangDropdown() {
 }
 
 export function Header({ route }: { route: Route }) {
-  const { theme, toggle } = useTheme();
   const { lang, t, isAr } = useI18n();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -231,34 +199,26 @@ export function Header({ route }: { route: Route }) {
     <header
       className={cx(
         "sticky top-0 z-50 transition-all duration-300",
-        scrolled ? "glass border-b bd-line" : "border-b border-transparent"
+        scrolled ? "bg-[var(--surface)] border-b border-[var(--line)]" : "bg-transparent"
       )}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4">
         <Link to="/" className="flex items-center gap-2.5" aria-label="Kraftoox">
-          <LogoMark size={34} />
-          <span className="leading-none">
-            <span className="font-display block text-[19px] font-extrabold tracking-tight" dir="ltr">
-              Kraft<span className="gradient-text">oox</span>
-            </span>
-            <span className="c-muted mt-0.5 block text-[10px] font-medium">
-              {t("ورشة الملفات الاحترافية", "Professional File Workshop")}
-            </span>
+          <LogoMark size={32} />
+          <span className="font-display text-xl font-bold" dir="ltr">
+            Kraft<span className="c-primary">oox</span>
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-0.5 lg:flex" aria-label={t("التنقل الرئيسي", "Main navigation")}>
+        <nav className="hidden items-center gap-1 lg:flex" aria-label={t("التنقل الرئيسي", "Main navigation")}>
           <Link
             to="/"
             className={cx(
-              "font-display relative rounded-lg px-3 py-2 text-sm font-semibold transition-colors duration-200",
-              route.path === "/" ? "c-teal" : "c-muted hover:text-[var(--ink)]"
+              "rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
+              route.path === "/" ? "c-primary" : "c-muted hover:text-[var(--ink)]"
             )}
           >
             {t("الرئيسية", "Home")}
-            {route.path === "/" && (
-              <span className="absolute inset-x-2.5 -bottom-[13px] h-[3px] rounded-full" style={{ background: "var(--teal)" }} />
-            )}
           </Link>
 
           {CATEGORIES.map((cat) => (
@@ -280,8 +240,8 @@ export function Header({ route }: { route: Route }) {
           <Link
             to="/tools"
             className={cx(
-              "font-display relative rounded-lg px-3 py-2 text-sm font-semibold transition-colors duration-200",
-              isActive("/tools") ? "c-teal" : "c-muted hover:text-[var(--ink)]"
+              "rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
+              isActive("/tools") ? "c-primary" : "c-muted hover:text-[var(--ink)]"
             )}
           >
             {t("كل الأدوات", "All tools")}
@@ -292,8 +252,8 @@ export function Header({ route }: { route: Route }) {
               key={n.to}
               to={n.to}
               className={cx(
-                "font-display relative rounded-lg px-3 py-2 text-sm font-semibold transition-colors duration-200",
-                isActive(n.to) ? "c-teal" : "c-muted hover:text-[var(--ink)]"
+                "rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
+                isActive(n.to) ? "c-primary" : "c-muted hover:text-[var(--ink)]"
               )}
             >
               {n.label}
@@ -306,26 +266,12 @@ export function Header({ route }: { route: Route }) {
 
           <button
             type="button"
-            onClick={toggle}
-            className="grid h-10 w-10 place-items-center rounded-xl glass c-muted transition-all duration-200 hover:c-teal"
-            aria-label={theme === "dark" ? t("الوضع الفاتح", "Light mode") : t("الوضع الليلي", "Dark mode")}
-          >
-            <span
-              className="grid place-items-center transition-transform duration-500"
-              style={{ transform: theme === "dark" ? "rotate(360deg)" : "rotate(0deg)" }}
-            >
-              <Icon name={theme === "dark" ? "sun" : "moon"} size={17} />
-            </span>
-          </button>
-
-          <button
-            type="button"
             onClick={() => setOpen((o) => !o)}
-            className="grid h-10 w-10 place-items-center rounded-xl glass lg:hidden"
+            className="grid h-10 w-10 place-items-center rounded-lg lg:hidden"
             aria-label={t("القائمة", "Menu")}
             aria-expanded={open}
           >
-            <Icon name={open ? "close" : "menu"} size={18} />
+            <Icon name={open ? "close" : "menu"} size={20} />
           </button>
         </div>
       </div>
@@ -333,31 +279,30 @@ export function Header({ route }: { route: Route }) {
       {/* قائمة الجوال */}
       <div
         className={cx(
-          "overflow-hidden border-t bd-line transition-all duration-300 lg:hidden",
-          open ? "max-h-[560px] overflow-y-auto opacity-100" : "max-h-0 border-t-0 opacity-0"
+          "overflow-hidden border-t border-[var(--line)] transition-all duration-300 lg:hidden bg-[var(--surface)]",
+          open ? "max-h-[560px] overflow-y-auto" : "max-h-0 border-t-0"
         )}
-        style={{ background: "var(--surface)" }}
       >
         <nav className="flex flex-col px-4 py-2" aria-label={t("قائمة الجوال", "Mobile menu")}>
-          <Link to="/" className={cx("font-display border-b bd-line py-3 text-sm font-semibold", route.path === "/" ? "c-teal" : "c-muted")}>
+          <Link to="/" className={cx("border-b border-[var(--line)] py-3 text-sm font-semibold", route.path === "/" ? "c-primary" : "c-muted")}>
             {t("الرئيسية", "Home")}
           </Link>
 
           {CATEGORIES.map((cat) => (
-            <details key={cat.id} className="group border-b bd-line">
-              <summary className="font-display flex list-none items-center gap-2.5 py-3 text-sm font-semibold c-muted">
+            <details key={cat.id} className="group border-b border-[var(--line)]">
+              <summary className="flex list-none items-center gap-2.5 py-3 text-sm font-semibold c-muted">
                 <span style={{ color: cat.color }}><Icon name={cat.icon} size={16} /></span>
                 {isAr ? cat.name : cat.nameEn}
-                <span className="font-mono ms-auto text-[10px] opacity-70">{toolsOf(cat.id).length}</span>
+                <span className="font-mono ms-auto text-xs opacity-70">{toolsOf(cat.id).length}</span>
                 <span className="acc-chev"><Icon name="chevron" size={14} /></span>
               </summary>
               <div className="grid gap-0.5 pb-3">
-                <Link to={`/${cat.slug}`} className="font-semibold text-[13px] c-teal px-2 py-1.5">
+                <Link to={`/${cat.slug}`} className="font-semibold text-sm c-primary px-2 py-1.5">
                   {t("صفحة القسم ←", "Section page ←")}
                 </Link>
                 {toolsOf(cat.id).map((tool) => (
-                  <Link key={tool.slug} to={`/tool/${tool.slug}`} className="c-muted flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] hover:bg-surface2">
-                    <span style={{ color: cat.color }}><Icon name={tool.icon} size={13} /></span>
+                  <Link key={tool.slug} to={`/tool/${tool.slug}`} className="c-muted flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-[var(--surface2)]">
+                    <span style={{ color: cat.color }}><Icon name={tool.icon} size={14} /></span>
                     {isAr ? tool.name : tool.nameEn}
                   </Link>
                 ))}
@@ -370,8 +315,8 @@ export function Header({ route }: { route: Route }) {
               key={n.to}
               to={n.to}
               className={cx(
-                "font-display border-b bd-line py-3 text-sm font-semibold last:border-0",
-                isActive(n.to) ? "c-teal" : "c-muted"
+                "border-b border-[var(--line)] py-3 text-sm font-semibold last:border-0",
+                isActive(n.to) ? "c-primary" : "c-muted"
               )}
             >
               {n.label}
