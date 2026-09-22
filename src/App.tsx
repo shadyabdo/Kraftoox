@@ -35,6 +35,16 @@ const ExtractPdfImages = lazyRetry(() => import("./tools/ExtractPdfImages"));
 const UpscaleImage = lazyRetry(() => import("./tools/UpscaleImage"));
 const ImageTranslator = lazyRetry(() => import("./tools/ImageTranslator"));
 const YouTubeDownloader = lazyRetry(() => import("./tools/YouTubeDownloader"));
+const JsonFormatter = lazyRetry(() => import("./tools/JsonFormatter"));
+const Base64Encoder = lazyRetry(() => import("./tools/Base64Encoder"));
+const HashGenerator = lazyRetry(() => import("./tools/HashGenerator"));
+const PasswordGenerator = lazyRetry(() => import("./tools/PasswordGenerator"));
+const UUIDGenerator = lazyRetry(() => import("./tools/UUIDGenerator"));
+const WordCounter = lazyRetry(() => import("./tools/WordCounter"));
+const TextCaseConverter = lazyRetry(() => import("./tools/TextCaseConverter"));
+const LoremIpsum = lazyRetry(() => import("./tools/LoremIpsum"));
+const ColorConverter = lazyRetry(() => import("./tools/ColorConverter"));
+const NumberBaseConverter = lazyRetry(() => import("./tools/NumberBaseConverter"));
 
 const TOOL_PAGES: Record<string, ComponentType> = {
   "compress-image": CompressImage,
@@ -47,9 +57,19 @@ const TOOL_PAGES: Record<string, ComponentType> = {
   "upscale-image": UpscaleImage,
   "image-translator": ImageTranslator,
   "youtube-downloader": YouTubeDownloader,
+  "json-formatter": JsonFormatter,
+  "base64-encoder": Base64Encoder,
+  "hash-generator": HashGenerator,
+  "password-generator": PasswordGenerator,
+  "uuid-generator": UUIDGenerator,
+  "word-counter": WordCounter,
+  "text-case-converter": TextCaseConverter,
+  "lorem-ipsum": LoremIpsum,
+  "color-converter": ColorConverter,
+  "number-base-converter": NumberBaseConverter,
 };
 
-const CATEGORY_SLUGS = ["images", "pdf", "video"];
+const CATEGORY_SLUGS = ["images", "pdf", "video", "developer", "text", "converter"];
 
 /* حاجز أخطاء: يعرض رسالة واضحة بدل الشاشة البيضاء عند أي عطل */
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {

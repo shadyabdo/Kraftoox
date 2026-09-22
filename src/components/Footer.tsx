@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS } from "../data/tools";
+import { IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS, DEVELOPER_TOOLS, TEXT_TOOLS, CONVERTER_TOOLS } from "../data/tools";
 import { Link } from "../lib/router";
 import { useI18n } from "../i18n";
 import { copyText, showToast } from "../lib/utils";
@@ -107,11 +107,54 @@ export function Footer() {
                   {isAr ? "ترجمة الصور بالذكاء الاصطناعي" : "AI Image Translator"}
                 </Link>
               </li>
-              <li>
-                <Link to="/tool/image-to-url" className="c-muted text-sm hover:c-primary transition-colors">
-                  {isAr ? "صورة إلى رابط" : "Image to URL"}
-                </Link>
-              </li>
+            </ul>
+          </div>
+
+          {/* Developer Tools */}
+          <div>
+            <h4 className="font-bold text-sm mb-4 flex items-center gap-2">
+              <span style={{ color: "#10b981" }}><Icon name="code" size={16} /></span>
+              {isAr ? "أدوات المطورين" : "Developer Tools"}
+            </h4>
+            <ul className="space-y-2">
+              {DEVELOPER_TOOLS.map((tool) => (
+                <li key={tool.slug}>
+                  <Link to={`/tool/${tool.slug}`} className="c-muted text-sm hover:c-primary transition-colors">
+                    {isAr ? tool.name : tool.nameEn}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Text & Converter Tools */}
+          <div>
+            <h4 className="font-bold text-sm mb-4 flex items-center gap-2">
+              <span style={{ color: "#8b5cf6" }}><Icon name="type" size={16} /></span>
+              {isAr ? "أدوات النصوص" : "Text Tools"}
+            </h4>
+            <ul className="space-y-2 mb-6">
+              {TEXT_TOOLS.map((tool) => (
+                <li key={tool.slug}>
+                  <Link to={`/tool/${tool.slug}`} className="c-muted text-sm hover:c-primary transition-colors">
+                    {isAr ? tool.name : tool.nameEn}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <h4 className="font-bold text-sm mb-4 flex items-center gap-2">
+              <span style={{ color: "#f59e0b" }}><Icon name="convert" size={16} /></span>
+              {isAr ? "أدوات التحويل" : "Converter Tools"}
+            </h4>
+            <ul className="space-y-2">
+              {CONVERTER_TOOLS.map((tool) => (
+                <li key={tool.slug}>
+                  <Link to={`/tool/${tool.slug}`} className="c-muted text-sm hover:c-primary transition-colors">
+                    {isAr ? tool.name : tool.nameEn}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         </div>

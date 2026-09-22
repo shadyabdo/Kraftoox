@@ -5,6 +5,9 @@
   <url><loc>https://kraftoox.app/#/images</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
   <url><loc>https://kraftoox.app/#/pdf</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
   <url><loc>https://kraftoox.app/#/video</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://kraftoox.app/#/developer</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://kraftoox.app/#/text</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://kraftoox.app/#/converter</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
   <url><loc>https://kraftoox.app/#/tool/compress-image</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://kraftoox.app/#/tool/resize-image</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://kraftoox.app/#/tool/convert-image</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
@@ -15,6 +18,16 @@
   <url><loc>https://kraftoox.app/#/tool/images-to-pdf</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://kraftoox.app/#/tool/extract-pdf-images</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://kraftoox.app/#/tool/youtube-downloader</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://kraftoox.app/#/tool/json-formatter</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://kraftoox.app/#/tool/base64-encoder</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://kraftoox.app/#/tool/hash-generator</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://kraftoox.app/#/tool/password-generator</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://kraftoox.app/#/tool/uuid-generator</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://kraftoox.app/#/tool/word-counter</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://kraftoox.app/#/tool/text-case-converter</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://kraftoox.app/#/tool/lorem-ipsum</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://kraftoox.app/#/tool/color-converter</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://kraftoox.app/#/tool/number-base-converter</loc><lastmod>2026-03-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://kraftoox.app/#/about</loc><lastmod>2026-03-15</lastmod><changefreq>yearly</changefreq><priority>0.5</priority></url>
   <url><loc>https://kraftoox.app/#/privacy</loc><lastmod>2026-03-15</lastmod><changefreq>yearly</changefreq><priority>0.4</priority></url>
   <url><loc>https://kraftoox.app/#/contact</loc><lastmod>2026-03-15</lastmod><changefreq>yearly</changefreq><priority>0.5</priority></url>
