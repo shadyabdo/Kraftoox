@@ -83,6 +83,50 @@ const META: Record<string, PageMeta> = {
     title: "محرر الفيديو الاحترافي أونلاين مجاناً — خط زمني وقصّ ودمج وتصدير MP4 | Kraftoox",
     description: "محرر فيديو بمستوى الاستوديوهات يعمل داخل متصفحك عبر محرك CreativeEditor: خط زمني، قصّ ودمج، نصوص وعناوين متحركة، موسيقى وانتقالات، وتصدير MP4 جاهز للنشر.",
   },
+  "/tool/json-formatter": {
+    title: "تنسيق JSON أونلاين مجاناً | Kraftoox",
+    description: "نسّق وجمّل بيانات JSON تلقائياً مع التحقق من الصحة وإبراز الأخطاء — يعمل بالكامل في متصفحك.",
+  },
+  "/tool/base64-encoder": {
+    title: "ترميز Base64 أونلاين مجاناً | Kraftoox",
+    description: "رمّز النصوص والملفات إلى Base64 أو فك الترميز — سريع ومحلي بالكامل في متصفحك.",
+  },
+  "/tool/hash-generator": {
+    title: "مولد Hash أونلاين مجاناً — MD5, SHA-256 | Kraftoox",
+    description: "ولّد MD5 وSHA-1 وSHA-256 وSHA-512 من أي نص — فوري ومحلي باستخدام Web Crypto API.",
+  },
+  "/tool/password-generator": {
+    title: "مولد كلمات المرور القوية أونلاين مجاناً | Kraftoox",
+    description: "ولّد كلمات مرور قوية وآمنة بطول مخصص وخيارات متعددة — محلي بالكامل باستخدام crypto API.",
+  },
+  "/tool/uuid-generator": {
+    title: "مولد UUID أونلاين مجاناً | Kraftoox",
+    description: "ولّد معرفات فريدة (UUID v4) بكميات كبيرة — فوري ومحلي باستخدام crypto.randomUUID().",
+  },
+  "/tool/word-counter": {
+    title: "عداد الكلمات أونلاين مجاناً | Kraftoox",
+    description: "عد الكلمات والأحرف والجمل والفقرات فوراً — مع إحصائيات القراءة ووقت التقدير.",
+  },
+  "/tool/text-case-converter": {
+    title: "محول حالة النص أونلاين مجاناً | Kraftoox",
+    description: "حوّل النص بين الحروف الكبيرة والصغيرة والعناوين وcamelCase وsnake_case — فوري ومحلي.",
+  },
+  "/tool/lorem-ipsum": {
+    title: "مولد Lorem Ipsum أونلاين مجاناً | Kraftoox",
+    description: "ولّد نصاً عشوائياً (Lorem Ipsum) للفقرات والجمل والكلمات — مثالي للتجارب والتصاميم.",
+  },
+  "/tool/color-converter": {
+    title: "محول الألوان أونلاين مجاناً — HEX, RGB, HSL | Kraftoox",
+    description: "حوّل الألوان بين HEX وRGB وHSL مع معاينة فورية ومنتقي ألوان — مثالي للمصممين ومطوري الويب.",
+  },
+  "/tool/number-base-converter": {
+    title: "محول الأنظمة العددية أونلاين مجاناً | Kraftoox",
+    description: "حوّل الأرقام بين Binary وDecimal وOctal وHexadecimal — فوري ومحلي بالكامل.",
+  },
+  "/tool/youtube-downloader": {
+    title: "تنزيل فيديوهات يوتيوب مجاناً — MP4 وMP3 | Kraftoox",
+    description: "نزّل أي فيديو من يوتيوب بالجودة التي تريدها أو استخرج الصوت فقط — سريع، مجاني، وبدون علامة مائية عبر خدمة Snapscooper.",
+  },
 };
 
 function setMetaTag(selector: string, attr: string, value: string): void {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { TOOLS, IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS, getTool, type ToolDef } from "../data/tools";
+import { TOOLS, IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS, DEVELOPER_TOOLS, TEXT_TOOLS, CONVERTER_TOOLS, getTool, type ToolDef } from "../data/tools";
 import { Link } from "../lib/router";
 import { useI18n } from "../i18n";
 import { getProcessedCount, matchesQuery, copyText, showToast } from "../lib/utils";
@@ -172,7 +172,7 @@ function BentoSections() {
       icon: "image" as const,
       color: "var(--teal)",
       name: isAr ? "أدوات الصور" : "Image Tools",
-      desc: isAr ? "ضغط، تحويل، تكبير، إزالة علامات مائية" : "Compress, convert, upscale, remove watermarks",
+      desc: isAr ? "ضغط، تحويل، تكبير" : "Compress, convert, upscale",
     },
     {
       id: "pdf",
@@ -191,12 +191,36 @@ function BentoSections() {
       desc: isAr ? "فيديو وصوت بجودات متعددة" : "Video & audio in multiple qualities",
     },
     {
+      id: "developer",
+      tools: DEVELOPER_TOOLS,
+      icon: "code" as const,
+      color: "#10b981",
+      name: isAr ? "أدوات المطورين" : "Developer Tools",
+      desc: isAr ? "JSON, Base64, Hash, Password, UUID" : "JSON, Base64, Hash, Password, UUID",
+    },
+    {
+      id: "text",
+      tools: TEXT_TOOLS,
+      icon: "type" as const,
+      color: "#8b5cf6",
+      name: isAr ? "أدوات النصوص" : "Text Tools",
+      desc: isAr ? "عداد كلمات، تحويل حالة، Lorem Ipsum" : "Word counter, case converter, Lorem Ipsum",
+    },
+    {
+      id: "converter",
+      tools: CONVERTER_TOOLS,
+      icon: "convert" as const,
+      color: "#f59e0b",
+      name: isAr ? "أدوات التحويل" : "Converter Tools",
+      desc: isAr ? "ألوان، أنظمة عددية" : "Colors, number bases",
+    },
+    {
       id: "ai",
-      tools: [getTool("image-translator")!, getTool("image-to-url")!].filter(Boolean),
+      tools: [getTool("image-translator")!].filter(Boolean),
       icon: "ai" as const,
       color: "var(--teal)",
       name: isAr ? "ذكاء اصطناعي" : "AI Tools",
-      desc: isAr ? "ترجمة صور، روابط دائمة" : "Image translation, permanent links",
+      desc: isAr ? "ترجمة صور بالذكاء الاصطناعي" : "AI image translation",
     },
   ];
 

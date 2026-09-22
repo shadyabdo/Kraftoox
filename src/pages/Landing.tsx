@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { TOOLS, IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS, getTool, type ToolDef } from "../data/tools";
+import { TOOLS, IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS, DEVELOPER_TOOLS, TEXT_TOOLS, CONVERTER_TOOLS, getTool, type ToolDef } from "../data/tools";
 import { Link } from "../lib/router";
 import { useI18n } from "../i18n";
 import { getProcessedCount, matchesQuery, copyText, showToast } from "../lib/utils";
@@ -182,6 +182,45 @@ export default function Landing() {
               </div>
             </div>
 
+            {/* Developer Tools */}
+            <div className="mb-16">
+              <div className="flex items-center gap-3 mb-6">
+                <span style={{ color: "#10b981" }}><Icon name="code" size={24} /></span>
+                <h2 className="text-2xl font-bold">{isAr ? "أدوات المطورين" : "Developer Tools"}</h2>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {DEVELOPER_TOOLS.map((tool) => (
+                  <ToolCard key={tool.slug} tool={tool} />
+                ))}
+              </div>
+            </div>
+
+            {/* Text Tools */}
+            <div className="mb-16">
+              <div className="flex items-center gap-3 mb-6">
+                <span style={{ color: "#8b5cf6" }}><Icon name="type" size={24} /></span>
+                <h2 className="text-2xl font-bold">{isAr ? "أدوات النصوص" : "Text Tools"}</h2>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {TEXT_TOOLS.map((tool) => (
+                  <ToolCard key={tool.slug} tool={tool} />
+                ))}
+              </div>
+            </div>
+
+            {/* Converter Tools */}
+            <div className="mb-16">
+              <div className="flex items-center gap-3 mb-6">
+                <span style={{ color: "#f59e0b" }}><Icon name="convert" size={24} /></span>
+                <h2 className="text-2xl font-bold">{isAr ? "أدوات التحويل" : "Converter Tools"}</h2>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {CONVERTER_TOOLS.map((tool) => (
+                  <ToolCard key={tool.slug} tool={tool} />
+                ))}
+              </div>
+            </div>
+
             {/* AI Tools */}
             <div>
               <div className="flex items-center gap-3 mb-6">
@@ -189,7 +228,7 @@ export default function Landing() {
                 <h2 className="text-2xl font-bold">{isAr ? "أدوات الذكاء الاصطناعي" : "AI Tools"}</h2>
               </div>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {["image-translator", "image-to-url"].map((slug) => {
+                {["image-translator"].map((slug) => {
                   const tool = getTool(slug);
                   return tool ? <ToolCard key={tool.slug} tool={tool} /> : null;
                 })}
