@@ -25,7 +25,7 @@ function useTheme() {
   return { theme, toggle };
 }
 
-/* غلاف قائمة منسدلة موحّد: يفتح بالنقر ويغلق خارجه وبـ Escape */
+/* غلاف قائمة منسدلة موحّد */
 function useDropdown() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -45,7 +45,7 @@ function useDropdown() {
   return { open, setOpen, ref };
 }
 
-/* ===== دروب داون قسم: الرابط نفسه يفتح قائمة أدواته ===== */
+/* ===== دروب داون قسم ===== */
 function SectionDropdown({
   slug,
   name,
@@ -73,7 +73,7 @@ function SectionDropdown({
         aria-expanded={open}
         aria-haspopup="true"
         className={cx(
-          "font-display relative flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors duration-200",
+          "font-display relative flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200",
           active || open ? "c-teal" : "c-muted hover:text-[var(--ink)]"
         )}
       >
@@ -92,7 +92,7 @@ function SectionDropdown({
           style={lang === "en" ? { left: 0, right: "auto" } : undefined}
           role="menu"
         >
-          <div className="card !rounded-xl overflow-hidden p-1.5 shadow-xl">
+          <div className="glass !rounded-xl overflow-hidden p-1.5 shadow-2xl">
             <div className="h-1 w-full rounded-t-lg" style={{ background: color }} />
             <Link
               to={`/${slug}`}
@@ -163,8 +163,8 @@ function LangDropdown() {
         aria-haspopup="true"
         aria-label={t("تغيير اللغة", "Change language")}
         className={cx(
-          "flex h-10 items-center gap-1.5 rounded-xl border bd-line bg-surface px-2.5 text-sm font-semibold transition-all duration-200",
-          open ? "border-[var(--teal)] c-teal" : "c-muted hover:border-[var(--teal)] hover:text-[var(--teal)]"
+          "flex h-10 items-center gap-1.5 rounded-xl glass px-2.5 text-sm font-semibold transition-all duration-200",
+          open ? "c-teal" : "c-muted hover:c-teal"
         )}
       >
         <Icon name="globe" size={16} />
@@ -176,7 +176,7 @@ function LangDropdown() {
 
       {open && (
         <div className="menu-panel-in absolute end-0 top-full z-50 mt-2 w-44" role="menu">
-          <div className="card !rounded-xl p-1.5 shadow-xl">
+          <div className="glass !rounded-xl p-1.5 shadow-xl">
             {OPTIONS.map((o) => (
               <button
                 key={o.id}
@@ -209,6 +209,13 @@ export function Header({ route }: { route: Route }) {
   const { theme, toggle } = useTheme();
   const { lang, t, isAr } = useI18n();
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => setOpen(false), [route.path, lang]);
 
@@ -222,18 +229,20 @@ export function Header({ route }: { route: Route }) {
 
   return (
     <header
-      className="sticky top-0 z-50 border-b bd-line"
-      style={{ background: "color-mix(in srgb, var(--bg) 88%, transparent)", backdropFilter: "blur(12px)" }}
+      className={cx(
+        "sticky top-0 z-50 transition-all duration-300",
+        scrolled ? "glass border-b bd-line" : "border-b border-transparent"
+      )}
     >
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4">
         <Link to="/" className="flex items-center gap-2.5" aria-label="Kraftoox">
           <LogoMark size={34} />
           <span className="leading-none">
             <span className="font-display block text-[19px] font-extrabold tracking-tight" dir="ltr">
-              Kraft<span className="c-teal">oox</span>
+              Kraft<span className="gradient-text">oox</span>
             </span>
             <span className="c-muted mt-0.5 block text-[10px] font-medium">
-              {t("ورشة الملفات المحلية", "The local file workshop")}
+              {t("ورشة الملفات الاحترافية", "Professional File Workshop")}
             </span>
           </span>
         </Link>
@@ -298,7 +307,7 @@ export function Header({ route }: { route: Route }) {
           <button
             type="button"
             onClick={toggle}
-            className="grid h-10 w-10 place-items-center rounded-xl border bd-line bg-surface c-muted transition-all duration-200 hover:border-[var(--amber)] hover:text-[var(--amber)]"
+            className="grid h-10 w-10 place-items-center rounded-xl glass c-muted transition-all duration-200 hover:c-teal"
             aria-label={theme === "dark" ? t("الوضع الفاتح", "Light mode") : t("الوضع الليلي", "Dark mode")}
           >
             <span
@@ -312,7 +321,7 @@ export function Header({ route }: { route: Route }) {
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
-            className="grid h-10 w-10 place-items-center rounded-xl border bd-line bg-surface lg:hidden"
+            className="grid h-10 w-10 place-items-center rounded-xl glass lg:hidden"
             aria-label={t("القائمة", "Menu")}
             aria-expanded={open}
           >
@@ -324,8 +333,8 @@ export function Header({ route }: { route: Route }) {
       {/* قائمة الجوال */}
       <div
         className={cx(
-          "overflow-hidden border-b bd-line transition-all duration-300 lg:hidden",
-          open ? "max-h-[560px] overflow-y-auto opacity-100" : "max-h-0 border-b-0 opacity-0"
+          "overflow-hidden border-t bd-line transition-all duration-300 lg:hidden",
+          open ? "max-h-[560px] overflow-y-auto opacity-100" : "max-h-0 border-t-0 opacity-0"
         )}
         style={{ background: "var(--surface)" }}
       >
