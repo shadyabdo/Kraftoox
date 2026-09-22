@@ -1,441 +1,273 @@
-import { useEffect, useRef, useState, type CSSProperties, type DragEvent } from "react";
-import { CATEGORIES, TOOLS, getTool, toolsOf } from "../data/tools";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { TOOLS, IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS, getTool, type ToolDef } from "../data/tools";
+import { Link } from "../lib/router";
 import { useI18n } from "../i18n";
-import { Link, navigate } from "../lib/router";
-import { usePageMeta } from "../lib/seo";
-import { stashPendingFiles } from "../lib/pending";
-import { formatBytes, showToast } from "../lib/utils";
+import { getProcessedCount, matchesQuery, copyText, showToast } from "../lib/utils";
 import { Icon } from "../components/Icons";
+import { ToolCard } from "../components/ToolCard";
 import { Reveal } from "../components/Reveal";
 
-type FileKind = "image" | "pdf" | "video";
-
-const KIND_TOOLS: Record<FileKind, string[]> = {
-  image: ["image-translator", "photo-editor", "compress-image", "upscale-image", "remove-watermark"],
-  pdf: ["compress-pdf", "merge-pdf", "extract-pdf-images", "images-to-pdf"],
-  video: ["video-editor"],
-};
-
-function detectKind(f: File): FileKind | null {
-  const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
-  if (f.type.startsWith("image/") || ["jpg", "jpeg", "png", "webp", "gif"].includes(ext)) return "image";
-  if (f.type === "application/pdf" || ext === "pdf") return "pdf";
-  if (f.type.startsWith("video/") || ["mp4", "webm", "mov", "mkv"].includes(ext)) return "video";
-  return null;
-}
-
-/* ===== لوحة الإفلات الذكي: ملف يدخل → الأدوات المناسبة تظهر ===== */
-function SmartDrop() {
-  const { t, lang, isAr } = useI18n();
-  const [file, setFile] = useState<File | null>(null);
-  const [kind, setKind] = useState<FileKind | null>(null);
-  const [live, setLive] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const take = (f: File | undefined | null) => {
-    if (!f) return;
-    const k = detectKind(f);
-    setFile(f);
-    setKind(k);
-    if (!k) showToast(t("صيغة غير مدعومة — جرّب صورة أو PDF أو فيديو", "Unsupported format — try an image, PDF or video"), "err");
-  };
-
-  const go = (slug: string) => {
-    if (!file) return;
-    stashPendingFiles([file]);
-    navigate(`/tool/${slug}`);
-  };
-
-  const kindColor: Record<FileKind, string> = { image: "var(--teal)", pdf: "var(--red)", video: "var(--blue)" };
-  const kindLabel: Record<FileKind, string> = {
-    image: t("صورة", "Image"),
-    pdf: "PDF",
-    video: t("فيديو", "Video"),
-  };
-
-  return (
-    <div className="card relative overflow-hidden !rounded-2xl">
-      {/* رأس اللوحة */}
-      <div className="flex items-center justify-between border-b bd-line px-5 py-3.5">
-        <p className="font-display flex items-center gap-2 text-sm font-bold">
-          <span className="anim-pulse-soft inline-block h-2 w-2 rounded-full" style={{ background: "var(--teal)" }} />
-          {t("جرّبها الآن — أفلت أي ملف", "Try it now — drop any file")}
-        </p>
-        <span className="font-mono text-[10px] tracking-wider c-muted" dir="ltr">
-          LOCAL · 0 UPLOADS
-        </span>
-      </div>
-
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={() => inputRef.current?.click()}
-        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && inputRef.current?.click()}
-        onDragOver={(e: DragEvent) => { e.preventDefault(); setLive(true); }}
-        onDragLeave={() => setLive(false)}
-        onDrop={(e: DragEvent) => { e.preventDefault(); setLive(false); take(e.dataTransfer.files?.[0]); }}
-        className="relative m-4 grid min-h-52 cursor-pointer place-items-center rounded-xl bg-surface2 text-center outline-none transition-all duration-300 focus-visible:ring-2 focus-visible:ring-[var(--teal)]"
-        style={{ border: `1.6px dashed ${live ? "var(--teal)" : "var(--line)"}` }}
-        aria-label={t("منطقة إفلات الملفات", "File drop area")}
-      >
-        {!file ? (
-          <div className="flex flex-col items-center gap-3 px-6 py-8">
-            <span className={`grid h-14 w-14 place-items-center rounded-xl transition-transform duration-300 ${live ? "scale-110" : ""}`}
-              style={{ background: "var(--teal-soft)", color: "var(--teal)" }}>
-              <Icon name="upload" size={26} />
-            </span>
-            <div>
-              <p className="font-display font-bold">{t("اسحب ملفاً هنا أو انقر للاختيار", "Drag a file here or click to browse")}</p>
-              <p className="c-muted mt-1 text-xs">
-                {t("سنقترح الأدوات المناسبة لنوعه فوراً", "We'll instantly suggest the right tools for its type")}
-              </p>
-            </div>
-            <div className="flex flex-wrap justify-center gap-1.5">
-              {["JPG", "PNG", "WEBP", "PDF", "MP4", "WEBM"].map((f) => (
-                <span key={f} className="font-mono rounded-md border bd-line bg-surface px-2 py-0.5 text-[10px] c-muted">{f}</span>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="anim-pop w-full px-5 py-6">
-            <div className="mx-auto flex max-w-sm items-center gap-3 rounded-xl border bd-line bg-surface p-3">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg"
-                style={{
-                  background: kind ? `color-mix(in srgb, ${kindColor[kind]} 12%, var(--surface))` : "var(--amber-soft)",
-                  color: kind ? kindColor[kind] : "var(--amber)",
-                }}>
-                <Icon name={kind === "pdf" ? "pdf" : kind === "video" ? "timeline" : "image"} size={22} />
-              </span>
-              <div className="min-w-0 flex-1 text-start">
-                <p className="truncate text-sm font-bold" dir="ltr" style={{ textAlign: "end" }}><bdi>{file.name}</bdi></p>
-                <p className="c-muted font-mono text-[11px]" dir="ltr">
-                  {formatBytes(file.size)}{kind ? ` · ${kindLabel[kind]}` : ""}
-                </p>
-              </div>
-              <button type="button" onClick={(e) => { e.stopPropagation(); setFile(null); setKind(null); }}
-                className="c-muted rounded-lg p-1.5 transition-colors hover:text-[var(--red)]" aria-label={t("إزالة الملف", "Remove file")}>
-                <Icon name="close" size={16} />
-              </button>
-            </div>
-
-            {kind ? (
-              <div className="mx-auto mt-4 max-w-sm">
-                <p className="mb-2 text-center text-xs font-semibold c-muted">
-                  {t("الأدوات المناسبة لهذا الملف:", "The right tools for this file:")}
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {KIND_TOOLS[kind].map((slug, i) => {
-                    const tool = getTool(slug)!;
-                    return (
-                      <button key={slug} type="button" onClick={(e) => { e.stopPropagation(); go(slug); }}
-                        className="menu-item-in flex items-center gap-2 rounded-xl border bd-line bg-surface px-3 py-2.5 text-start text-xs font-bold transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--teal)]"
-                        style={{ animationDelay: `${i * 50}ms`, color: kindColor[kind] }}>
-                        <Icon name={tool.icon} size={16} />
-                        <span className="text-[var(--ink)]">{isAr ? tool.name : tool.nameEn}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="mt-2.5 text-center text-[10.5px] c-muted">
-                  {t("ملفك سينتظرك داخل الأداة المختارة", "Your file will be waiting inside the chosen tool")}
-                </p>
-              </div>
-            ) : (
-              <p className="mt-3 text-center text-xs c-red">{t("جرّب صورة أو PDF أو فيديو", "Try an image, PDF or video")}</p>
-            )}
-          </div>
-        )}
-        <input ref={inputRef} type="file" className="hidden"
-          accept="image/*,application/pdf,video/mp4,video/webm,video/quicktime,.jpg,.png,.webp,.pdf,.mp4,.webm,.mov"
-          onChange={(e) => { take(e.target.files?.[0]); e.target.value = ""; }} />
-      </div>
-    </div>
-  );
-}
-
-/* ===== سطر "كيف تعمل" — تحرير رقمي ===== */
-function HowItWorks() {
-  const { t } = useI18n();
-  const steps = [
-    {
-      n: "01",
-      title: t("تختار ملفك", "You pick a file"),
-      desc: t("بلا حساب ولا تسجيل — الملف يُقرأ من جهازك مباشرة عبر واجهات المتصفح الآمنة.", "No account, no sign-up — the file is read straight from your device via secure browser APIs."),
-      color: "var(--teal)",
-    },
-    {
-      n: "02",
-      title: t("تعمل المحركات محلياً", "Engines run locally"),
-      desc: t("Canvas وWeb Workers وpdf-lib وMediaRecorder — كل بايت يُعالَج في متصفحك، وقطع الإنترنت لا يوقف العمل.", "Canvas, Web Workers, pdf-lib and MediaRecorder — every byte is processed in your browser; cutting the internet doesn't stop the work."),
-      color: "var(--amber)",
-    },
-    {
-      n: "03",
-      title: t("تنزّل النتيجة فوراً", "You download instantly"),
-      desc: t("روابط تنزيل حقيقية تُنشأ على جهازك. لا طوابير خادم، لا علامات مائية، لا حدود يومية.", "Real download links are created on your machine. No server queues, no watermarks, no daily limits."),
-      color: "var(--red)",
-    },
-  ];
-  return (
-    <div className="grid gap-px overflow-hidden rounded-2xl border bd-line bg-[var(--line)] md:grid-cols-3">
-      {steps.map((s, i) => (
-        <Reveal key={s.n} delay={i * 90}>
-          <div className="group h-full bg-surface p-7 transition-colors duration-300 hover:bg-surface2">
-            <span className="font-mono text-3xl font-bold transition-colors duration-300" style={{ color: s.color }} dir="ltr">
-              {s.n}
-            </span>
-            <h3 className="font-display mt-3 text-lg font-bold">{s.title}</h3>
-            <p className="c-muted mt-2 text-[13px] leading-relaxed">{s.desc}</p>
-          </div>
-        </Reveal>
-      ))}
-    </div>
-  );
-}
-
 export default function Landing() {
-  usePageMeta("/");
-  const { t, isAr } = useI18n();
+  const { isAr, t } = useI18n();
   const [q, setQ] = useState("");
-  const [drawn, setDrawn] = useState(false);
+  const [processed, setProcessed] = useState(getProcessedCount());
+  const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const id = setTimeout(() => setDrawn(true), 350);
-    return () => clearTimeout(id);
+    const onCount = () => setProcessed(getProcessedCount());
+    window.addEventListener("ft:count", onCount);
+    return () => window.removeEventListener("ft:count", onCount);
   }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (e.key === "/" && !["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const filtered = useMemo(
+    () =>
+      q.trim()
+        ? TOOLS.filter((tool) => matchesQuery(`${tool.name} ${tool.nameEn} ${tool.short} ${tool.shortEn} ${tool.keywords} ${tool.keywordsEn}`, q))
+        : [],
+    [q]
+  );
+
+  const searching = q.trim().length > 0;
+
+  const QUICK = ["compress-image", "youtube-downloader", "photo-editor", "image-translator"]
+    .map((s) => getTool(s))
+    .filter((tool): tool is ToolDef => !!tool);
 
   return (
     <main>
-      {/* ===== الافتتاحية: الورشة نفسها ===== */}
-      <section className="mx-auto grid max-w-6xl items-start gap-10 px-4 pb-14 pt-12 sm:pt-16 lg:grid-cols-[1.04fr_0.96fr] lg:gap-14">
-        <div>
-          <Reveal>
-            <p className="kicker c-teal">
-              {t("ورشة ملفات محلية — 17 أداة", "A local file workshop — 17 tools")}
-            </p>
-          </Reveal>
-
-          <Reveal delay={80}>
-            <h1 className="font-display mt-5 text-[2.5rem] font-extrabold leading-[1.15] sm:text-6xl lg:text-[3.9rem]">
-              {t("ملفاتك تُعالَج", "Your files, processed")}
-              <br />
-              <span className="relative inline-block c-teal">
-                {t("حيث يجب أن تكون", "where they should be")}
-                <svg className="absolute -bottom-2.5 start-0 w-full" viewBox="0 0 220 12" fill="none" aria-hidden="true">
-                  <path d="M4 9 C60 2, 150 2, 216 7" stroke="var(--amber)" strokeWidth="4.5" strokeLinecap="round"
-                    pathLength={1} strokeDasharray={1}
-                    style={{ strokeDashoffset: drawn ? 0 : 1, transition: "stroke-dashoffset 1s ease 0.6s" }} />
-                </svg>
-              </span>
-              <span className="c-muted"> — {t("في جهازك", "on your device")}</span>
-            </h1>
-          </Reveal>
-
-          <Reveal delay={160}>
-            <p className="mt-7 max-w-xl text-base leading-loose sm:text-[17px]" style={{ color: "var(--muted)" }}>
-              {t(
-                "ضغط صور وتكبيرها حتى 4K، إزالة علامات مائية، وتحرير احترافي كامل عبر فوتوشوب الويب Photopea — إضافةً إلى ضغط PDF ودمجه واستخراج صوره — كل ذلك دون أن يغادر ملف واحد جهازك.",
-                "Compress and upscale images to 4K, remove watermarks, and do full professional editing via Photopea web Photoshop — plus PDF compression, merging and image extraction — all without a single file leaving your device."
-              )}
-            </p>
-          </Reveal>
-
-          <Reveal delay={240}>
-            <form className="relative mt-8 max-w-xl" onSubmit={(e) => { e.preventDefault(); navigate(`/tools?q=${encodeURIComponent(q.trim())}`); }} role="search">
-              <span className="absolute inset-y-0 start-4 grid place-items-center c-muted"><Icon name="search" size={18} /></span>
-              <input
-                type="search"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder={t("ما الذي تريد إنجازه؟ مثال: ضغط، دمج، علامة مائية…", "What do you need done? e.g. compress, merge, watermark…")}
-                className="input !rounded-xl !border-2 !py-3.5 !pe-24 !ps-11"
-                aria-label={t("ابحث عن أداة", "Search for a tool")}
-              />
-              <button type="submit" className="btn btn-teal absolute inset-y-1.5 end-1.5 !rounded-lg !px-4 !text-sm">
-                {t("ابحث", "Search")}
-              </button>
-            </form>
-          </Reveal>
-
-          <Reveal delay={300}>
-            <div className="mt-5 flex flex-wrap items-center gap-2">
-              <span className="c-muted text-xs font-semibold">{t("الأكثر استخداماً:", "Most used:")}</span>
-              {["compress-image", "image-to-url", "photo-editor", "video-editor", "merge-pdf"].map((s) => {
-                const tool = getTool(s)!;
-                return (
-                  <Link key={s} to={`/tool/${s}`} className="chip !text-xs">
-                    <span style={{ color: tool.color }}><Icon name={tool.icon} size={12} /></span>
-                    {isAr ? tool.name : tool.nameEn}
-                  </Link>
-                );
-              })}
-            </div>
-          </Reveal>
-
-          <Reveal delay={360}>
-            <dl className="mt-10 grid max-w-xl grid-cols-3 gap-4 border-t bd-line pt-6">
-              {[
-                { v: String(TOOLS.length), l: t("أداة متخصصة", "specialized tools") },
-                { v: "0", l: t("ملفات تُرفع لخوادمنا", "files uploaded to us") },
-                { v: "100%", l: t("معالجة داخل المتصفح", "in-browser processing") },
-              ].map((s) => (
-                <div key={s.l}>
-                  <dt className="sr-only">{s.l}</dt>
-                  <dd className="font-display text-3xl font-extrabold" dir="ltr">{s.v}</dd>
-                  <dd className="c-muted mt-0.5 text-xs font-medium">{s.l}</dd>
-                </div>
-              ))}
-            </dl>
-          </Reveal>
-        </div>
-
-        <Reveal delay={200}>
-          <SmartDrop />
-          <p className="mt-3 text-center text-[11px] c-muted">
-            {t("هذه ليست واجهة تجريبية — الإفلات يعمل فعلاً وسيحمّل ملفك في الأداة.", "This isn't a mock — dropping really works and loads your file into the tool.")}
+      {/* Hero Section */}
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:py-24">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
+            <span className="c-primary">{isAr ? "Kraftoox" : "Kraftoox"}</span>
+          </h1>
+          <p className="text-xl sm:text-2xl text-[var(--ink-secondary)] mb-4">
+            {isAr 
+              ? "أدوات مجانية عبر الإنترنت"
+              : "Free Online Tools"}
           </p>
-        </Reveal>
-      </section>
+          <p className="text-base sm:text-lg c-muted max-w-2xl mx-auto">
+            {isAr
+              ? "أدوات مجانية لمعالجة الصور والملفات والفيديو والذكاء الاصطناعي. كل شيء يعمل داخل متصفحك بدون رفع ملفاتك."
+              : "Free tools for images, files, video, and AI. Everything works in your browser without uploading your files."}
+          </p>
+        </div>
 
-      {/* ===== شريط الصيغ ===== */}
-      <div className="overflow-hidden border-y bd-line py-3" style={{ background: "var(--surface)" }} aria-hidden="true">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-7 gap-y-1 px-4" dir="ltr">
-          {["JPG", "PNG", "WEBP", "PDF", "MP4", "WEBM", "4K", "A4", "FLUX", "ZIP", "MD", "BBCode"].map((f) => (
-            <span key={f} className="font-mono text-xs font-semibold tracking-[0.18em] c-muted">{f}</span>
+        {/* Search */}
+        <div className="max-w-2xl mx-auto mb-12">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (q.trim()) {
+                window.location.hash = `/tools?q=${encodeURIComponent(q.trim())}`;
+              }
+            }}
+            className="relative"
+          >
+            <span className="absolute inset-y-0 start-4 grid place-items-center c-muted">
+              <Icon name="search" size={20} />
+            </span>
+            <input
+              ref={searchRef}
+              type="search"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={isAr ? "ابحث عن أداة… (اضغط /)" : "Search for a tool… (press /)"}
+              className="input !rounded-xl !py-4 !ps-12 !pe-4 !text-base"
+              aria-label={isAr ? "ابحث عن أداة" : "Search for a tool"}
+            />
+          </form>
+        </div>
+
+        {/* Quick Links */}
+        <div className="flex flex-wrap justify-center gap-3 mb-16">
+          {QUICK.map((tool) => (
+            <Link key={tool.slug} to={`/tool/${tool.slug}`} className="chip">
+              <span style={{ color: tool.color }}><Icon name={tool.icon} size={16} /></span>
+              {isAr ? tool.name : tool.nameEn}
+            </Link>
           ))}
         </div>
-      </div>
 
-      {/* ===== الأقسام ===== */}
-      <section className="mx-auto max-w-6xl px-4 pt-16">
-        <Reveal>
-          <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="kicker c-amber">{t("أقسام الورشة", "Workshop sections")}</p>
-              <h2 className="font-display mt-2 text-3xl font-extrabold sm:text-4xl">{t("أربع ورش تحت سقف واحد", "Four workshops, one roof")}</h2>
-            </div>
-            <Link to="/tools" className="linkish text-sm font-bold">{t("كل الأدوات في صفحة واحدة ←", "All tools on one page ←")}</Link>
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto mb-16">
+          <div className="text-center">
+            <p className="text-3xl font-bold c-primary">{TOOLS.length}</p>
+            <p className="c-muted text-sm mt-1">{isAr ? "أداة" : "Tools"}</p>
           </div>
-        </Reveal>
-
-        <div className="grid gap-4 md:grid-cols-3 md:grid-rows-2">
-          {CATEGORIES.map((cat, i) => {
-            const tools = toolsOf(cat.id);
-            const wide = i === 0 || i === 3;
-            return (
-              <Reveal key={cat.id} delay={i * 80} className={wide ? "md:col-span-2" : ""}>
-                <Link to={`/${cat.slug}`} className="tool-card card group flex h-full flex-col p-6" style={{ "--tc": cat.color } as CSSProperties}>
-                  <div className="flex items-start justify-between gap-3">
-                    <span className="grid h-12 w-12 place-items-center rounded-xl transition-transform duration-300 group-hover:scale-110"
-                      style={{ background: `color-mix(in srgb, ${cat.color} 13%, var(--surface))`, color: cat.color }}>
-                      <Icon name={cat.icon} size={24} />
-                    </span>
-                    <span className="font-mono text-[10px] font-semibold tracking-[0.15em] c-muted" dir="ltr">
-                      {String(tools.length).padStart(2, "0")} {t("أدوات", "TOOLS")}
-                    </span>
-                  </div>
-                  <h3 className="font-display mt-4 text-[22px] font-extrabold">{isAr ? cat.name : cat.nameEn}</h3>
-                  <p className="mt-1 text-sm font-semibold" style={{ color: cat.color }}>{isAr ? cat.tagline : cat.taglineEn}</p>
-                  <div className="mt-3.5 flex flex-wrap gap-1.5">
-                    {tools.map((tool) => (
-                      <span key={tool.slug} className="chip pointer-events-none !cursor-default !px-2.5 !py-1 !text-[10.5px]">
-                        {isAr ? tool.name : tool.nameEn}
-                      </span>
-                    ))}
-                  </div>
-                  <span className="mt-5 flex items-center gap-1.5 text-xs font-bold transition-transform duration-300 group-hover:-translate-x-1.5" style={{ color: cat.color }}>
-                    {t("ادخل القسم", "Enter section")}
-                    <Icon name="arrow" size={14} />
-                  </span>
-                </Link>
-              </Reveal>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ===== كيف تعمل ===== */}
-      <section className="mx-auto max-w-6xl px-4 pt-20">
-        <Reveal>
-          <p className="kicker c-teal">{t("المعمارية", "Architecture")}</p>
-          <h2 className="font-display mt-2 text-3xl font-extrabold sm:text-4xl">{t("لا خادم في المنتصف — وهذا مقصود", "No server in between — on purpose")}</h2>
-        </Reveal>
-        <div className="mt-8">
-          <HowItWorks />
-        </div>
-      </section>
-
-      {/* ===== أسئلة شائعة ===== */}
-      <section className="mx-auto max-w-3xl px-4 pt-20">
-        <Reveal>
-          <p className="kicker c-red">{t("أسئلة شائعة", "FAQ")}</p>
-          <h2 className="font-display mt-2 text-3xl font-extrabold sm:text-4xl">{t("قبل أن تسأل…", "Before you ask…")}</h2>
-        </Reveal>
-        <div className="mt-8 space-y-3">
-          {[
-            {
-              q: t("هل تُرفع ملفاتي إلى خوادمكم؟", "Are my files uploaded to your servers?"),
-              a: t(
-                "لا. كل أدوات المعالجة (ضغط، تحويل، تكبير، دمج، استخراج) تعمل داخل متصفحك ولا يغادر الملف جهازك. الاستثناء الوحيد الاختياري هو زر النشر المؤقت في أداة الروابط، ويتطلب موافقتك الصريحة.",
-                "No. Every processing tool (compress, convert, upscale, merge, extract) runs inside your browser and the file never leaves your device. The only optional exception is the temp-publish button in the link tool, which requires your explicit action."
-              ),
-            },
-            {
-              q: t("ما هو محرر الفوتوشوب أونلاين؟", "What is the online Photoshop editor?"),
-              a: t(
-                "نعرض داخل المنصة خدمة Photopea الاحترافية عبر واجهتها الرسمية: طبقات وأقنعة وأدوات تحديد وفتح ملفات PSD وAI وSketch. عدّل بحرية وعند الحفظ (Ctrl+S) تصلك النتيجة للتنزيل فوراً — بلا تسجيل وبلا تثبيت.",
-                "We embed the professional Photopea service through its official API: layers, masks, selection tools and support for PSD, AI and Sketch files. Edit freely and when you save (Ctrl+S) the result is ready to download instantly — no sign-up, no install."
-              ),
-            },
-            {
-              q: t("هل الأدوات مجانية فعلاً؟", "Are the tools really free?"),
-              a: t(
-                "نعم — كل الأدوات مجانية بالكامل وبلا حدود يومية وبلا علامات مائية على النتائج، لأن المعالجة تتم على جهازك فلا نتحمل تكلفة خوادم ولا نحتاج اشتراكات.",
-                "Yes — every tool is completely free with no daily limits and no watermarks on the results, because processing happens on your device so we bear no server cost and need no subscriptions."
-              ),
-            },
-            {
-              q: t("هل يدعم الموقع اللغة الإنجليزية؟", "Does the site support English?"),
-              a: t(
-                "نعم — بدّل اللغة من القائمة المنسدلة في الهيدر بين العربية والإنجليزية، ويُحفَظ اختيارك تلقائياً. كل الأدوات والصفحات مترجمة بالكامل.",
-                "Yes — switch the language from the header dropdown between Arabic and English, and your choice is saved automatically. All tools and pages are fully translated."
-              ),
-            },
-          ].map((f, i) => (
-            <Reveal key={i} delay={i * 60}>
-              <details className="ft-acc card group overflow-hidden">
-                <summary className="font-display flex items-center justify-between gap-3 px-5 py-4 text-sm font-bold transition-colors hover:bg-surface2">
-                  {f.q}
-                  <span className="acc-chev shrink-0 c-muted"><Icon name="chevron" size={17} /></span>
-                </summary>
-                <p className="c-muted border-t bd-line px-5 py-4 text-sm leading-loose">{f.a}</p>
-              </details>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* ===== دعوة أخيرة ===== */}
-      <section className="mx-auto max-w-6xl px-4 pt-20">
-        <Reveal>
-          <div className="flex flex-col items-start justify-between gap-6 rounded-2xl border bd-line p-8 sm:flex-row sm:items-center sm:p-10" style={{ background: "var(--surface)" }}>
-            <div>
-              <h2 className="font-display text-2xl font-extrabold sm:text-3xl">
-                {t("ابدأ بملفك — لا بحساب بريد", "Start with your file — not an email address")}
-              </h2>
-              <p className="c-muted mt-2 max-w-xl text-sm leading-relaxed">
-                {t("اختر أداة من القائمة أعلاه، أو اسحب ملفك في لوحة التجربة وسنوجّهك للأداة الصحيحة.", "Pick a tool from the menu above, or drop your file into the try-panel and we'll route you to the right one.")}
-              </p>
-            </div>
-            <div className="flex shrink-0 gap-3">
-              <Link to="/tools" className="btn btn-teal !px-6 !py-3">
-                <Icon name="sparkle" size={17} />
-                {t("كل الأدوات", "All tools")}
-              </Link>
-              <Link to="/about" className="btn btn-ghost !px-5 !py-3">{t("من نحن", "About")}</Link>
-            </div>
+          <div className="text-center">
+            <p className="text-3xl font-bold c-primary">{processed}</p>
+            <p className="c-muted text-sm mt-1">{isAr ? "ملف معالج" : "Files Processed"}</p>
           </div>
-        </Reveal>
+          <div className="text-center">
+            <p className="text-3xl font-bold c-primary">0</p>
+            <p className="c-muted text-sm mt-1">{isAr ? "رفع للخوادم" : "Uploads to Servers"}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Tools Grid */}
+      <section className="mx-auto max-w-7xl px-4 pb-16">
+        {searching ? (
+          <div>
+            <h2 className="text-2xl font-bold mb-8 text-center">
+              {filtered.length > 0 
+                ? (isAr ? `${filtered.length} نتيجة` : `${filtered.length} Results`)
+                : (isAr ? "لا توجد نتائج" : "No Results")}
+            </h2>
+            {filtered.length > 0 ? (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {filtered.map((tool) => (
+                  <ToolCard key={tool.slug} tool={tool} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="c-muted text-lg">
+                  {isAr ? "جرّب كلمات أخرى" : "Try different keywords"}
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Image Tools */}
+            <div className="mb-16">
+              <div className="flex items-center gap-3 mb-6">
+                <span className="c-primary"><Icon name="image" size={24} /></span>
+                <h2 className="text-2xl font-bold">{isAr ? "أدوات الصور" : "Image Tools"}</h2>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {IMAGE_TOOLS.map((tool) => (
+                  <ToolCard key={tool.slug} tool={tool} />
+                ))}
+              </div>
+            </div>
+
+            {/* PDF Tools */}
+            <div className="mb-16">
+              <div className="flex items-center gap-3 mb-6">
+                <span className="c-error"><Icon name="pdf" size={24} /></span>
+                <h2 className="text-2xl font-bold">{isAr ? "أدوات PDF" : "PDF Tools"}</h2>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {PDF_TOOLS.map((tool) => (
+                  <ToolCard key={tool.slug} tool={tool} />
+                ))}
+              </div>
+            </div>
+
+            {/* Video Tools */}
+            <div className="mb-16">
+              <div className="flex items-center gap-3 mb-6">
+                <span className="c-error"><Icon name="download" size={24} /></span>
+                <h2 className="text-2xl font-bold">{isAr ? "أدوات الفيديو" : "Video Tools"}</h2>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {VIDEO_TOOLS.map((tool) => (
+                  <ToolCard key={tool.slug} tool={tool} />
+                ))}
+              </div>
+            </div>
+
+            {/* AI Tools */}
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <span className="c-primary"><Icon name="ai" size={24} /></span>
+                <h2 className="text-2xl font-bold">{isAr ? "أدوات الذكاء الاصطناعي" : "AI Tools"}</h2>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {["image-translator", "image-to-url"].map((slug) => {
+                  const tool = getTool(slug);
+                  return tool ? <ToolCard key={tool.slug} tool={tool} /> : null;
+                })}
+              </div>
+            </div>
+          </>
+        )}
+      </section>
+
+      {/* Features Section */}
+      <section className="mx-auto max-w-7xl px-4 py-16 border-t border-[var(--line)]">
+        <h2 className="text-3xl font-bold text-center mb-12">
+          {isAr ? "لماذا Kraftoox؟" : "Why Kraftoox?"}
+        </h2>
+        <div className="grid gap-8 md:grid-cols-3">
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--surface2)] mb-4">
+              <Icon name="shield" size={32} className="c-primary" />
+            </div>
+            <h3 className="text-xl font-bold mb-2">{isAr ? "خصوصية كاملة" : "Complete Privacy"}</h3>
+            <p className="c-muted">
+              {isAr 
+                ? "ملفاتك لا تغادر جهازك. كل المعالجة تتم محلياً في متصفحك."
+                : "Your files never leave your device. All processing happens locally in your browser."}
+            </p>
+          </div>
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--surface2)] mb-4">
+              <Icon name="bolt" size={32} className="c-primary" />
+            </div>
+            <h3 className="text-xl font-bold mb-2">{isAr ? "سريع وسهل" : "Fast & Simple"}</h3>
+            <p className="c-muted">
+              {isAr 
+                ? "لا تسجيل، لا حدود، لا علامات مائية. فقط اختر الأداة وابدأ."
+                : "No sign-up, no limits, no watermarks. Just pick a tool and start."}
+            </p>
+          </div>
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--surface2)] mb-4">
+              <Icon name="globe" size={32} className="c-primary" />
+            </div>
+            <h3 className="text-xl font-bold mb-2">{isAr ? "مجاني بالكامل" : "Completely Free"}</h3>
+            <p className="c-muted">
+              {isAr 
+                ? "جميع الأدوات مجانية 100%. لا اشتراكات، لا رسوم خفية."
+                : "All tools are 100% free. No subscriptions, no hidden fees."}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="mx-auto max-w-7xl px-4 py-16 text-center border-t border-[var(--line)]">
+        <h2 className="text-3xl font-bold mb-4">
+          {isAr ? "ابدأ الآن" : "Start Now"}
+        </h2>
+        <p className="c-muted text-lg mb-8 max-w-2xl mx-auto">
+          {isAr 
+            ? "اختر أي أداة وابدأ في معالجة ملفاتك فوراً. سريع، مجاني، وآمن."
+            : "Pick any tool and start processing your files immediately. Fast, free, and secure."}
+        </p>
+        <div className="flex flex-wrap justify-center gap-4">
+          <Link to="/tools" className="btn btn-primary">
+            <Icon name="sparkle" size={18} />
+            {isAr ? "كل الأدوات" : "All Tools"}
+          </Link>
+          <button
+            type="button"
+            onClick={async () => {
+              const ok = await copyText("https://kraftoox.app/");
+              if (ok) showToast(isAr ? "تم نسخ الرابط" : "Link copied");
+            }}
+            className="btn btn-secondary"
+          >
+            <Icon name="link" size={18} />
+            {isAr ? "شارك الموقع" : "Share Site"}
+          </button>
+        </div>
       </section>
     </main>
   );
