@@ -8,8 +8,14 @@ import { Icon } from "../components/Icons";
 
 const TOOL = getTool("youtube-downloader")!;
 
-// Piped API instances (مجانية، مفتوحة المصدر، تدعم CORS)
-const Piped_INSTANCES = [
+// CORS proxies لدعم الخوادم التي لا تدعم CORS مباشرة
+const CORS_PROXIES = [
+  "https://corsproxy.io/?",
+  "https://api.allorigins.win/raw?url=",
+];
+
+// Piped API instances
+const PIPED_INSTANCES = [
   "https://pipedapi.kavin.rocks",
   "https://pipedapi.adminforge.de",
   "https://api.piped.projectsegfau.lt",
@@ -64,37 +70,45 @@ function extractVideoId(url: string): string | null {
 async function fetchFromPiped(videoId: string): Promise<VideoInfo> {
   let lastError: Error | null = null;
   
-  for (const instance of Piped_INSTANCES) {
-    try {
-      const res = await fetch(`${instance}/streams/${videoId}`, {
-        signal: AbortSignal.timeout(10000),
-      });
-      
-      if (!res.ok) {
-        lastError = new Error(`HTTP ${res.status}`);
+  // محاولة الوصول المباشر أولاً، ثم عبر proxy
+  for (const instance of PIPED_INSTANCES) {
+    const urls = [
+      `${instance}/streams/${videoId}`,
+      ...CORS_PROXIES.map(proxy => `${proxy}${encodeURIComponent(`${instance}/streams/${videoId}`)}`)
+    ];
+    
+    for (const url of urls) {
+      try {
+        const res = await fetch(url, {
+          signal: AbortSignal.timeout(15000),
+        });
+        
+        if (!res.ok) {
+          lastError = new Error(`HTTP ${res.status}`);
+          continue;
+        }
+        
+        const data = await res.json();
+        
+        if (!data.title && !data.videoStreams) {
+          lastError = new Error("Invalid response");
+          continue;
+        }
+        
+        return {
+          title: data.title || "Untitled",
+          thumbnailUrl: data.thumbnailUrl || "",
+          uploaderName: data.uploader || "Unknown",
+          duration: data.duration || 0,
+          views: data.views || 0,
+          uploadDate: data.uploadDate || "",
+          videoStreams: (data.videoStreams || []).filter((s: VideoStream) => s.url),
+          audioStreams: (data.audioStreams || []).filter((s: AudioStream) => s.url),
+        };
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
         continue;
       }
-      
-      const data = await res.json();
-      
-      if (!data.title && !data.videoStreams) {
-        lastError = new Error("Invalid response");
-        continue;
-      }
-      
-      return {
-        title: data.title || "Untitled",
-        thumbnailUrl: data.thumbnailUrl || "",
-        uploaderName: data.uploader || "Unknown",
-        duration: data.duration || 0,
-        views: data.views || 0,
-        uploadDate: data.uploadDate || "",
-        videoStreams: (data.videoStreams || []).filter((s: VideoStream) => s.url),
-        audioStreams: (data.audioStreams || []).filter((s: AudioStream) => s.url),
-      };
-    } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-      continue;
     }
   }
   
