@@ -366,30 +366,29 @@ export function Icon({ name, size = 20, ...rest }: IconProps) {
   );
 }
 
-/* شعار Kraftoox — حرف K ذهبي داخل مستطيل ملف بحبر دافئ */
+/* شعار Kraftoox — حرف K ذهبي أنيق */
 export function LogoMark({ size = 34 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
-      <rect x="4" y="4" width="56" height="56" rx="15" fill="#211d14" />
-      <rect x="4" y="4" width="56" height="56" rx="15" fill="none" stroke="var(--teal)" strokeOpacity="0.35" strokeWidth="1.5" />
-      <path
-        d="M20 14h17l9 9v27a4 4 0 0 1-4 4H20a4 4 0 0 1-4-4V18a4 4 0 0 1 4-4z"
-        fill="none"
-        stroke="var(--teal)"
-        strokeOpacity="0.5"
-        strokeWidth="2"
-      />
-      <path d="M26 22v20" stroke="var(--teal)" strokeWidth="5" strokeLinecap="round" />
+      <defs>
+        <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#d4b370" />
+          <stop offset="100%" stopColor="#c8a460" />
+        </linearGradient>
+      </defs>
+      <rect x="4" y="4" width="56" height="56" rx="15" fill="#141414" />
+      <rect x="4" y="4" width="56" height="56" rx="15" fill="none" stroke="url(#logoGrad)" strokeWidth="1.5" opacity="0.6" />
+      <path d="M26 22v20" stroke="url(#logoGrad)" strokeWidth="5.5" strokeLinecap="round" />
       <path
         d="M38 22 27.5 32 38 42"
-        stroke="var(--teal)"
-        strokeWidth="5"
+        stroke="url(#logoGrad)"
+        strokeWidth="5.5"
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
       />
-      <circle cx="44" cy="15" r="3" fill="var(--amber)" />
-      <circle cx="45" cy="49" r="2.2" fill="var(--red)" />
+      <circle cx="44" cy="15" r="3.5" fill="#3f6f57" opacity="0.9" />
+      <circle cx="45" cy="49" r="2.5" fill="#c04040" opacity="0.9" />
     </svg>
   );
 }

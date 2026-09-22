@@ -38,7 +38,7 @@ const RemoveWatermark = lazyRetry(() => import("./tools/RemoveWatermark"));
 const PhotoEditor = lazyRetry(() => import("./tools/PhotoEditor"));
 const ImageTranslator = lazyRetry(() => import("./tools/ImageTranslator"));
 const ImageToUrl = lazyRetry(() => import("./tools/ImageToUrl"));
-const VideoEditor = lazyRetry(() => import("./tools/VideoEditor"));
+const YouTubeDownloader = lazyRetry(() => import("./tools/YouTubeDownloader"));
 
 const TOOL_PAGES: Record<string, ComponentType> = {
   "compress-image": CompressImage,
@@ -54,7 +54,7 @@ const TOOL_PAGES: Record<string, ComponentType> = {
   "photo-editor": PhotoEditor,
   "image-translator": ImageTranslator,
   "image-to-url": ImageToUrl,
-  "video-editor": VideoEditor,
+  "youtube-downloader": YouTubeDownloader,
 };
 
 const CATEGORY_SLUGS = ["images", "pdf", "video"];
