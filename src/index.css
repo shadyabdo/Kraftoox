@@ -74,6 +74,7 @@ body {
 .btn-primary:hover:not(:disabled) { 
   background: var(--primary-hover);
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(200, 164, 96, 0.3);
 }
 
 .btn-secondary { 
@@ -133,6 +134,7 @@ body {
 .chip:hover { 
   border-color: var(--primary);
   color: var(--primary);
+  background: var(--surface2);
 }
 
 /* ============ card ============ */
@@ -145,6 +147,7 @@ body {
 .card:hover {
   border-color: var(--primary);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(200, 164, 96, 0.1);
 }
 
 /* ============ tool card ============ */

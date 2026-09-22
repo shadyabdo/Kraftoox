@@ -28,32 +28,24 @@ function lazyRetry(factory: () => Promise<{ default: ComponentType }>, retries =
 const CompressImage = lazyRetry(() => import("./tools/CompressImage"));
 const ResizeImage = lazyRetry(() => import("./tools/ResizeImage"));
 const ConvertImage = lazyRetry(() => import("./tools/ConvertImage"));
-const ImageHost = lazyRetry(() => import("./tools/ImageHost"));
 const CompressPdf = lazyRetry(() => import("./tools/CompressPdf"));
 const MergePdf = lazyRetry(() => import("./tools/MergePdf"));
 const ImagesToPdf = lazyRetry(() => import("./tools/ImagesToPdf"));
 const ExtractPdfImages = lazyRetry(() => import("./tools/ExtractPdfImages"));
 const UpscaleImage = lazyRetry(() => import("./tools/UpscaleImage"));
-const RemoveWatermark = lazyRetry(() => import("./tools/RemoveWatermark"));
-const PhotoEditor = lazyRetry(() => import("./tools/PhotoEditor"));
 const ImageTranslator = lazyRetry(() => import("./tools/ImageTranslator"));
-const ImageToUrl = lazyRetry(() => import("./tools/ImageToUrl"));
 const YouTubeDownloader = lazyRetry(() => import("./tools/YouTubeDownloader"));
 
 const TOOL_PAGES: Record<string, ComponentType> = {
   "compress-image": CompressImage,
   "resize-image": ResizeImage,
   "convert-image": ConvertImage,
-  "image-host": ImageHost,
   "compress-pdf": CompressPdf,
   "merge-pdf": MergePdf,
   "images-to-pdf": ImagesToPdf,
   "extract-pdf-images": ExtractPdfImages,
   "upscale-image": UpscaleImage,
-  "remove-watermark": RemoveWatermark,
-  "photo-editor": PhotoEditor,
   "image-translator": ImageTranslator,
-  "image-to-url": ImageToUrl,
   "youtube-downloader": YouTubeDownloader,
 };
 

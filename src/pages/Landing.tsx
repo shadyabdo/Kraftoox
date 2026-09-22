@@ -41,7 +41,7 @@ export default function Landing() {
 
   const searching = q.trim().length > 0;
 
-  const QUICK = ["compress-image", "youtube-downloader", "photo-editor", "image-translator"]
+  const QUICK = ["compress-image", "youtube-downloader", "image-translator", "upscale-image"]
     .map((s) => getTool(s))
     .filter((tool): tool is ToolDef => !!tool);
 
