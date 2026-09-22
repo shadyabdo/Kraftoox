@@ -9,6 +9,8 @@ import { Icon } from "../components/Icons";
 
 const TOOL = getTool("youtube-downloader")!;
 
+// استخدام proxy CORS لتجاوز مشكلة الحظر
+const CORS_PROXY = "https://api.allorigins.win/raw?url=";
 const COBALT_API = "https://api.cobalt.tools/api/json";
 
 interface VideoInfo {
@@ -79,7 +81,10 @@ async function downloadFromCobalt(url: string, quality: string, type: "video" | 
     filenamePattern: "basic",
   };
 
-  const res = await fetch(COBALT_API, {
+  // استخدام proxy CORS
+  const proxyUrl = CORS_PROXY + encodeURIComponent(COBALT_API);
+  
+  const res = await fetch(proxyUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -99,6 +104,66 @@ async function downloadFromCobalt(url: string, quality: string, type: "video" | 
   throw new Error("Unexpected response");
 }
 
+// فحص الجودات الفعلية المتاحة للفيديو
+async function fetchAvailableQualities(videoId: string): Promise<{ video: string[], audio: string[] }> {
+  // استخدام خدمة ytdl للحصول على معلومات الجودات
+  const ytdlUrl = `https://www.y2mate.com/mates/analyzeV2/ajax`;
+  
+  try {
+    const formData = new URLSearchParams();
+    formData.append('k_query', `https://www.youtube.com/watch?v=${videoId}`);
+    formData.append('k_page', 'home');
+    formData.append('hl', 'en');
+    
+    const proxyUrl = CORS_PROXY + encodeURIComponent(ytdlUrl);
+    
+    const res = await fetch(proxyUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: formData.toString(),
+    });
+
+    if (!res.ok) throw new Error("Failed to fetch qualities");
+    const data = await res.json();
+
+    const videoQualities: string[] = [];
+    const audioQualities: string[] = [];
+
+    // استخراج الجودات الفعلية من الاستجابة
+    if (data.links && data.links.mp4) {
+      Object.keys(data.links.mp4).forEach(key => {
+        const item = data.links.mp4[key];
+        if (item && item.fquality) {
+          videoQualities.push(item.fquality);
+        }
+      });
+    }
+
+    if (data.links && data.links.mp3) {
+      Object.keys(data.links.mp3).forEach(key => {
+        const item = data.links.mp3[key];
+        if (item && item.fquality) {
+          audioQualities.push(item.fquality);
+        }
+      });
+    }
+
+    return {
+      video: videoQualities.length > 0 ? videoQualities : ["1080", "720", "480", "360"],
+      audio: audioQualities.length > 0 ? audioQualities : ["320", "256", "192", "128"]
+    };
+  } catch (error) {
+    console.error("Error fetching qualities:", error);
+    // إرجاع جودات افتراضية في حالة الفشل
+    return {
+      video: ["1080", "720", "480", "360"],
+      audio: ["320", "256", "192", "128"]
+    };
+  }
+}
+
 export default function YouTubeDownloader() {
   const { t, isAr } = useI18n();
   const [url, setUrl] = useState("");
@@ -107,6 +172,8 @@ export default function YouTubeDownloader() {
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [selectedQuality, setSelectedQuality] = useState<QualityOption>(VIDEO_QUALITIES[2]);
   const [error, setError] = useState("");
+  const [availableQualities, setAvailableQualities] = useState<{ video: string[], audio: string[] }>({ video: [], audio: [] });
+  const [currentType, setCurrentType] = useState<"video" | "audio">("video");
 
   const handleFetchInfo = async () => {
     const videoId = extractVideoId(url);
@@ -118,8 +185,18 @@ export default function YouTubeDownloader() {
     setLoading(true);
     setError("");
     try {
-      const info = await fetchVideoInfo(videoId);
+      const [info, qualities] = await Promise.all([
+        fetchVideoInfo(videoId),
+        fetchAvailableQualities(videoId)
+      ]);
       setVideoInfo(info);
+      setAvailableQualities(qualities);
+      
+      // اختيار أول جودة متاحة افتراضياً
+      if (qualities.video.length > 0) {
+        const firstVideoQuality = VIDEO_QUALITIES.find(q => qualities.video.includes(q.value)) || VIDEO_QUALITIES[2];
+        setSelectedQuality(firstVideoQuality);
+      }
     } catch {
       setError(t("تعذّر جلب معلومات الفيديو", "Failed to fetch video info"));
     } finally {
@@ -133,12 +210,12 @@ export default function YouTubeDownloader() {
     setDownloading(true);
     setError("");
     try {
-      const downloadUrl = await downloadFromCobalt(url, selectedQuality.value, selectedQuality.type);
+      const downloadUrl = await downloadFromCobalt(url, selectedQuality.value, currentType);
       
       // Trigger download
       const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = `${videoInfo.title}.${selectedQuality.type === "audio" ? "mp3" : "mp4"}`;
+      link.download = `${videoInfo.title}.${currentType === "audio" ? "mp3" : "mp4"}`;
       link.target = "_blank";
       link.rel = "noopener noreferrer";
       document.body.appendChild(link);
@@ -218,16 +295,24 @@ export default function YouTubeDownloader() {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setSelectedQuality(VIDEO_QUALITIES[2])}
-                  className={`chip flex-1 !justify-center !py-2.5 ${selectedQuality.type === "video" ? "!border-[var(--teal)] !bg-[var(--teal-soft)] !text-[var(--teal)]" : ""}`}
+                  onClick={() => {
+                    setCurrentType("video");
+                    const firstVideoQuality = VIDEO_QUALITIES.find(q => availableQualities.video.includes(q.value)) || VIDEO_QUALITIES[2];
+                    setSelectedQuality(firstVideoQuality);
+                  }}
+                  className={`chip flex-1 !justify-center !py-2.5 ${currentType === "video" ? "!border-[var(--teal)] !bg-[var(--teal-soft)] !text-[var(--teal)]" : ""}`}
                 >
                   <Icon name="video" size={16} />
                   {t("فيديو", "Video")}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSelectedQuality(AUDIO_QUALITIES[0])}
-                  className={`chip flex-1 !justify-center !py-2.5 ${selectedQuality.type === "audio" ? "!border-[var(--teal)] !bg-[var(--teal-soft)] !text-[var(--teal)]" : ""}`}
+                  onClick={() => {
+                    setCurrentType("audio");
+                    const firstAudioQuality = AUDIO_QUALITIES.find(q => availableQualities.audio.includes(q.value)) || AUDIO_QUALITIES[0];
+                    setSelectedQuality(firstAudioQuality);
+                  }}
+                  className={`chip flex-1 !justify-center !py-2.5 ${currentType === "audio" ? "!border-[var(--teal)] !bg-[var(--teal-soft)] !text-[var(--teal)]" : ""}`}
                 >
                   <Icon name="mic" size={16} />
                   {t("صوت فقط", "Audio Only")}
@@ -235,22 +320,24 @@ export default function YouTubeDownloader() {
               </div>
             </div>
 
-            {/* اختيار الجودة */}
+            {/* اختيار الجودة - عرض الجودات الفعلية فقط */}
             <div>
               <label className="mb-2 block text-sm font-bold">
                 {t("الجودة", "Quality")}
               </label>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {(selectedQuality.type === "video" ? VIDEO_QUALITIES : AUDIO_QUALITIES).map((q) => (
-                  <button
-                    key={q.value}
-                    type="button"
-                    onClick={() => setSelectedQuality(q)}
-                    className={`chip !justify-center !py-2.5 ${selectedQuality.value === q.value ? "!border-[var(--teal)] !bg-[var(--teal-soft)] !text-[var(--teal)]" : ""}`}
-                  >
-                    {q.label}
-                  </button>
-                ))}
+                {(currentType === "video" ? VIDEO_QUALITIES : AUDIO_QUALITIES)
+                  .filter(q => availableQualities[currentType].includes(q.value))
+                  .map((q) => (
+                    <button
+                      key={q.value}
+                      type="button"
+                      onClick={() => setSelectedQuality(q)}
+                      className={`chip !justify-center !py-2.5 ${selectedQuality.value === q.value ? "!border-[var(--teal)] !bg-[var(--teal-soft)] !text-[var(--teal)]" : ""}`}
+                    >
+                      {q.label}
+                    </button>
+                  ))}
               </div>
             </div>
 
