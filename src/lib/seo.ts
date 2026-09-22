@@ -123,6 +123,10 @@ const META: Record<string, PageMeta> = {
     title: "محول الأنظمة العددية أونلاين مجاناً | Kraftoox",
     description: "حوّل الأرقام بين Binary وDecimal وOctal وHexadecimal — فوري ومحلي بالكامل.",
   },
+  "/tool/youtube-downloader": {
+    title: "تنزيل فيديوهات يوتيوب مجاناً — MP4 وMP3 | Kraftoox",
+    description: "نزّل أي فيديو من يوتيوب بالجودة التي تريدها أو استخرج الصوت فقط — سريع، مجاني، وبدون علامة مائية عبر خدمة Snapscooper.",
+  },
 };
 
 function setMetaTag(selector: string, attr: string, value: string): void {
