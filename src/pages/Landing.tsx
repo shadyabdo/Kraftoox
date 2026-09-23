@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { TOOLS, IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS, DEVELOPER_TOOLS, TEXT_TOOLS, CONVERTER_TOOLS, getTool, type ToolDef } from "../data/tools";
+import { TOOLS, IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS, DEVELOPER_TOOLS, TEXT_TOOLS, CONVERTER_TOOLS, OFFICE_TOOLS, getTool, type ToolDef } from "../data/tools";
 import { Link } from "../lib/router";
 import { useI18n } from "../i18n";
 import { getProcessedCount, matchesQuery, copyText, showToast } from "../lib/utils";
@@ -216,6 +216,19 @@ export default function Landing() {
               </div>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {CONVERTER_TOOLS.map((tool) => (
+                  <ToolCard key={tool.slug} tool={tool} />
+                ))}
+              </div>
+            </div>
+
+            {/* Office Tools */}
+            <div className="mb-16">
+              <div className="flex items-center gap-3 mb-6">
+                <span style={{ color: "#18a303" }}><Icon name="file" size={24} /></span>
+                <h2 className="text-2xl font-bold">{isAr ? "LibreOffice" : "LibreOffice"}</h2>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {OFFICE_TOOLS.map((tool) => (
                   <ToolCard key={tool.slug} tool={tool} />
                 ))}
               </div>

@@ -46,6 +46,14 @@ const LoremIpsum = lazyRetry(() => import("./tools/LoremIpsum"));
 const ColorConverter = lazyRetry(() => import("./tools/ColorConverter"));
 const NumberBaseConverter = lazyRetry(() => import("./tools/NumberBaseConverter"));
 const AiCvGenerator = lazyRetry(() => import("./tools/AiCvGenerator"));
+const LibreOfficeWriter = lazyRetry(() => import("./tools/LibreOfficeWriter"));
+const LibreOfficeCalc = lazyRetry(() => import("./tools/LibreOfficeCalc"));
+const LibreOfficeImpress = lazyRetry(() => import("./tools/LibreOfficeImpress"));
+const UnitConverter = lazyRetry(() => import("./tools/UnitConverter"));
+const QRCodeGenerator = lazyRetry(() => import("./tools/QRCodeGenerator"));
+const Calculator = lazyRetry(() => import("./tools/Calculator"));
+const StopwatchTimer = lazyRetry(() => import("./tools/StopwatchTimer"));
+const SimpleTool = lazyRetry(() => import("./tools/SimpleTool"));
 
 const TOOL_PAGES: Record<string, ComponentType> = {
   "compress-image": CompressImage,
@@ -69,9 +77,39 @@ const TOOL_PAGES: Record<string, ComponentType> = {
   "color-converter": ColorConverter,
   "number-base-converter": NumberBaseConverter,
   "ai-cv-generator": AiCvGenerator,
+  "libreoffice-writer": LibreOfficeWriter,
+  "libreoffice-calc": LibreOfficeCalc,
+  "libreoffice-impress": LibreOfficeImpress,
+  "unit-converter": UnitConverter,
+  "qr-code-generator": QRCodeGenerator,
+  "calculator": Calculator,
+  "stopwatch-timer": StopwatchTimer,
+  "currency-converter": SimpleTool,
+  "markdown-editor": SimpleTool,
+  "json-to-yaml": SimpleTool,
+  "csv-to-json": SimpleTool,
+  "text-diff": SimpleTool,
+  "text-remover-duplicates": SimpleTool,
+  "text-sorter": SimpleTool,
+  "random-number-generator": SimpleTool,
+  "barcode-generator": SimpleTool,
+  "color-palette-generator": SimpleTool,
+  "image-to-base64": SimpleTool,
+  "image-resizer-online": SimpleTool,
+  "image-cropper": SimpleTool,
+  "image-rotate-flip": SimpleTool,
+  "pdf-splitter": SimpleTool,
+  "pdf-protector": SimpleTool,
+  "pdf-unlocker": SimpleTool,
+  "pdf-page-numbers": SimpleTool,
+  "pdf-watermark": SimpleTool,
+  "color-picker": SimpleTool,
+  "gradient-generator": SimpleTool,
+  "regex-tester": SimpleTool,
+  "sql-formatter": SimpleTool,
 };
 
-const CATEGORY_SLUGS = ["images", "pdf", "video", "developer", "text", "converter"];
+const CATEGORY_SLUGS = ["images", "pdf", "video", "developer", "text", "converter", "office"];
 
 /* حاجز أخطاء: يعرض رسالة واضحة بدل الشاشة البيضاء عند أي عطل */
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {

@@ -131,6 +131,18 @@ const META: Record<string, PageMeta> = {
     title: "مولد السيرة الذاتية بالذكاء الاصطناعي متوافق مع ATS | Kraftoox",
     description: "أنشئ سيرة ذاتية احترافية متوافقة مع أنظمة تتبع المتقدمين (ATS) بالذكاء الاصطناعي — تصميم بسيط، كلمات مفتاحية محسّنة، وتصدير PDF جاهز.",
   },
+  "/tool/libreoffice-writer": {
+    title: "محرر مستندات LibreOffice Writer أونلاين | Kraftoox",
+    description: "محرر مستندات كامل بديل Microsoft Word يعمل في المتصفح - يدعم DOCX وODT.",
+  },
+  "/tool/libreoffice-calc": {
+    title: "جداول LibreOffice Calc أونلاين | Kraftoox",
+    description: "جداول بيانات كاملة بديل Microsoft Excel تعمل في المتصفح - تدعم XLSX وODS.",
+  },
+  "/tool/libreoffice-impress": {
+    title: "عروض LibreOffice Impress أونلاين | Kraftoox",
+    description: "عروض تقديمية كاملة بديل PowerPoint تعمل في المتصفح - تدعم PPTX وODP.",
+  },
 };
 
 function setMetaTag(selector: string, attr: string, value: string): void {

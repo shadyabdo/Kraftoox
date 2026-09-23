@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { TOOLS, IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS, DEVELOPER_TOOLS, TEXT_TOOLS, CONVERTER_TOOLS, getTool, type ToolDef } from "../data/tools";
+import { TOOLS, IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS, DEVELOPER_TOOLS, TEXT_TOOLS, CONVERTER_TOOLS, OFFICE_TOOLS, getTool, type ToolDef } from "../data/tools";
 import { Link } from "../lib/router";
 import { useI18n } from "../i18n";
 import { getProcessedCount, matchesQuery, copyText, showToast } from "../lib/utils";
@@ -221,6 +221,14 @@ function BentoSections() {
       color: "var(--teal)",
       name: isAr ? "ذكاء اصطناعي" : "AI Tools",
       desc: isAr ? "ترجمة صور بالذكاء الاصطناعي" : "AI image translation",
+    },
+    {
+      id: "office",
+      tools: OFFICE_TOOLS,
+      icon: "file" as const,
+      color: "#18a303",
+      name: "LibreOffice",
+      desc: isAr ? "بديل Microsoft Office كامل" : "Complete Microsoft Office alternative",
     },
   ];
 
