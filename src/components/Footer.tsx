@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS, DEVELOPER_TOOLS, TEXT_TOOLS, CONVERTER_TOOLS } from "../data/tools";
+import { IMAGE_TOOLS, PDF_TOOLS, VIDEO_TOOLS, DEVELOPER_TOOLS, TEXT_TOOLS, CONVERTER_TOOLS, OFFICE_TOOLS } from "../data/tools";
 import { Link } from "../lib/router";
 import { useI18n } from "../i18n";
 import { copyText, showToast } from "../lib/utils";
@@ -98,15 +98,17 @@ export function Footer() {
             </ul>
 
             <h4 className="font-bold text-sm mb-4 flex items-center gap-2">
-              <span className="c-primary"><Icon name="ai" size={16} /></span>
-              {isAr ? "أدوات AI" : "AI Tools"}
+              <span style={{ color: "#18a303" }}><Icon name="file" size={16} /></span>
+              LibreOffice
             </h4>
             <ul className="space-y-2">
-              <li>
-                <Link to="/tool/image-translator" className="c-muted text-sm hover:c-primary transition-colors">
-                  {isAr ? "ترجمة الصور بالذكاء الاصطناعي" : "AI Image Translator"}
-                </Link>
-              </li>
+              {OFFICE_TOOLS.map((tool) => (
+                <li key={tool.slug}>
+                  <Link to={`/tool/${tool.slug}`} className="c-muted text-sm hover:c-primary transition-colors">
+                    {isAr ? tool.name : tool.nameEn}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
