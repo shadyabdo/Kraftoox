@@ -1,6 +1,6 @@
 import type { IconName } from "../components/Icons";
 
-export type ToolCategory = "image" | "pdf" | "video" | "developer" | "text" | "converter";
+export type ToolCategory = "image" | "pdf" | "video" | "developer" | "text" | "converter" | "ai";
 
 export interface ToolDef {
   slug: string;
@@ -584,6 +584,31 @@ export const TOOLS: ToolDef[] = [
     note: ["يدعم الأرقام حتى 64 بت — مناسب لمعظم الاستخدامات.", "Supports numbers up to 64 bits — suitable for most uses."],
     isNew: true,
   },
+  {
+    slug: "ai-cv-generator",
+    name: "مولد السيرة الذاتية بالذكاء الاصطناعي",
+    nameEn: "AI CV Generator",
+    short: "أنشئ سيرة ذاتية احترافية متوافقة مع ATS بالذكاء الاصطناعي — جاهزة للتقديم فوراً.",
+    shortEn: "Create a professional ATS-compatible CV with AI — ready to submit instantly.",
+    long: "مولد سيرة ذاتية ذكي يستخدم Gemini AI لإنشاء CV احترافي متوافق مع أنظمة تتبع المتقدمين (ATS). أدخل معلوماتك الأساسية وسيولّد لك CV منظم بكلمات مفتاحية مناسبة، تصميم بسيط، وقابل للتصدير PDF.",
+    longEn: "Smart CV generator using Gemini AI to create a professional ATS-compatible CV. Enter your basic info and it generates an organized CV with appropriate keywords, simple design, and PDF export capability.",
+    category: "ai",
+    icon: "file",
+    color: "#8b5cf6",
+    accept: "",
+    multiple: false,
+    badge: "AI · ATS · PDF",
+    badgeEn: "AI · ATS · PDF",
+    keywords: "مولد cv سيرة ذاتية ذكاء اصطناعي ats cv generator resume builder",
+    keywordsEn: "ai cv generator ats compatible resume builder professional cv",
+    features: ["متوافق مع ATS 100%", "توليد بالذكاء الاصطناعي", "تصدير PDF جاهز", "كلمات مفتاحية محسّنة"],
+    featuresEn: ["100% ATS compatible", "AI-powered generation", "Ready PDF export", "Optimized keywords"],
+    drop: ["أدخل معلوماتك لإنشاء CV", "Enter your info to create CV"],
+    dropSub: ["الاسم، الوظيفة، الخبرات، المهارات", "Name, job, experience, skills"],
+    action: ["أنشئ CV", "Generate CV"],
+    note: ["يستخدم Gemini API — مفتاحك يُحفظ محلياً فقط.", "Uses Gemini API — your key is stored locally only."],
+    isNew: true,
+  },
 ];
 
 export const IMAGE_TOOLS = TOOLS.filter((t) => t.category === "image");
@@ -592,6 +617,7 @@ export const VIDEO_TOOLS = TOOLS.filter((t) => t.category === "video");
 export const DEVELOPER_TOOLS = TOOLS.filter((t) => t.category === "developer");
 export const TEXT_TOOLS = TOOLS.filter((t) => t.category === "text");
 export const CONVERTER_TOOLS = TOOLS.filter((t) => t.category === "converter");
+export const AI_TOOLS = TOOLS.filter((t) => t.category === "ai");
 
 export function getTool(slug: string): ToolDef | undefined {
   return TOOLS.find((t) => t.slug === slug);

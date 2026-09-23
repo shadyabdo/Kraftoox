@@ -45,6 +45,7 @@ const TextCaseConverter = lazyRetry(() => import("./tools/TextCaseConverter"));
 const LoremIpsum = lazyRetry(() => import("./tools/LoremIpsum"));
 const ColorConverter = lazyRetry(() => import("./tools/ColorConverter"));
 const NumberBaseConverter = lazyRetry(() => import("./tools/NumberBaseConverter"));
+const AiCvGenerator = lazyRetry(() => import("./tools/AiCvGenerator"));
 
 const TOOL_PAGES: Record<string, ComponentType> = {
   "compress-image": CompressImage,
@@ -67,6 +68,7 @@ const TOOL_PAGES: Record<string, ComponentType> = {
   "lorem-ipsum": LoremIpsum,
   "color-converter": ColorConverter,
   "number-base-converter": NumberBaseConverter,
+  "ai-cv-generator": AiCvGenerator,
 };
 
 const CATEGORY_SLUGS = ["images", "pdf", "video", "developer", "text", "converter"];

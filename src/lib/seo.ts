@@ -127,6 +127,10 @@ const META: Record<string, PageMeta> = {
     title: "تنزيل فيديوهات يوتيوب مجاناً — MP4 وMP3 | Kraftoox",
     description: "نزّل أي فيديو من يوتيوب بالجودة التي تريدها أو استخرج الصوت فقط — سريع، مجاني، وبدون علامة مائية عبر خدمة Snapscooper.",
   },
+  "/tool/ai-cv-generator": {
+    title: "مولد السيرة الذاتية بالذكاء الاصطناعي متوافق مع ATS | Kraftoox",
+    description: "أنشئ سيرة ذاتية احترافية متوافقة مع أنظمة تتبع المتقدمين (ATS) بالذكاء الاصطناعي — تصميم بسيط، كلمات مفتاحية محسّنة، وتصدير PDF جاهز.",
+  },
 };
 
 function setMetaTag(selector: string, attr: string, value: string): void {

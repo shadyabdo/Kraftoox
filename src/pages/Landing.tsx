@@ -41,7 +41,7 @@ export default function Landing() {
 
   const searching = q.trim().length > 0;
 
-  const QUICK = ["compress-image", "youtube-downloader", "image-translator", "upscale-image"]
+  const QUICK = ["compress-image", "youtube-downloader", "ai-cv-generator", "image-translator"]
     .map((s) => getTool(s))
     .filter((tool): tool is ToolDef => !!tool);
 
@@ -228,7 +228,7 @@ export default function Landing() {
                 <h2 className="text-2xl font-bold">{isAr ? "أدوات الذكاء الاصطناعي" : "AI Tools"}</h2>
               </div>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {["image-translator"].map((slug) => {
+                {["image-translator", "ai-cv-generator"].map((slug) => {
                   const tool = getTool(slug);
                   return tool ? <ToolCard key={tool.slug} tool={tool} /> : null;
                 })}
