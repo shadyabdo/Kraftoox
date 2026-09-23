@@ -162,7 +162,7 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-12 pt-8 border-t border-[var(--line)] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-12 pt-8 border-t border-[var(--line)] flex flex-col sm:flex-row items-center justify-between gap-4" style={{ background: "#212121" }}>
           <p className="c-muted text-sm">
             © 2026 Kraftoox — {isAr ? "جميع الحقوق محفوظة" : "All rights reserved"}
           </p>
