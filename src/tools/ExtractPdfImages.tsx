@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import JSZip from "jszip";
 import { Dropzone } from "../components/Dropzone";
-import { InfoNote, IndeterminateBar } from "../components/bits";
+import { InfoNote, IndeterminateBar, Spinner } from "../components/bits";
 import { getTool } from "../data/tools";
 import { extractPdfImages, type ExtractedImage } from "../lib/pdf";
 import { bumpProcessedCount, downloadBlob, formatBytes, showToast } from "../lib/utils";
@@ -20,6 +20,9 @@ export default function ExtractPdfImages() {
   const [busy, setBusy] = useState(false);
   const [images, setImages] = useState<Found[]>([]);
   const [searched, setSearched] = useState(false);
+  const [inputMode, setInputMode] = useState<"file" | "url">("file");
+  const [pdfUrl, setPdfUrl] = useState("");
+  const [loadingUrl, setLoadingUrl] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -27,6 +30,28 @@ export default function ExtractPdfImages() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [images]);
+
+  const loadFromUrl = async () => {
+    if (!pdfUrl.trim()) {
+      showToast("أدخل رابط PDF أولاً", "err");
+      return;
+    }
+    setLoadingUrl(true);
+    try {
+      const response = await fetch(pdfUrl);
+      if (!response.ok) throw new Error("فشل تحميل الملف");
+      const blob = await response.blob();
+      const file = new File([blob], "document.pdf", { type: "application/pdf" });
+      setFile(file);
+      setImages([]);
+      setSearched(false);
+      showToast("تم تحميل الملف بنجاح");
+    } catch (err) {
+      showToast("تعذّر تحميل الملف من الرابط — تأكد من صحة الرابط وأن الملف متاح", "err");
+    } finally {
+      setLoadingUrl(false);
+    }
+  };
 
   const run = async () => {
     if (!file) return;
@@ -69,18 +94,75 @@ export default function ExtractPdfImages() {
   return (
     <ToolShell tool={TOOL}>
       {!file ? (
-        <Dropzone
-          accept={TOOL.accept}
-          multiple={false}
-          onFiles={(f) => {
-            setFile(f[0]);
-            setImages([]);
-            setSearched(false);
-          }}
-          color={TOOL.color}
-          title="اسحب ملف PDF لاستخراج صوره"
-          subtitle="يفكك المحرك بنية الملف ويعثر على كل الصور المضمنة بدقة أصلية"
-        />
+        <>
+          {/* أزرار تبديل وضع الإدخال */}
+          <div className="mb-4 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setInputMode("file")}
+              className={`btn flex-1 ${inputMode === "file" ? "btn-primary" : "btn-secondary"}`}
+            >
+              <Icon name="upload" size={16} />
+              رفع ملف
+            </button>
+            <button
+              type="button"
+              onClick={() => setInputMode("url")}
+              className={`btn flex-1 ${inputMode === "url" ? "btn-primary" : "btn-secondary"}`}
+            >
+              <Icon name="link" size={16} />
+              من رابط
+            </button>
+          </div>
+
+          {/* وضع رفع الملف */}
+          {inputMode === "file" && (
+            <Dropzone
+              accept={TOOL.accept}
+              multiple={false}
+              onFiles={(f) => {
+                setFile(f[0]);
+                setImages([]);
+                setSearched(false);
+              }}
+              color={TOOL.color}
+              title="اسحب ملف PDF لاستخراج صوره"
+              subtitle="يفكك المحرك بنية الملف ويعثر على كل الصور المضمنة بدقة أصلية"
+            />
+          )}
+
+          {/* وضع الرابط */}
+          {inputMode === "url" && (
+            <div className="card p-6">
+              <label className="mb-2 block text-sm font-bold">
+                رابط ملف PDF
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={pdfUrl}
+                  onChange={(e) => setPdfUrl(e.target.value)}
+                  placeholder="https://example.com/document.pdf"
+                  className="input flex-1"
+                  dir="ltr"
+                  disabled={loadingUrl}
+                />
+                <button
+                  type="button"
+                  onClick={loadFromUrl}
+                  disabled={loadingUrl || !pdfUrl.trim()}
+                  className="btn btn-primary !px-6"
+                >
+                  {loadingUrl ? <Spinner size={18} /> : <Icon name="download" size={18} />}
+                  {loadingUrl ? "جارٍ التحميل..." : "تحميل"}
+                </button>
+              </div>
+              <p className="mt-3 text-xs c-muted">
+                الصق رابط ملف PDF مباشر (يجب أن يكون الرابط متاحاً للوصول العام)
+              </p>
+            </div>
+          )}
+        </>
       ) : (
         <div className="anim-pop">
           <div className="card p-5">
@@ -110,6 +192,8 @@ export default function ExtractPdfImages() {
                     setFile(null);
                     setImages([]);
                     setSearched(false);
+                    setPdfUrl("");
+                    setInputMode("file");
                   }}
                   className="btn btn-ghost !px-3"
                 >
