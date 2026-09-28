@@ -31,23 +31,62 @@ export default function ExtractPdfImages() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [images]);
 
-  const loadFromUrl = async () => {
+  const loadFromUrl = async (useProxy = false) => {
     if (!pdfUrl.trim()) {
       showToast("أدخل رابط PDF أولاً", "err");
       return;
     }
     setLoadingUrl(true);
     try {
-      const response = await fetch(pdfUrl);
-      if (!response.ok) throw new Error("فشل تحميل الملف");
+      // تشفير الرابط بشكل صحيح للتعامل مع المسافات والأحرف الخاصة
+      const encodedUrl = encodeURI(pdfUrl.trim());
+      
+      let response: Response;
+      
+      if (useProxy) {
+        // استخدام CORS proxy للتعامل مع الروابط المحجوبة
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(encodedUrl)}`;
+        response = await fetch(proxyUrl);
+      } else {
+        // محاولة التحميل المباشر أولاً
+        response = await fetch(encodedUrl);
+      }
+      
+      if (!response.ok) {
+        if (!useProxy) {
+          // إذا فشل التحميل المباشر، جرب عبر proxy
+          setLoadingUrl(false);
+          const retry = confirm(
+            "فشل التحميل المباشر. هل تريد المحاولة عبر خادم وسيط؟\n\n" +
+            "Direct download failed. Try via proxy server?"
+          );
+          if (retry) {
+            await loadFromUrl(true);
+          }
+          return;
+        }
+        throw new Error(`فشل تحميل الملف (${response.status})`);
+      }
+      
       const blob = await response.blob();
-      const file = new File([blob], "document.pdf", { type: "application/pdf" });
+      
+      // التحقق من أن الملف هو PDF فعلاً
+      if (blob.type !== "application/pdf" && !blob.type.includes("pdf")) {
+        throw new Error("الملف المحمّل ليس PDF");
+      }
+      
+      // استخراج اسم الملف من الرابط
+      const urlParts = encodedUrl.split("/");
+      const fileName = urlParts[urlParts.length - 1] || "document.pdf";
+      
+      const file = new File([blob], decodeURIComponent(fileName), { type: "application/pdf" });
       setFile(file);
       setImages([]);
       setSearched(false);
-      showToast("تم تحميل الملف بنجاح");
+      showToast("تم تحميل الملف بنجاح ✓");
     } catch (err) {
-      showToast("تعذّر تحميل الملف من الرابط — تأكد من صحة الرابط وأن الملف متاح", "err");
+      const errorMsg = err instanceof Error ? err.message : "خطأ غير معروف";
+      showToast(`تعذّر تحميل الملف: ${errorMsg}`, "err");
     } finally {
       setLoadingUrl(false);
     }
@@ -149,17 +188,32 @@ export default function ExtractPdfImages() {
                 />
                 <button
                   type="button"
-                  onClick={loadFromUrl}
+                  onClick={() => loadFromUrl(false)}
                   disabled={loadingUrl || !pdfUrl.trim()}
                   className="btn btn-primary !px-6"
+                  title="تحميل مباشر"
                 >
                   {loadingUrl ? <Spinner size={18} /> : <Icon name="download" size={18} />}
-                  {loadingUrl ? "جارٍ التحميل..." : "تحميل"}
+                  {loadingUrl ? "جارٍ..." : "تحميل"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => loadFromUrl(true)}
+                  disabled={loadingUrl || !pdfUrl.trim()}
+                  className="btn btn-secondary !px-4"
+                  title="تحميل عبر خادم وسيط (للروابط المحجوبة)"
+                >
+                  <Icon name="globe" size={18} />
                 </button>
               </div>
-              <p className="mt-3 text-xs c-muted">
-                الصق رابط ملف PDF مباشر (يجب أن يكون الرابط متاحاً للوصول العام)
-              </p>
+              <div className="mt-3 space-y-1">
+                <p className="text-xs c-muted">
+                  💡 الصق رابط ملف PDF مباشر (يدعم المسافات والأحرف الخاصة)
+                </p>
+                <p className="text-xs c-muted">
+                  🔒 إذا فشل التحميل، اضغط زر 🌐 للتحميل عبر خادم وسيط
+                </p>
+              </div>
             </div>
           )}
         </>
